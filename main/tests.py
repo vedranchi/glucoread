@@ -1,3 +1,8 @@
+import os
+
+from django.contrib.staticfiles import finders
+from django.contrib.staticfiles.storage import staticfiles_storage
+from django.test import override_settings
 import logging
 import re
 from pathlib import Path
@@ -91,3 +96,46 @@ class MobileNavDrawerCssTest(TestCase):
                     "an overflow lock on <html> breaks the sticky topbar; "
                     "contain the drawer's own scroll instead",
                 )
+
+
+class StaticCacheBustingTest(TestCase):
+    """Development static URLs must change when the file does.
+
+    Production hashes filenames, so it is already safe; the regression this
+    guards is the dev case, where an edited asset kept its URL and browsers
+    went on serving the cached copy.
+    """
+
+    ASSET = "main/css/app.css"
+
+    @override_settings(DEBUG=True)
+    def test_debug_urls_carry_the_source_mtime(self):
+        url = staticfiles_storage.url(self.ASSET)
+        self.assertIn("?v=", url)
+
+        stamp = url.split("?v=")[1]
+        self.assertTrue(stamp.isdigit(), url)
+        self.assertEqual(
+            int(stamp), int(os.path.getmtime(finders.find(self.ASSET)))
+        )
+
+    @override_settings(DEBUG=True)
+    def test_a_touched_file_gets_a_new_url(self):
+        source = finders.find(self.ASSET)
+        original = os.stat(source)
+        before = staticfiles_storage.url(self.ASSET)
+        try:
+            os.utime(source, (original.st_atime, original.st_mtime + 60))
+            self.assertNotEqual(staticfiles_storage.url(self.ASSET), before)
+        finally:
+            os.utime(source, (original.st_atime, original.st_mtime))
+
+    @override_settings(DEBUG=False)
+    def test_production_urls_are_untouched(self):
+        """Outside DEBUG this must behave exactly as the manifest storage it
+        subclasses — hashed name, no query string bolted on."""
+        self.assertNotIn("?v=", staticfiles_storage.url(self.ASSET))
+
+    @override_settings(DEBUG=True)
+    def test_an_unknown_asset_does_not_raise(self):
+        self.assertNotIn("?v=", staticfiles_storage.url("does/not/exist.css"))

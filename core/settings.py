@@ -283,7 +283,10 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+# Subclasses WhiteNoise's manifest storage; identical in production, and
+# stamps URLs with the source mtime in DEBUG so an edited asset is never
+# served from a stale browser cache. See main/storage.py.
+STATICFILES_STORAGE = "main.storage.CacheBustingStaticFilesStorage"
 
 STORAGES = {
     "staticfiles": {"BACKEND": STATICFILES_STORAGE},
