@@ -1,6 +1,11 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.conf import settings
+
+from logs.conversions import (
+    DEFAULT_TARGET_HIGH_MMOL,
+    DEFAULT_TARGET_LOW_MMOL,
+)
 from PIL import Image
 
 
@@ -44,6 +49,18 @@ class UserPreferences(models.Model):
     )
     glucose_unit = models.CharField(
         max_length=10, choices=GLUCOSE_UNIT_CHOICES, default=GLUCOSE_UNIT_MMOL
+    )
+
+    # The user's in-range band. Stored in mmol/L and at the same precision as
+    # GlucoseLog.value, so a target entered in mg/dL survives the round trip
+    # the same way a reading does (see logs.conversions.MMOL_QUANTUM). The
+    # defaults are the standard adult band, so existing rows and new signups
+    # behave exactly as the fixed thresholds did before.
+    target_low = models.DecimalField(
+        max_digits=6, decimal_places=3, default=DEFAULT_TARGET_LOW_MMOL
+    )
+    target_high = models.DecimalField(
+        max_digits=6, decimal_places=3, default=DEFAULT_TARGET_HIGH_MMOL
     )
 
 

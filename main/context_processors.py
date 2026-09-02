@@ -17,12 +17,7 @@ from django.utils import timezone
 from logs.models import GlucoseLog
 from users.models import UserPreferences
 from users.services import get_user_preferences
-from logs.conversions import (
-    RANGE_HIGH_MMOL,
-    RANGE_LOW_MMOL,
-    reading_status,
-    to_display,
-)
+from logs.conversions import reading_status, to_display
 
 
 # Rail section, keyed off the trailing word of the resolved URL name rather
@@ -63,7 +58,10 @@ def shell(request):
         total=Count("id"),
         in_range=Count(
             "id",
-            filter=Q(value__gte=RANGE_LOW_MMOL, value__lte=RANGE_HIGH_MMOL),
+            filter=Q(
+                value__gte=preferences.target_low,
+                value__lte=preferences.target_high,
+            ),
         ),
     )
     reading_count = counts["total"]
@@ -75,7 +73,9 @@ def shell(request):
     latest_reading = None
     latest = today_readings.order_by("-measured_at").first()
     if latest is not None:
-        tone, label = reading_status(latest.value)
+        tone, label = reading_status(
+            latest.value, preferences.target_low, preferences.target_high
+        )
         latest_reading = {
             "value": to_display(latest.value, is_mgdl),
             "unit": unit_label,

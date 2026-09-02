@@ -1,8 +1,21 @@
+from decimal import Decimal
+
 from django.test import TestCase
 from django.core import mail
 from django.core.cache import cache
 from django.contrib.auth import get_user_model
 from django.urls import reverse
+from django.utils import timezone
+
+from logs.conversions import (
+    DEFAULT_TARGET_HIGH_MMOL,
+    DEFAULT_TARGET_LOW_MMOL,
+    mgdl_to_mmol,
+    reading_status,
+    to_display,
+)
+from logs.models import GlucoseLog
+from users.models import UserPreferences
 
 User = get_user_model()
 
@@ -158,6 +171,8 @@ class ProfileUpdateTest(TestCase):
             "email": self.user.email,
             "glucose_unit": "mmol",
             "diabetes_type": "type1",
+            "target_low": "3.9",
+            "target_high": "10.0",
         }
         data.update(overrides)
         return self.client.post(reverse("user-profile"), data)
@@ -283,3 +298,140 @@ class AdminLoginRateLimitTest(TestCase):
         from django.conf import settings
 
         self.assertTrue(settings.ADMIN_PATH.endswith("/"))
+
+
+class GlucoseTargetTest(TestCase):
+    """The in-range band is per-user, stored in mmol/L, typed in either unit."""
+
+    def setUp(self):
+        cache.clear()
+        self.user = User.objects.create_user(
+            username="targetuser", email="target@example.com", password="pw12345!"
+        )
+        self.client.login(email="target@example.com", password="pw12345!")
+
+    def _post(self, **overrides):
+        data = {
+            "username": self.user.username,
+            "email": self.user.email,
+            "glucose_unit": "mmol",
+            "diabetes_type": "type1",
+            "target_low": "3.9",
+            "target_high": "10.0",
+        }
+        data.update(overrides)
+        return self.client.post(reverse("user-profile"), data)
+
+    def test_new_preferences_default_to_the_standard_band(self):
+        prefs = self.user.preferences
+        self.assertEqual(prefs.target_low, DEFAULT_TARGET_LOW_MMOL)
+        self.assertEqual(prefs.target_high, DEFAULT_TARGET_HIGH_MMOL)
+
+    def test_targets_typed_in_mmol_are_stored_as_typed(self):
+        self._post(target_low="4.5", target_high="8.5")
+        self.user.preferences.refresh_from_db()
+        self.assertEqual(self.user.preferences.target_low, Decimal("4.5"))
+        self.assertEqual(self.user.preferences.target_high, Decimal("8.5"))
+
+    def test_targets_typed_in_mgdl_are_converted_before_storage(self):
+        prefs = self.user.preferences
+        prefs.glucose_unit = UserPreferences.GLUCOSE_UNIT_MGDL
+        prefs.save()
+
+        self._post(glucose_unit="mg/dL", target_low="80", target_high="160")
+        prefs.refresh_from_db()
+
+        self.assertEqual(prefs.target_low, mgdl_to_mmol(Decimal("80")))
+        self.assertEqual(prefs.target_high, mgdl_to_mmol(Decimal("160")))
+        # and the stored value reads back as the number that was typed
+        self.assertEqual(to_display(prefs.target_low, True), 80.0)
+        self.assertEqual(to_display(prefs.target_high, True), 160.0)
+
+    def test_a_unit_change_reads_the_targets_in_the_unit_on_screen(self):
+        """The page was rendered in mmol/L, so "4.0" means 4.0 mmol/L even
+        though the same submit switches the account to mg/dL."""
+        self._post(glucose_unit="mg/dL", target_low="4.0", target_high="9.0")
+        prefs = self.user.preferences
+        prefs.refresh_from_db()
+
+        self.assertEqual(prefs.glucose_unit, "mg/dL")
+        self.assertEqual(prefs.target_low, Decimal("4.0"))
+        self.assertEqual(prefs.target_high, Decimal("9.0"))
+
+    def test_upper_target_must_exceed_the_lower_one(self):
+        response = self._post(target_low="9.0", target_high="5.0")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "must be above the lower target")
+
+        self.user.preferences.refresh_from_db()
+        self.assertEqual(self.user.preferences.target_low, DEFAULT_TARGET_LOW_MMOL)
+
+    def test_equal_targets_are_rejected(self):
+        response = self._post(target_low="6.0", target_high="6.0")
+        self.assertContains(response, "must be above the lower target")
+
+    def test_an_implausible_target_is_rejected_in_the_users_own_unit(self):
+        response = self._post(target_low="0.2", target_high="10.0")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "between 1 and 40 mmol/L")
+
+        self.user.preferences.refresh_from_db()
+        self.assertEqual(self.user.preferences.target_low, DEFAULT_TARGET_LOW_MMOL)
+
+
+class ReadingStatusTest(TestCase):
+    """Classification is driven by the band it is handed, not by a constant."""
+
+    def test_classifies_against_the_supplied_band(self):
+        low, high = Decimal("4.0"), Decimal("9.0")
+        self.assertEqual(reading_status(Decimal("3.9"), low, high)[1], "Low")
+        self.assertEqual(reading_status(Decimal("4.0"), low, high)[1], "In range")
+        self.assertEqual(reading_status(Decimal("9.0"), low, high)[1], "In range")
+        self.assertEqual(reading_status(Decimal("9.1"), low, high)[1], "High")
+
+    def test_the_same_reading_changes_status_when_the_band_narrows(self):
+        reading = Decimal("9.5")
+        wide = reading_status(reading, Decimal("3.9"), Decimal("10.0"))
+        narrow = reading_status(reading, Decimal("4.0"), Decimal("9.0"))
+        self.assertEqual(wide[1], "In range")
+        self.assertEqual(narrow[1], "High")
+
+
+class TimeInRangeUsesUserTargetsTest(TestCase):
+    """The rail meter and header chip must follow the user's own band."""
+
+    def setUp(self):
+        cache.clear()
+        self.user = User.objects.create_user(
+            username="tiruser", email="tir@example.com", password="pw12345!"
+        )
+        self.client.login(email="tir@example.com", password="pw12345!")
+        now = timezone.now()
+        for value in ("5.0", "9.5", "11.0"):
+            GlucoseLog.objects.create(
+                user=self.user, value=Decimal(value), measured_at=now
+            )
+
+    def test_default_band_counts_two_of_three_in_range(self):
+        response = self.client.get(reverse("glucoread-dashboard"))
+        self.assertEqual(response.context["time_in_range"], 67)
+        self.assertEqual(response.context["in_range_count"], 2)
+
+    def test_narrowing_the_band_drops_the_reading_that_no_longer_fits(self):
+        prefs = self.user.preferences
+        prefs.target_high = Decimal("9.0")
+        prefs.save()
+
+        response = self.client.get(reverse("glucoread-dashboard"))
+        self.assertEqual(response.context["in_range_count"], 1)
+        self.assertEqual(response.context["time_in_range"], 33)
+
+    def test_the_chart_band_is_labelled_with_the_users_own_targets(self):
+        prefs = self.user.preferences
+        prefs.target_low = Decimal("4.4")
+        prefs.target_high = Decimal("9.0")
+        prefs.save()
+
+        response = self.client.get(reverse("glucoread-dashboard"))
+        self.assertEqual(response.context["range_low"], 4.4)
+        self.assertEqual(response.context["range_high"], 9.0)

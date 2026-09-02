@@ -50,25 +50,49 @@ def to_display(value, is_mgdl):
 # --------------------------------------------------------------------------
 # Target range.
 #
-# The redesign surfaces range status in four places — the header chip, the
-# rail's time-in-range meter, the dashboard's shaded chart band, and each row
-# of the glucose log — so the thresholds and the labels live here, next to the
-# unit conversion, rather than being restated at each of those call sites.
+# The app surfaces range status in four places — the header chip, the rail's
+# time-in-range meter, the dashboard's shaded chart band, and each row of the
+# glucose log — so the classification lives here, next to the unit conversion,
+# rather than being restated at each of those call sites.
 #
-# 3.9-10.0 mmol/L is the standard adult target band, and is what the source
-# design states as 70-180 mg/dL. Held in mmol/L because that is the storage
+# The band itself is per-user (UserPreferences.target_low / target_high); the
+# constants below are only the defaults those fields ship with. 3.9-10.0 mmol/L
+# is the standard adult target band. Held in mmol/L because that is the storage
 # unit: classifying on the stored value means a mg/dL user and an mmol/L user
 # never disagree about whether the same reading was in range.
 # --------------------------------------------------------------------------
-RANGE_LOW_MMOL = 3.9
-RANGE_HIGH_MMOL = 10.0
+DEFAULT_TARGET_LOW_MMOL = Decimal("3.9")
+DEFAULT_TARGET_HIGH_MMOL = Decimal("10.0")
 
 
-def reading_status(value_mmol):
-    """Classify a stored reading, returning (tone class, human label)."""
-    value = float(value_mmol)
-    if value < RANGE_LOW_MMOL:
+def reading_status(value_mmol, low_mmol, high_mmol):
+    """Classify a stored reading against a band, returning (tone, label).
+
+    All three arguments are mmol/L. Decimal and float compare exactly here, so
+    a caller may pass either without a coercion step.
+    """
+    if value_mmol < low_mmol:
         return "t-danger", "Low"
-    if value > RANGE_HIGH_MMOL:
+    if value_mmol > high_mmol:
         return "t-warn", "High"
     return "t-range", "In range"
+
+
+# --------------------------------------------------------------------------
+# Plausible-entry bounds.
+#
+# A figure outside these is far likelier to be a unit mix-up than a real
+# reading, so both the log entry forms and the target fields on the profile
+# reject it. Stated per display unit because that is what the user typed.
+# --------------------------------------------------------------------------
+MGDL_ENTRY_MIN = Decimal("20")
+MGDL_ENTRY_MAX = Decimal("700")
+MMOL_ENTRY_MIN = Decimal("1")
+MMOL_ENTRY_MAX = Decimal("40")
+
+
+def entry_bounds(is_mgdl):
+    """The accepted range for a typed glucose figure, in the user's unit."""
+    if is_mgdl:
+        return MGDL_ENTRY_MIN, MGDL_ENTRY_MAX
+    return MMOL_ENTRY_MIN, MMOL_ENTRY_MAX

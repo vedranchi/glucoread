@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 
 from users.models import UserPreferences
 from users.services import get_user_preferences
-from logs.conversions import RANGE_HIGH_MMOL, RANGE_LOW_MMOL, to_display
+from logs.conversions import to_display
 
 
 @login_required
@@ -153,11 +153,11 @@ def dashboard(request):
         "unit_label": unit_label,
         "avg_delta_pct": avg_delta_pct,
         "avg_delta_direction": avg_delta_direction,
-        # The target band the chart shades and the range card names. Held in
-        # mmol/L in logs.conversions and converted here for display, so no two
-        # surfaces can state different thresholds.
-        "range_low": to_display(RANGE_LOW_MMOL, is_mgdl),
-        "range_high": to_display(RANGE_HIGH_MMOL, is_mgdl),
+        # The target band the chart shades and the range card names. Stored
+        # in mmol/L on the user's preferences and converted here for display,
+        # so no two surfaces can state different thresholds.
+        "range_low": to_display(profile.target_low, is_mgdl),
+        "range_high": to_display(profile.target_high, is_mgdl),
     }
 
     return render(request, "dashboard/dashboard.html", context)

@@ -9,7 +9,15 @@ from users.models import UserPreferences
 from django.utils import timezone
 from datetime import timedelta
 from decimal import Decimal, InvalidOperation
-from logs.conversions import mgdl_to_mmol, reading_status, to_display
+from logs.conversions import (
+    MGDL_ENTRY_MAX,
+    MGDL_ENTRY_MIN,
+    MMOL_ENTRY_MAX,
+    MMOL_ENTRY_MIN,
+    mgdl_to_mmol,
+    reading_status,
+    to_display,
+)
 
 
 def clean_text(value, max_length, label):
@@ -214,7 +222,7 @@ def log_glucose(request):
     # and an mmol/L user classify the same reading identically.
     recent_activity = []
     for g in glucose_today:
-        tone, label = reading_status(g.value)
+        tone, label = reading_status(g.value, profile.target_low, profile.target_high)
         recent_activity.append(
             {
                 "id": g.id,
@@ -252,7 +260,7 @@ def log_glucose(request):
 
     recent_7_days = []
     for g in recent_7_days_qs:
-        tone, label = reading_status(g.value)
+        tone, label = reading_status(g.value, profile.target_low, profile.target_high)
         recent_7_days.append(
             {
                 "value": to_display(g.value, is_mgdl),
@@ -347,14 +355,14 @@ def add_glucose(request, pk=None):
             if not value.is_finite():
                 error = error or "Enter a valid number"
             elif is_mgdl:  # convert to mmol/L before storing
-                if value < Decimal("20") or value > Decimal("700"):
+                if value < MGDL_ENTRY_MIN or value > MGDL_ENTRY_MAX:
                     error = error or (
                         "Too high/low for mg/dL. Check if unit preference is correct"
                     )
                 else:
                     mmol_value = mgdl_to_mmol(value)
             else:
-                if value < Decimal("1") or value > Decimal("40"):
+                if value < MMOL_ENTRY_MIN or value > MMOL_ENTRY_MAX:
                     error = error or (
                         "Too high/low for mmol/L. Check if unit preference is correct"
                     )

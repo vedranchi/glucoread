@@ -59,6 +59,39 @@ Account Settings — GlucoRead
                     <div class="field-error">{{ error }}</div>
                 {% endfor %}
             </div>
+
+            {% comment %}
+              Labels carry the unit, so the pair is not self-explanatory
+              without this line above them.
+            {% endcomment %}
+            <p class="form-section-note">
+                Readings inside this band count as in range — it drives the
+                dashboard chart, the time-in-range meter and each reading's
+                status.
+            </p>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="{{ preferences_form.target_low.id_for_label }}">
+                        {{ preferences_form.target_low.label }}
+                    </label>
+                    {{ preferences_form.target_low }}
+                    {% for error in preferences_form.target_low.errors %}
+                        <div class="field-error">{{ error }}</div>
+                    {% endfor %}
+                </div>
+                <div class="form-group">
+                    <label for="{{ preferences_form.target_high.id_for_label }}">
+                        {{ preferences_form.target_high.label }}
+                    </label>
+                    {{ preferences_form.target_high }}
+                    {% for error in preferences_form.target_high.errors %}
+                        <div class="field-error">{{ error }}</div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% for error in preferences_form.non_field_errors %}
+                <div class="field-error">{{ error }}</div>
+            {% endfor %}
         </div>
 
         <!-- Health Profile Section -->
