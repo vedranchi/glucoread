@@ -386,6 +386,14 @@ class GlucoseTargetTest(TestCase):
         self.assertContains(response, 'data-target-low="70.2"')
         self.assertContains(response, 'data-target-high="180.0"')
 
+    def test_reset_handler_is_inline_not_in_a_cacheable_static_file(self):
+        """The page is no-store; profile.js is not. Serving the handler from
+        the static file let a stale cached copy leave the button dead."""
+        response = self.client.get(reverse("user-profile"))
+        self.assertContains(response, "data-reset-targets")
+        # the listener itself, not just the button, must be in the response
+        self.assertContains(response, "addEventListener")
+
     def test_reset_button_does_not_submit_the_form(self):
         """It fills the inputs only; a default-type button inside the form
         would submit every section instead."""
