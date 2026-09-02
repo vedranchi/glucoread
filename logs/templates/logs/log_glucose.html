@@ -1,121 +1,202 @@
 {% extends 'main/base.html' %}
 {% load static %}
 
-{% block title %}Log Glucose — GlucoRead{% endblock %}
-{% block nav_title %}Track Glucose{% endblock %}
+{% block title %}Glucose Log — GlucoRead{% endblock %}
+{% block nav_title %}Glucose log{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'logs/css/logs.css' %}">
 {% endblock %}
 
 {% block content %}
-<!-- Current reading -->
-<div class="summary-box">
-    <h2>Current Reading</h2>
-    {% if current_glucose_value %}
-        <p>
-            <strong>{{ current_glucose_value }} {{ unit_label }}</strong>
+<div class="page-head">
+    <div>
+        <h1>Glucose log</h1>
+        <p>Track and review your blood glucose readings.</p>
+    </div>
+    <a class="btn btn-primary" href="{% url 'add-glucose' %}">
+        <svg class="icon icon-sm" aria-hidden="true"><use href="#i-plus" /></svg>
+        Add reading
+    </a>
+</div>
+
+<div class="stat-grid">
+    <article class="card stat t-glucose">
+        <div class="stat-top">
+            <div>
+                <p class="stat-label">Latest reading</p>
+                <p class="stat-value">
+                    {% if current_glucose_value %}
+                        {{ current_glucose_value }} <span class="unit">{{ unit_label }}</span>
+                    {% else %}
+                        &mdash;
+                    {% endif %}
+                </p>
+            </div>
+            <span class="puck" aria-hidden="true">
+                <svg class="icon icon-lg"><use href="#i-droplet" /></svg>
+            </span>
+        </div>
+        <p class="stat-foot">
+            {% if current_glucose_time %}
+                {{ current_glucose_time|date:"M j, H:i" }}
+            {% else %}
+                No readings recorded yet
+            {% endif %}
         </p>
-        <p>
-            <small>
-                Measured at: {{ current_glucose_time|date:"M d, Y H:i" }}
-            </small>
-        </p>
+    </article>
+
+    <article class="card stat t-glucose">
+        <div class="stat-top">
+            <div>
+                <p class="stat-label">Average today</p>
+                <p class="stat-value">
+                    {% if avg_glucose %}
+                        {{ avg_glucose|floatformat:1 }} <span class="unit">{{ unit_label }}</span>
+                    {% else %}
+                        &mdash;
+                    {% endif %}
+                </p>
+            </div>
+            <span class="puck" aria-hidden="true">
+                <svg class="icon icon-lg"><use href="#i-activity" /></svg>
+            </span>
+        </div>
+        <p class="stat-foot">Across {{ reading_count|default:"0" }} reading{{ reading_count|pluralize }}</p>
+    </article>
+
+    <article class="card stat t-range">
+        <div class="stat-top">
+            <div>
+                <p class="stat-label">Time in range</p>
+                <p class="stat-value">
+                    {% if time_in_range is not None %}
+                        {{ time_in_range }}<span class="unit">%</span>
+                    {% else %}
+                        &mdash;
+                    {% endif %}
+                </p>
+            </div>
+            <span class="puck" aria-hidden="true">
+                <svg class="icon icon-lg"><use href="#i-activity" /></svg>
+            </span>
+        </div>
+        <p class="stat-foot">{{ in_range_count }} of {{ reading_count }} today</p>
+    </article>
+</div>
+
+<article class="card table-card">
+    <div class="card-head">
+        <div>
+            <h2>Today's readings</h2>
+            <p class="card-desc">Most recent first, up to ten</p>
+        </div>
+    </div>
+    {% if recent_activity %}
+        <div class="table-scroll">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Value</th>
+                        <th>Status</th>
+                        <th>Context</th>
+                        <th>Note</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for reading in recent_activity %}
+                        <tr>
+                            <td class="cell-primary">
+                                <a href="{% url 'edit-glucose' pk=reading.id %}">{{ reading.when|date:"H:i" }}</a>
+                            </td>
+                            <td class="num" data-label="Value">
+                                <span class="reading-value">{{ reading.value }} {{ unit_label }}</span>
+                            </td>
+                            <td data-label="Status">
+                                <span class="badge {{ reading.tone }}">{{ reading.status }}</span>
+                            </td>
+                            <td data-label="Context">
+                                {% if reading.context %}
+                                    <span class="badge badge-outline">{{ reading.context }}</span>
+                                {% else %}
+                                    <span class="muted">&mdash;</span>
+                                {% endif %}
+                            </td>
+                            <td data-label="Note">{{ reading.note|default:"—" }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     {% else %}
-        <p>No readings yet</p>
+        <div class="card-body">
+            <div class="empty">
+                <span class="puck" aria-hidden="true">
+                    <svg class="icon icon-lg"><use href="#i-droplet" /></svg>
+                </span>
+                <b>No readings today</b>
+                <p>Add your first reading of the day and it will appear here.</p>
+                <a class="btn btn-primary btn-sm" href="{% url 'add-glucose' %}">Add reading</a>
+            </div>
+        </div>
     {% endif %}
-</div>
+</article>
 
-<!-- Today's summary -->
-<div class="summary-box">
-    <h2>Today's Summary</h2>
-    <p>
-        <strong>Average:</strong>
-        {{ avg_glucose|floatformat:1|default:"No data" }} {{ unit_label }}
-    </p>
-    <p>
-        <strong>Total readings:</strong>
-        {{ reading_count|default:"0" }}
-    </p>
-</div>
-
-<!-- Add glucose -->
-<a href="{% url 'add-glucose' %}" class="primary-action-link">
-    + Add Glucose Reading
-</a>
-
-<!-- Recent activity -->
-<h2>Recent Activity (Last 10 readings)</h2>
-
-{% if recent_activity %}
-<table>
-    <thead>
-        <tr>
-            <th>Time</th>
-            <th>Value ({{ unit_label }})</th>
-            <th>Context</th>
-            <th>Note</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for reading in recent_activity %}
-        <tr class="clickable-row">
-            <td data-label="Time">
-                <a href="{% url 'edit-glucose' pk=reading.id %}">
-                    {{ reading.when|date:"H:i" }}
-                </a>
-            </td>
-            <td data-label="Value">
-                {{ reading.value }}
-            </td>
-            <td data-label="Context">
-                {{ reading.context|default:"-" }}
-            </td>
-            <td data-label="Note">
-                {{ reading.note|default:"-" }}
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
-{% else %}
-<p>No glucose readings today.</p>
-{% endif %}
-
-<!-- Last 7 days -->
-<h2>Recent Activity (Last 7 Days)</h2>
-
-{% if recent_seven_days %}
-<table>
-    <thead>
-        <tr>
-            <th>Time</th>
-            <th>Value ({{ unit_label }})</th>
-            <th>Context</th>
-            <th>Note</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for reading in recent_seven_days %}
-        <tr>
-            <td data-label="Time">
-                {{ reading.measured_at|date:"M d H:i" }}
-            </td>
-            <td data-label="Value">
-                {{ reading.value }}
-            </td>
-            <td data-label="Context">
-                {{ reading.context|default:"-" }}
-            </td>
-            <td data-label="Note">
-                {{ reading.note|default:"-" }}
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
-{% else %}
-<p>No readings in the last 7 days.</p>
-{% endif %}
-
+<article class="card table-card">
+    <div class="card-head">
+        <div>
+            <h2>Last seven days</h2>
+            <p class="card-desc">Every reading in the past week</p>
+        </div>
+    </div>
+    {% if recent_seven_days %}
+        <div class="table-scroll">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>When</th>
+                        <th>Value</th>
+                        <th>Status</th>
+                        <th>Context</th>
+                        <th>Note</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for reading in recent_seven_days %}
+                        <tr>
+                            <td class="cell-primary">
+                                <a href="{% url 'edit-glucose' pk=reading.id %}">{{ reading.measured_at|date:"M j, H:i" }}</a>
+                            </td>
+                            <td class="num" data-label="Value">
+                                <span class="reading-value">{{ reading.value }} {{ unit_label }}</span>
+                            </td>
+                            <td data-label="Status">
+                                <span class="badge {{ reading.tone }}">{{ reading.status }}</span>
+                            </td>
+                            <td data-label="Context">
+                                {% if reading.context %}
+                                    <span class="badge badge-outline">{{ reading.context }}</span>
+                                {% else %}
+                                    <span class="muted">&mdash;</span>
+                                {% endif %}
+                            </td>
+                            <td data-label="Note">{{ reading.note|default:"—" }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="card-body">
+            <div class="empty">
+                <span class="puck" aria-hidden="true">
+                    <svg class="icon icon-lg"><use href="#i-droplet" /></svg>
+                </span>
+                <b>Nothing in the last seven days</b>
+                <p>Readings you log build up a week of history here.</p>
+            </div>
+        </div>
+    {% endif %}
+</article>
 {% endblock %}

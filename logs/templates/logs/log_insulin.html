@@ -1,119 +1,201 @@
 {% extends 'main/base.html' %}
 {% load static %}
 
-{% block title %}Log Insulin — GlucoRead{% endblock %}
-{% block nav_title %}Track Insulin{% endblock %}
+{% block title %}Insulin Log — GlucoRead{% endblock %}
+{% block nav_title %}Insulin log{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'logs/css/logs.css' %}">
 {% endblock %}
 
 {% block content %}
-<!-- Today's summary -->
-<div class="summary-box">
-    <h2>Today's Summary</h2>
-    <p><strong>Total Insulin:</strong> {{ total_units_today|default:"0" }} units</p>
-    <p><strong>Basal:</strong> {{ basal_today|default:"0" }} units</p>
-    <p><strong>Bolus:</strong> {{ bolus_today|default:"0" }} units</p>
+<div class="page-head">
+    <div>
+        <h1>Insulin log</h1>
+        <p>Basal and bolus doses, and what you have taken today.</p>
+    </div>
+    <a class="btn btn-primary" href="{% url 'add-insulin' %}">
+        <svg class="icon icon-sm" aria-hidden="true"><use href="#i-plus" /></svg>
+        Add dose
+    </a>
 </div>
 
-<!-- Add insulin -->
-<a href="{% url 'add-insulin' %}" class="primary-action-link">
-    + Add Insulin Dose
-</a>
+<div class="stat-grid">
+    <article class="card stat t-insulin">
+        <div class="stat-top">
+            <div>
+                <p class="stat-label">Total today</p>
+                <p class="stat-value">{{ total_units_today|default:"0" }} <span class="unit">units</span></p>
+            </div>
+            <span class="puck" aria-hidden="true">
+                <svg class="icon icon-lg"><use href="#i-syringe" /></svg>
+            </span>
+        </div>
+        <p class="stat-foot">Basal and bolus combined</p>
+    </article>
 
-<!-- Recent activity -->
-<h2>Recent Activity (Last 5)</h2>
+    <article class="card stat t-insulin">
+        <div class="stat-top">
+            <div>
+                <p class="stat-label">Basal</p>
+                <p class="stat-value">{{ basal_today|default:"0" }} <span class="unit">units</span></p>
+            </div>
+            <span class="puck" aria-hidden="true">
+                <svg class="icon icon-lg"><use href="#i-minus" /></svg>
+            </span>
+        </div>
+        <p class="stat-foot">Long-acting background dose</p>
+    </article>
 
-{% if recent_insulin %}
-<table>
-    <thead>
-        <tr>
-            <th>Time</th>
-            <th>Units</th>
-            <th>Type</th>
-            <th>Brand</th>
-            <th>Note</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for insulin in recent_insulin %}
-        <tr class="clickable-row">
-            <td data-label="Time">
-                <a href="{% url 'edit-insulin' pk=insulin.id %}">
-                    {{ insulin.when|date:"H:i" }}
-                </a>
-            </td>
-            <td data-label="Units">{{ insulin.units }}</td>
-            <td data-label="Type">{{ insulin.type }}</td>
-            <td data-label="Brand">{{ insulin.brand|default:"-" }}</td>
-            <td data-label="Note">{{ insulin.note|default:"-" }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
-{% else %}
-<p>No insulin logged today.</p>
-{% endif %}
+    <article class="card stat t-insulin">
+        <div class="stat-top">
+            <div>
+                <p class="stat-label">Bolus</p>
+                <p class="stat-value">{{ bolus_today|default:"0" }} <span class="unit">units</span></p>
+            </div>
+            <span class="puck" aria-hidden="true">
+                <svg class="icon icon-lg"><use href="#i-trending-up" /></svg>
+            </span>
+        </div>
+        <p class="stat-foot">Mealtime and correction doses</p>
+    </article>
+</div>
 
-<!-- Weekly summary -->
-<h2>Last 7 Days</h2>
+<article class="card table-card">
+    <div class="card-head">
+        <div>
+            <h2>Recent doses</h2>
+            <p class="card-desc">Your five most recent entries</p>
+        </div>
+    </div>
+    {% if recent_insulin %}
+        <div class="table-scroll">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Units</th>
+                        <th>Type</th>
+                        <th>Brand</th>
+                        <th>Note</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for insulin in recent_insulin %}
+                        <tr>
+                            <td class="cell-primary">
+                                <a href="{% url 'edit-insulin' pk=insulin.id %}">{{ insulin.when|date:"H:i" }}</a>
+                            </td>
+                            <td class="num" data-label="Units">{{ insulin.units }} U</td>
+                            <td data-label="Type">
+                                <span class="badge badge-outline">{{ insulin.type }}</span>
+                            </td>
+                            <td data-label="Brand">{{ insulin.brand|default:"—" }}</td>
+                            <td data-label="Note">{{ insulin.note|default:"—" }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="card-body">
+            <div class="empty">
+                <span class="puck" aria-hidden="true">
+                    <svg class="icon icon-lg"><use href="#i-syringe" /></svg>
+                </span>
+                <b>No doses logged</b>
+                <p>Log a basal or bolus dose and it will appear here.</p>
+                <a class="btn btn-primary btn-sm" href="{% url 'add-insulin' %}">Add dose</a>
+            </div>
+        </div>
+    {% endif %}
+</article>
 
-{% if weekly_insulin %}
-<table>
-    <thead>
-        <tr>
-            <th>Date</th>
-            <th>Basal Units</th>
-            <th>Bolus Units</th>
-            <th>Total</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for day in weekly_insulin %}
-        <tr>
-            <td data-label="Date">{{ day.date|date:"M d, Y" }}</td>
-            <td data-label="Basal Units">{{ day.basal_units|default_if_none:"0" }}</td>
-            <td data-label="Bolus Units">{{ day.bolus_units|default_if_none:"0" }}</td>
-            <td data-label="Total">
-                {{ day.total_units|default_if_none:"0" }}
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
-{% else %}
-<p>No data for the last 7 days.</p>
-{% endif %}
+<article class="card table-card">
+    <div class="card-head">
+        <div>
+            <h2>Last seven days</h2>
+            <p class="card-desc">Daily basal, bolus and total</p>
+        </div>
+    </div>
+    {% if weekly_insulin %}
+        <div class="table-scroll">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Basal</th>
+                        <th>Bolus</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for day in weekly_insulin %}
+                        <tr>
+                            <td class="cell-primary">{{ day.date|date:"M j, Y" }}</td>
+                            <td class="num" data-label="Basal">{{ day.basal_units|default_if_none:"0" }} U</td>
+                            <td class="num" data-label="Bolus">{{ day.bolus_units|default_if_none:"0" }} U</td>
+                            <td class="num" data-label="Total">{{ day.total_units|default_if_none:"0" }} U</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="card-body">
+            <div class="empty">
+                <span class="puck" aria-hidden="true">
+                    <svg class="icon icon-lg"><use href="#i-syringe" /></svg>
+                </span>
+                <b>No data for the last seven days</b>
+                <p>A week of doses builds a daily basal and bolus breakdown here.</p>
+            </div>
+        </div>
+    {% endif %}
+</article>
 
-<!-- Correction doses -->
-<h2>Correction Doses (Last 7 Days)</h2>
-
-{% if weekly_corrections %}
-<table>
-    <thead>
-        <tr>
-            <th>Time</th>
-            <th>Units</th>
-            <th>Type</th>
-            <th>Brand</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for correction in weekly_corrections %}
-        <tr>
-            <td data-label="Time">
-                {{ correction.taken_at|date:"M d, H:i" }}
-            </td>
-            <td data-label="Units">{{ correction.units }}</td>
-            <td data-label="Type">{{ correction.insulin_type }}</td>
-            <td data-label="Brand">{{ correction.brand|default:"-" }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
-{% else %}
-<p>No correction doses in the last 7 days.</p>
-{% endif %}
-
+<article class="card table-card">
+    <div class="card-head">
+        <div>
+            <h2>Correction doses</h2>
+            <p class="card-desc">Doses logged in the last seven days</p>
+        </div>
+    </div>
+    {% if weekly_corrections %}
+        <div class="table-scroll">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>When</th>
+                        <th>Units</th>
+                        <th>Type</th>
+                        <th>Brand</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for correction in weekly_corrections %}
+                        <tr>
+                            <td class="cell-primary">{{ correction.taken_at|date:"M j, H:i" }}</td>
+                            <td class="num" data-label="Units">{{ correction.units }} U</td>
+                            <td data-label="Type">
+                                <span class="badge badge-outline">{{ correction.insulin_type }}</span>
+                            </td>
+                            <td data-label="Brand">{{ correction.brand|default:"—" }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="card-body">
+            <div class="empty">
+                <span class="puck" aria-hidden="true">
+                    <svg class="icon icon-lg"><use href="#i-syringe" /></svg>
+                </span>
+                <b>No correction doses this week</b>
+                <p>Doses from the last seven days are listed here.</p>
+            </div>
+        </div>
+    {% endif %}
+</article>
 {% endblock %}

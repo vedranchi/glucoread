@@ -2,154 +2,248 @@
 {% load static %}
 
 {% block title %}Dashboard — GlucoRead{% endblock %}
-{% block nav_title %}Dashboard{% endblock %}
+{% block nav_title %}Your day at a glance{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'dashboard/css/dashboard.css' %}">
 {% endblock %}
 
 {% block content %}
-<section class="dashboard-shell">
-    <div class="metrics-grid">
-        <article class="metric-card">
-            <div class="metric-head">
-                <span class="metric-label">Glucose Logs</span>
-                <span class="metric-badge">Today</span>
-            </div>
-            <div class="metric-value">{{ glucose_count_today }}</div>
-            <p class="metric-sub">
-                Avg:
-                <strong>
-                    {% if avg_glucose %}
-                        {{ avg_glucose }} {{ unit_label }}
-                    {% else %}
-                        No data
-                    {% endif %}
-                </strong>
-            </p>
-            <p class="metric-foot">
-                Last:
-                {% if latest_glucose %}
-                    {{ latest_glucose_value }} {{ unit_label }} at {{ latest_glucose.measured_at|date:"H:i" }}
-                {% else %}
-                    No reading logged
-                {% endif %}
-            </p>
-        </article>
-
-        <article class="metric-card">
-            <div class="metric-head">
-                <span class="metric-label">Insulin Logs</span>
-                <span class="metric-badge">Today</span>
-            </div>
-            <div class="metric-value">{{ insulin_count_today }}</div>
-            <p class="metric-sub">Total: <strong>{{ total_insulin|default:"0" }} units</strong></p>
-            <p class="metric-foot">
-                Last:
-                {% if latest_insulin %}
-                    {{ latest_insulin.units }} U at {{ latest_insulin.taken_at|date:"H:i" }}
-                {% else %}
-                    No insulin logged
-                {% endif %}
-            </p>
-        </article>
-
-        <article class="metric-card">
-            <div class="metric-head">
-                <span class="metric-label">Meal Logs</span>
-                <span class="metric-badge">Today</span>
-            </div>
-            <div class="metric-value">{{ meal_count_today }}</div>
-            <p class="metric-sub">Carbs: <strong>{{ carbs_consumed|default:"0" }} g</strong></p>
-            <p class="metric-foot">
-                Last:
-                {% if latest_meal %}
-                    {{ latest_meal.note|default:"Meal entry" }} at {{ latest_meal.eaten_at|date:"H:i" }}
-                {% else %}
-                    No meals logged
-                {% endif %}
-            </p>
-        </article>
-
-        <article class="metric-card quick-card">
-            <div class="metric-head">
-                <span class="metric-label">Quick Actions</span>
-                <span class="metric-badge neutral">Logs</span>
-            </div>
-            <div class="quick-actions">
-                <a href="{% url 'log-glucose' %}">Open Glucose</a>
-                <a href="{% url 'log-insulin' %}">Open Insulin</a>
-                <a href="{% url 'log-meal' %}">Open Meals</a>
-            </div>
-        </article>
+{# Welcome band. The one place the brand gradient carries copy — see .banner. #}
+<section class="banner">
+    <div>
+        <h1>Welcome back, {{ user.first_name|default:user.username }}</h1>
+        <p>Here is your glucose, insulin and meal picture for today.</p>
     </div>
+    {% if latest_reading %}
+        <div class="banner-reading">
+            <p class="label">Latest reading</p>
+            <p class="value">
+                <b>{{ latest_reading.value }}</b>
+                <span>{{ latest_reading.unit }}</span>
+            </p>
+            <span class="badge-on-brand">{{ latest_reading.label }}</span>
+        </div>
+    {% endif %}
+</section>
 
-    <div class="content-grid">
-        <article class="panel-card activity-card">
-            <div class="panel-head">
-                <h2>Recent Activity</h2>
-                <span class="panel-meta">{{ recent_activity|length }} items</span>
+<section>
+    <h2 class="section-title">Today's summary</h2>
+    <div class="stat-grid">
+        <article class="card stat t-glucose">
+            <div class="stat-top">
+                <div>
+                    <p class="stat-label">Average glucose</p>
+                    <p class="stat-value">
+                        {% if avg_glucose %}
+                            {{ avg_glucose }} <span class="unit">{{ unit_label }}</span>
+                        {% else %}
+                            &mdash;
+                        {% endif %}
+                    </p>
+                </div>
+                <span class="puck" aria-hidden="true">
+                    <svg class="icon icon-lg"><use href="#i-droplet" /></svg>
+                </span>
             </div>
-            <ul class="activity-list">
-                {% for activity in recent_activity %}
-                <li>
-                    <a href="{{ activity.edit_url }}" class="activity-link">
-                        <span class="activity-label">{{ activity.label }}</span>
-                        <span class="activity-time">{{ activity.when|date:"H:i" }}</span>
-                    </a>
-                </li>
-                {% empty %}
-                <li class="empty-state">No activity today</li>
-                {% endfor %}
-            </ul>
+            {% if avg_delta_direction %}
+                <p class="stat-foot is-toned {% if avg_delta_direction == 'up' %}t-warn{% else %}t-range{% endif %}">
+                    <svg class="icon icon-sm" aria-hidden="true">
+                        <use href="#i-trending-{{ avg_delta_direction }}" />
+                    </svg>
+                    {{ avg_delta_pct }}% from yesterday
+                </p>
+            {% else %}
+                <p class="stat-foot">
+                    {{ glucose_count_today }} reading{{ glucose_count_today|pluralize }} today
+                </p>
+            {% endif %}
         </article>
 
-        <article class="panel-card chart-card">
-            <div class="panel-head chart-head">
+        <article class="card stat t-insulin">
+            <div class="stat-top">
                 <div>
-                    <h2>Glucose Trend</h2>
-                    <p class="chart-date">{{ chart_date|date:"F j, Y" }}</p>
+                    <p class="stat-label">Total insulin</p>
+                    <p class="stat-value">
+                        {% if total_insulin %}
+                            {{ total_insulin }} <span class="unit">units</span>
+                        {% else %}
+                            &mdash;
+                        {% endif %}
+                    </p>
                 </div>
-                <div class="trend-controls">
-                    <a
-                        href="{% url 'glucoread-dashboard' %}?chart_date={{ previous_chart_date|date:'Y-m-d' }}"
-                        class="trend-btn"
-                        aria-label="Previous day"
-                    >
-                        Previous
-                    </a>
-                    {% if next_chart_date %}
-                    <a
-                        href="{% url 'glucoread-dashboard' %}"
-                        class="trend-btn"
-                        aria-label="Jump to today"
-                    >
-                        Today
-                    </a>
-                    <a
-                        href="{% url 'glucoread-dashboard' %}?chart_date={{ next_chart_date|date:'Y-m-d' }}"
-                        class="trend-btn"
-                        aria-label="Next day"
-                    >
-                        Next
-                    </a>
-                    {% else %}
-                    <span class="trend-btn trend-btn-disabled" aria-disabled="true">Next</span>
-                    {% endif %}
+                <span class="puck" aria-hidden="true">
+                    <svg class="icon icon-lg"><use href="#i-syringe" /></svg>
+                </span>
+            </div>
+            <p class="stat-foot">
+                {{ insulin_count_today }} dose{{ insulin_count_today|pluralize }} today
+            </p>
+        </article>
+
+        <article class="card stat t-meal">
+            <div class="stat-top">
+                <div>
+                    <p class="stat-label">Carbs consumed</p>
+                    <p class="stat-value">
+                        {% if carbs_consumed %}
+                            {{ carbs_consumed }} <span class="unit">g</span>
+                        {% else %}
+                            &mdash;
+                        {% endif %}
+                    </p>
                 </div>
+                <span class="puck" aria-hidden="true">
+                    <svg class="icon icon-lg"><use href="#i-utensils-crossed" /></svg>
+                </span>
             </div>
-            <div class="chart-wrap">
-                {{ glucose_labels|json_script:"glucose-labels" }}
-                {{ glucose_values|json_script:"glucose-values" }}
-                <canvas
-                    id="glucoseChart"
-                    height="140"
-                    data-unit-label="{{ unit_label }}"
-                ></canvas>
+            <p class="stat-foot">
+                {{ meal_count_today }} meal{{ meal_count_today|pluralize }} logged
+            </p>
+        </article>
+
+        <article class="card stat t-range">
+            <div class="stat-top">
+                <div>
+                    <p class="stat-label">Time in range</p>
+                    <p class="stat-value">
+                        {% if time_in_range is not None %}
+                            {{ time_in_range }}<span class="unit">%</span>
+                        {% else %}
+                            &mdash;
+                        {% endif %}
+                    </p>
+                </div>
+                <span class="puck" aria-hidden="true">
+                    <svg class="icon icon-lg"><use href="#i-activity" /></svg>
+                </span>
             </div>
+            <p class="stat-foot">Target {{ range_low }}&ndash;{{ range_high }} {{ unit_label }}</p>
         </article>
     </div>
 </section>
+
+<div class="split-2-1">
+    <article class="card chart-card">
+        <div class="card-head">
+            <div>
+                <h2>Glucose trend</h2>
+                <p class="card-desc">{{ chart_date|date:"l, F j, Y" }}</p>
+            </div>
+            <div class="stepper">
+                <a href="{% url 'glucoread-dashboard' %}?chart_date={{ previous_chart_date|date:'Y-m-d' }}"
+                   aria-label="Previous day">
+                    <svg class="icon icon-sm" aria-hidden="true"><use href="#i-chevron-left" /></svg>
+                    Previous
+                </a>
+                {% if next_chart_date %}
+                    <a href="{% url 'glucoread-dashboard' %}">Today</a>
+                    <a href="{% url 'glucoread-dashboard' %}?chart_date={{ next_chart_date|date:'Y-m-d' }}"
+                       aria-label="Next day">
+                        Next
+                        <svg class="icon icon-sm" aria-hidden="true"><use href="#i-chevron-right" /></svg>
+                    </a>
+                {% else %}
+                    <span class="is-disabled" aria-disabled="true">
+                        Next
+                        <svg class="icon icon-sm" aria-hidden="true"><use href="#i-chevron-right" /></svg>
+                    </span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="card-body">
+            {{ glucose_labels|json_script:"glucose-labels" }}
+            {{ glucose_values|json_script:"glucose-values" }}
+            {% if glucose_values %}
+                <div class="chart-wrap">
+                    <canvas id="glucoseChart"
+                            data-unit-label="{{ unit_label }}"
+                            data-range-low="{{ range_low }}"
+                            data-range-high="{{ range_high }}"></canvas>
+                </div>
+                <p class="chart-legend">
+                    <span class="t-glucose"><i></i>Glucose</span>
+                    <span class="is-target"><i></i>Target band ({{ range_low }}&ndash;{{ range_high }} {{ unit_label }})</span>
+                </p>
+            {% else %}
+                <div class="empty">
+                    <span class="puck" aria-hidden="true">
+                        <svg class="icon icon-lg"><use href="#i-droplet" /></svg>
+                    </span>
+                    <b>No readings on this day</b>
+                    <p>Log a glucose reading and the day's trend appears here.</p>
+                    <a class="btn btn-primary btn-sm" href="{% url 'add-glucose' %}">Add a reading</a>
+                </div>
+            {% endif %}
+        </div>
+    </article>
+
+    <article class="card">
+        <div class="card-head">
+            <div>
+                <h2>Recent activity</h2>
+                <p class="card-desc">Your latest entries today</p>
+            </div>
+        </div>
+        <div class="card-body">
+            {% if recent_activity %}
+                <ul class="rowlist">
+                    {% for activity in recent_activity %}
+                        <li>
+                            <a class="row {{ activity.tone }}" href="{{ activity.edit_url }}">
+                                <span class="row-main">
+                                    <span class="puck puck-sm" aria-hidden="true">
+                                        <svg class="icon icon-sm"><use href="#i-{{ activity.icon }}" /></svg>
+                                    </span>
+                                    <span>
+                                        <span class="row-title">{{ activity.label }}</span>
+                                        <span class="row-meta">{{ activity.when|date:"H:i" }}</span>
+                                    </span>
+                                </span>
+                            </a>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <div class="empty">
+                    <span class="puck" aria-hidden="true">
+                        <svg class="icon icon-lg"><use href="#i-activity" /></svg>
+                    </span>
+                    <b>Nothing logged yet today</b>
+                    <p>Entries you add appear here, newest first.</p>
+                </div>
+            {% endif %}
+        </div>
+    </article>
+</div>
+
+<article class="card">
+    <div class="card-head">
+        <div>
+            <h2>Quick actions</h2>
+            <p class="card-desc">Add an entry without leaving the dashboard</p>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="quick-grid">
+            <a class="quick t-glucose" href="{% url 'add-glucose' %}">
+                <svg class="icon icon-lg" aria-hidden="true"><use href="#i-droplet" /></svg>
+                <b>Log glucose</b>
+                <span>Record a blood sugar reading</span>
+            </a>
+            <a class="quick t-insulin" href="{% url 'add-insulin' %}">
+                <svg class="icon icon-lg" aria-hidden="true"><use href="#i-syringe" /></svg>
+                <b>Log insulin</b>
+                <span>Record a basal or bolus dose</span>
+            </a>
+            <a class="quick t-meal" href="{% url 'add-meal' %}">
+                <svg class="icon icon-lg" aria-hidden="true"><use href="#i-utensils-crossed" /></svg>
+                <b>Log meal</b>
+                <span>Track carbs and macros</span>
+            </a>
+        </div>
+    </div>
+</article>
 {% endblock %}
 
 {% block extra_js %}

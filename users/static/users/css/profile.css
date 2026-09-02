@@ -1,246 +1,291 @@
 /* ==========================================================================
    Account settings.
 
-   The page sits inside main/base.html, so base.css lands after theme.css and
-   its bare `button:not(.theme-switch)` rule (specificity 0,1,1) outranks a
-   plain `.btn-primary` class. Every control here is therefore scoped under
-   .profile-container, which is what keeps the buttons at the size the rest of
-   the app uses instead of base.css's oversized default.
+   The source design's ProfileModule is a stack of cards — an identity header,
+   then one card per group of settings. The markup here already had that shape
+   (a profile header plus .form-section blocks), so this restyles those blocks
+   as cards rather than rewriting the template. The whole page is one <form>
+   that posts three Django forms together; the cards are visual grouping, not
+   separate submissions.
+
+   Shell components come from main/css/app.css; colours and radii from
+   main/css/theme.css.
    ========================================================================== */
 
 .profile-container {
-    max-width: 760px;
-    margin: 0 auto;
-    padding: 1.35rem;
-    background: var(--surface);
-    border: 1px solid var(--line);
-    border-radius: 16px;
-    box-shadow: var(--shadow-lg);
-    font-family: var(--font-sans);
+  width: 100%;
+  max-width: 720px;
+  margin-inline: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
 }
 
-.profile-container .page-title {
-    font-size: 1.32rem;
-    font-weight: 700;
-    color: var(--ink);
-    margin: 0 0 1.2rem;
-    padding-bottom: 0.7rem;
-    border-bottom: 1px solid var(--paper-2);
+.profile-container > form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
 }
 
-/* ------------------------------- header ---------------------------------- */
+.page-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+/* ------------------------------ identity card ---------------------------- */
 .profile-header {
-    display: flex;
-    align-items: center;
-    gap: 1.35rem;
-    padding-bottom: 1.35rem;
-    border-bottom: 1px solid var(--paper-2);
-    margin-bottom: 1.35rem;
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 1.5rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-sm);
 }
 
-/* The avatar and its picker stack in normal flow; the label used to be
-   absolutely positioned below the image, where it overlapped the fields on a
-   narrow screen. */
 .profile-image-wrapper {
-    display: grid;
-    justify-items: center;
-    gap: 0.45rem;
-    flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  flex: none;
 }
 
 .profile-image {
-    width: 96px;
-    height: 96px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 2px solid var(--line);
+  width: 84px;
+  height: 84px;
+  border-radius: var(--r-pill);
+  object-fit: cover;
+  background: var(--accent-soft);
+  border: 1px solid var(--line);
 }
 
+/* The real file input is hidden and its label is the button, so the control
+   can be styled — but it must still be reachable by keyboard, which is why it
+   is clipped rather than display:none, and why the label shows a focus ring
+   when the input behind it is focused. */
 .profile-image-input {
-    display: none;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .change-photo-btn {
-    background: transparent;
-    color: var(--accent);
-    border: none;
-    padding: 0;
-    cursor: pointer;
-    font-size: 0.82rem;
-    font-weight: 600;
-    white-space: nowrap;
-    text-decoration: none;
-    font-family: var(--font-sans);
-    transition: color 0.2s ease;
+  font-size: 0.8125rem;
+  color: var(--accent);
+  background: var(--accent-wash);
+  border: 1px solid var(--accent-line);
+  border-radius: var(--r-md);
+  padding: 0.35rem 0.75rem;
+  cursor: pointer;
+  transition: background 0.18s var(--ease);
 }
 
 .change-photo-btn:hover {
-    color: var(--accent-hover);
+  background: var(--accent-soft);
+}
+
+.profile-image-input:focus-visible + .change-photo-btn {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .profile-info {
-    flex: 1;
-    min-width: 0; /* flex items otherwise floor at their min-content width */
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  min-width: 0;
+  flex: 1;
 }
 
-.username-container {
-    margin-bottom: 0.6rem;
+/* The username reads as a heading until you focus it, at which point it
+   behaves like the text input it has always been. */
+.username-input {
+  font: inherit;
+  font-size: 1.125rem;
+  font-weight: 600;
+  width: 100%;
+  color: var(--ink);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--r-md);
+  padding: 0.35rem 0.5rem;
+  margin-left: -0.5rem;
+  transition: border-color 0.18s var(--ease), background 0.18s var(--ease);
 }
 
-/* ------------------------------- fields ---------------------------------- */
-.profile-container .username-input,
-.profile-container .form-group select,
-.profile-container .form-group input[type="email"] {
-    width: 100%;
-    max-width: 100%;
-    padding: 0.62rem 0.72rem;
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    background: var(--surface);
-    font-family: inherit;
-    font-size: 0.93rem;
-    color: var(--ink);
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+.username-input:hover {
+  border-color: var(--line);
 }
 
-.profile-container .username-input {
-    font-size: 1.05rem;
-    font-weight: 600;
+.username-input:focus {
+  outline: none;
+  background: var(--surface);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
-.profile-container .username-input:focus,
-.profile-container .form-group select:focus,
-.profile-container .form-group input[type="email"]:focus {
-    outline: none;
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px var(--accent-soft);
-}
-
+/* ------------------------------ setting cards ---------------------------- */
 .form-section {
-    margin-bottom: 1.35rem;
+  padding: 1.25rem 1.5rem 1.5rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-sm);
 }
 
 .form-section h3 {
-    font-size: 1rem;
-    font-weight: 700;
-    color: var(--ink);
-    margin: 0 0 0.8rem;
-    padding-bottom: 0.45rem;
-    border-bottom: 1px solid var(--paper-2);
+  margin: 0 0 1rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--ink);
 }
 
-.profile-container .form-group {
-    margin-bottom: 1rem;
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
 }
 
-.profile-container .form-group label {
-    display: block;
-    font-size: 0.9rem;
-    font-weight: 700;
-    color: var(--ink);
-    margin-bottom: 0.4rem;
+.form-group:last-child {
+  margin-bottom: 0;
+}
+
+.form-group label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+/* Django renders these widgets itself, so they are matched by element rather
+   than by a class this stylesheet controls. */
+.profile-container input[type="text"],
+.profile-container input[type="email"],
+.profile-container select {
+  font: inherit;
+  font-size: 0.9375rem;
+  width: 100%;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: 0.6rem 0.75rem;
+  transition: border-color 0.18s var(--ease), box-shadow 0.18s var(--ease);
+}
+
+/* The username input opts out — it is styled as a heading above. */
+.profile-container input.username-input {
+  background: transparent;
+  border-color: transparent;
+  padding: 0.35rem 0.5rem;
+}
+
+.profile-container input[type="text"]:focus,
+.profile-container input[type="email"]:focus,
+.profile-container select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
 .field-error {
-    color: var(--danger);
-    font-size: 0.85rem;
-    margin-top: 0.35rem;
+  font-size: 0.8125rem;
+  color: var(--danger);
 }
 
-/* ------------------------------- actions --------------------------------- */
+.profile-container input:user-invalid,
+.profile-container .field-error + input {
+  border-color: var(--danger);
+}
+
+/* -------------------------------- actions -------------------------------- */
 .form-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.55rem;
-    padding-top: 1.2rem;
-    border-top: 1px solid var(--paper-2);
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
 }
 
-/* Scoped so base.css's `button:not(.theme-switch)` cannot re-inflate them. */
-.profile-container .btn-primary,
-.profile-container .btn-secondary,
-.profile-container .btn-logout {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0.6rem 0.9rem;
-    border-radius: 10px;
-    font-family: inherit;
-    font-size: 0.9rem;
-    font-weight: 700;
-    line-height: 1.4;
-    text-decoration: none;
-    border: 1px solid transparent;
-    cursor: pointer;
-    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+/* These two class names predate the shared .btn primitives and are used only
+   here, so they carry their own rules rather than the template being rewired
+   to .btn .btn-primary. Same shape and weight as .btn, from the same tokens. */
+.form-actions .btn-primary,
+.form-actions .btn-secondary {
+  font: inherit;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  font-weight: 500;
+  border-radius: var(--r-md);
+  padding: 0.6rem 1.2rem;
+  cursor: pointer;
+  transition: background 0.18s var(--ease), border-color 0.18s var(--ease);
 }
 
-.profile-container .btn-primary {
-    background: var(--accent);
-    color: var(--accent-ink);
-    border-color: var(--accent-hover);
+.form-actions .btn-primary {
+  color: var(--accent-ink);
+  background: var(--accent);
+  border: 1px solid transparent;
 }
 
-.profile-container .btn-primary:hover {
-    background: var(--accent-hover);
-    color: var(--accent-ink);
+.form-actions .btn-primary:hover {
+  background: var(--accent-hover);
 }
 
-.profile-container .btn-secondary {
-    background: var(--paper-2);
-    color: var(--ink-2);
-    border-color: var(--line);
+.form-actions .btn-secondary {
+  color: var(--ink);
+  background: transparent;
+  border: 1px solid var(--line);
 }
 
-.profile-container .btn-secondary:hover {
-    background: var(--paper-2);
-    color: var(--ink);
+.form-actions .btn-secondary:hover {
+  background: var(--paper-2);
 }
 
+.form-actions .btn-primary:active,
+.form-actions .btn-secondary:active {
+  transform: translateY(1px);
+}
+
+/* Signing out is not a settings change, so it sits outside the settings form,
+   separated by a rule rather than styled as a second primary action. */
 .account-actions {
-    margin-top: 1.2rem;
-    padding-top: 1rem;
-    border-top: 1px dashed var(--line);
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--line);
 }
 
-.profile-container .btn-logout {
-    background: var(--danger-soft);
-    color: var(--danger);
-    border-color: var(--danger-soft);
+.btn-logout {
+  font: inherit;
+  font-size: 0.875rem;
+  color: var(--ink-2);
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  transition: color 0.18s var(--ease), border-color 0.18s var(--ease),
+    background 0.18s var(--ease);
 }
 
-.profile-container .btn-logout:hover {
-    background: var(--danger-soft);
-    color: var(--danger);
-    border-color: var(--danger);
+.btn-logout:hover {
+  color: var(--danger);
+  background: var(--danger-wash);
+  border-color: var(--danger-soft);
 }
 
-/* ----------------------------- narrow screens ---------------------------- */
-@media (max-width: 640px) {
-    .profile-container {
-        padding: 1rem;
-        border-radius: 12px;
-    }
+@media (max-width: 560px) {
+  .profile-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 
-    /* Avatar over fields: side by side, a 96px image plus the gap left the
-       inputs too narrow to be usable. */
-    .profile-header {
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-        gap: 1rem;
-    }
-
-    .profile-info {
-        width: 100%;
-    }
-
-    .profile-image {
-        width: 80px;
-        height: 80px;
-    }
-
-    .profile-container .username-input {
-        text-align: center;
-    }
+  .form-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
 }

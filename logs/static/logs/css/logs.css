@@ -1,166 +1,144 @@
-.summary-box {
-    background: linear-gradient(180deg, var(--surface) 0%, var(--surface) 100%);
-    border: 1px solid var(--line);
-    border-radius: 14px;
-    padding: 1.2rem 1.3rem;
-    margin-bottom: 1rem;
-    box-shadow: var(--shadow-lg);
+/* ==========================================================================
+   Log list pages (glucose, insulin, meals).
+
+   The source design lists entries as stacked rows with an icon puck. That
+   works for its one-value-per-entry readings; these pages carry four to six
+   columns each (time, value, context, brand, macros), which is genuinely
+   tabular — squeezing six macro figures into a row's subtitle would be a
+   worse translation than an honest table. So the page furniture is the source
+   design's (page head, stat trio, card) and the table inside the card is
+   styled to sit in the same language: no zebra striping, one hairline per row,
+   the same 0.8125rem meta type.
+
+   Shell components (.card, .stat-grid, .puck, .badge, .empty) come from
+   main/css/app.css — only what is specific to a table lives here.
+   ========================================================================== */
+
+.table-card {
+  overflow: hidden;
 }
 
-.summary-box h2 {
-    margin: 0 0 0.8rem;
-    font-size: 1.05rem;
-    font-weight: 700;
-    color: var(--ink);
+/* The table scrolls inside its own card rather than widening the page. */
+.table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
-.summary-box p {
-    margin: 0 0 0.45rem;
-    padding: 0;
-    border: 0;
-    background: transparent;
-    color: var(--ink-2);
-    font-size: 0.96rem;
-    text-align: left;
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
 }
 
-.summary-box p:last-child {
-    margin-bottom: 0;
+.data-table th {
+  padding: 0.65rem 1.5rem;
+  text-align: left;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--ink-3);
+  white-space: nowrap;
+  background: var(--paper-2);
+  border-block: 1px solid var(--line);
 }
 
-.summary-box strong {
-    color: var(--ink);
+.data-table td {
+  padding: 0.8rem 1.5rem;
+  color: var(--ink-2);
+  border-bottom: 1px solid var(--line-soft);
+  vertical-align: middle;
 }
 
-.summary-box small {
-    color: var(--ink-2);
-    font-size: 0.85rem;
+.data-table tbody tr:last-child td {
+  border-bottom: 0;
 }
 
-h2 {
-    margin: 1.3rem 0 0.75rem;
-    font-size: 1.03rem;
-    color: var(--ink);
-    font-weight: 700;
+.data-table tbody tr:hover {
+  background: var(--paper-2);
 }
 
-.primary-action-link {
-    display: inline-block;
-    text-decoration: none;
-    background: var(--accent);
-    color: var(--surface);
-    border: 1px solid var(--accent-hover);
-    border-radius: 10px;
-    font-size: 0.94rem;
-    font-weight: 700;
-    padding: 0.62rem 0.9rem;
-    margin: 0.3rem 0 0.4rem;
-    transition: background-color 0.2s ease, border-color 0.2s ease;
+/* The first cell carries the entry's own link, so it reads as the row's
+   handle rather than the row being one big anchor with a table inside it. */
+.data-table .cell-primary {
+  color: var(--ink);
+  font-weight: 500;
+  white-space: nowrap;
 }
 
-.primary-action-link:hover {
-    color: var(--surface);
-    background: var(--accent-hover);
-    border-color: var(--accent-hover);
+.data-table a {
+  color: var(--accent);
 }
 
-table {
+.data-table a:hover {
+  text-decoration: underline;
+}
+
+.data-table .num {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.data-table .muted {
+  color: var(--ink-3);
+}
+
+/* A reading's value carries its own range status, the way the source colours
+   each entry by whether it is low, in range or high. */
+.reading-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+/* ------------------------------- responsive ------------------------------ */
+/* Below the tablet breakpoint the table stops being a grid and each row
+   becomes its own block, with the column header repeated from data-label.
+   The markup already carried those labels; nothing used them until now. */
+@media (max-width: 720px) {
+  .data-table,
+  .data-table tbody,
+  .data-table tr,
+  .data-table td {
+    display: block;
     width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
-    background: var(--surface);
-    border: 1px solid var(--line);
-    border-radius: 14px;
+  }
+
+  .data-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
     overflow: hidden;
-    box-shadow: var(--shadow-lg);
-    margin-bottom: 1rem;
-}
+    clip-path: inset(50%);
+  }
 
-thead th {
-    background: linear-gradient(180deg, var(--paper-2) 0%, var(--paper-2) 100%);
-    color: var(--ink);
-    text-align: left;
-    font-size: 0.84rem;
-    letter-spacing: 0.01em;
-    padding: 0.72rem 0.82rem;
-    font-weight: 700;
+  .data-table tr {
+    padding: 0.5rem 0;
     border-bottom: 1px solid var(--line);
-}
+  }
 
-tbody td {
-    padding: 0.72rem 0.82rem;
-    color: var(--ink);
-    font-size: 0.91rem;
-    border-bottom: 1px solid var(--paper-2);
-}
-
-tbody tr:last-child td {
+  .data-table tr:last-child {
     border-bottom: 0;
-}
+  }
 
-tbody tr:hover {
-    background: var(--paper-2);
-}
+  .data-table td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.35rem 1rem;
+    border-bottom: 0;
+  }
 
-.clickable-row td a {
-    color: var(--accent);
-    text-decoration: none;
-    font-weight: 700;
-}
+  .data-table td::before {
+    content: attr(data-label);
+    font-size: 0.75rem;
+    color: var(--ink-3);
+  }
 
-.clickable-row td a:hover {
-    color: var(--ink);
-}
-
-p {
-    margin: 0.4rem 0 1rem;
-    padding: 0.75rem 0.85rem;
-    border: 1px dashed var(--line);
-    border-radius: 10px;
-    background: var(--paper-2);
-    color: var(--ink-2);
-    font-size: 0.9rem;
-}
-
-@media (max-width: 900px) {
-    table,
-    thead,
-    tbody,
-    th,
-    td,
-    tr {
-        display: block;
-    }
-
-    thead tr {
-        position: absolute;
-        top: -9999px;
-        left: -9999px;
-    }
-
-    tbody tr {
-        border-bottom: 1px solid var(--paper-2);
-        padding: 0.55rem 0.55rem 0.35rem;
-    }
-
-    tbody tr:last-child {
-        border-bottom: 0;
-    }
-
-    tbody td {
-        border: 0;
-        padding: 0.45rem 0.45rem 0.45rem 47%;
-        position: relative;
-        text-align: right;
-    }
-
-    tbody td::before {
-        content: attr(data-label);
-        position: absolute;
-        left: 0.45rem;
-        top: 0.45rem;
-        color: var(--ink-2);
-        font-weight: 700;
-        font-size: 0.8rem;
-    }
+  /* A cell with no label is the row's handle; let it span the width. */
+  .data-table td.cell-primary {
+    padding-top: 0.6rem;
+  }
 }

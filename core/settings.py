@@ -213,6 +213,9 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                # Feeds the app shell (nav highlight, header reading chip,
+                # time-in-range meter) on every authenticated page.
+                "main.context_processors.shell",
             ],
         },
     },

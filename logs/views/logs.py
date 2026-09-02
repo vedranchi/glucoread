@@ -9,7 +9,7 @@ from users.models import UserPreferences
 from django.utils import timezone
 from datetime import timedelta
 from decimal import Decimal, InvalidOperation
-from logs.conversions import mgdl_to_mmol, to_display
+from logs.conversions import mgdl_to_mmol, reading_status, to_display
 
 
 def clean_text(value, max_length, label):
@@ -209,9 +209,12 @@ def log_glucose(request):
         user=request.user, measured_at__date=today, is_deleted=False
     )
 
-    # today's readings list, converted to display unit
+    # today's readings list, converted to display unit. The status pair comes
+    # from the stored mmol/L value, never the converted one, so a mg/dL user
+    # and an mmol/L user classify the same reading identically.
     recent_activity = []
     for g in glucose_today:
+        tone, label = reading_status(g.value)
         recent_activity.append(
             {
                 "id": g.id,
@@ -219,6 +222,8 @@ def log_glucose(request):
                 "note": g.note,
                 "context": g.context,
                 "when": g.measured_at,
+                "tone": tone,
+                "status": label,
             }
         )
     recent_activity = sorted(recent_activity, key=lambda a: a["when"], reverse=True)[:10]
@@ -247,6 +252,7 @@ def log_glucose(request):
 
     recent_7_days = []
     for g in recent_7_days_qs:
+        tone, label = reading_status(g.value)
         recent_7_days.append(
             {
                 "value": to_display(g.value, is_mgdl),
@@ -254,6 +260,8 @@ def log_glucose(request):
                 "context": g.context,
                 "note": g.note,
                 "id": g.id,
+                "tone": tone,
+                "status": label,
             }
         )
 

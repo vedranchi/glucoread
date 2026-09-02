@@ -15,12 +15,18 @@
 {% endblock %}
 
 {% block content %}
-<div class="form-container">
-    {% if request.resolver_match.url_name == 'edit-glucose' %}
-        <h1>Edit Glucose Reading</h1>
-    {% else %}
-        <h1>Add Glucose Reading</h1>
-    {% endif %}
+<article class="card form-card">
+    <div class="card-head">
+        <div>
+            {% if request.resolver_match.url_name == 'edit-glucose' %}
+                <h2>Edit glucose reading</h2>
+            {% else %}
+                <h2>Add glucose reading</h2>
+            {% endif %}
+            <p class="card-desc">Readings are stored in mmol/L and shown in your chosen unit.</p>
+        </div>
+    </div>
+    <div class="card-body">
     
     <form method="POST">
         {% csrf_token %}
@@ -72,10 +78,13 @@
     </form>
     
     {% if request.resolver_match.url_name == 'edit-glucose' %}
+    <div class="danger-zone">
     <form method="post" action="{% url 'delete-glucose' pk=glucose.id %}" onsubmit="return confirm('Are you sure you want to delete this glucose reading?');">
         {% csrf_token %}
-        <button type="submit" class="btn-delete">Delete Reading</button>
+        <button type="submit" class="btn-delete"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-trash-2" /></svg>Delete Reading</button>
     </form>
+    </div>
     {% endif %}
-</div>
+    </div>
+</article>
 {% endblock %}

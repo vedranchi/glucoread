@@ -45,3 +45,30 @@ def to_display(value, is_mgdl):
         return None
     value = float(value)
     return round(value * MMOL_TO_MGDL if is_mgdl else value, 1)
+
+
+# --------------------------------------------------------------------------
+# Target range.
+#
+# The redesign surfaces range status in four places — the header chip, the
+# rail's time-in-range meter, the dashboard's shaded chart band, and each row
+# of the glucose log — so the thresholds and the labels live here, next to the
+# unit conversion, rather than being restated at each of those call sites.
+#
+# 3.9-10.0 mmol/L is the standard adult target band, and is what the source
+# design states as 70-180 mg/dL. Held in mmol/L because that is the storage
+# unit: classifying on the stored value means a mg/dL user and an mmol/L user
+# never disagree about whether the same reading was in range.
+# --------------------------------------------------------------------------
+RANGE_LOW_MMOL = 3.9
+RANGE_HIGH_MMOL = 10.0
+
+
+def reading_status(value_mmol):
+    """Classify a stored reading, returning (tone class, human label)."""
+    value = float(value_mmol)
+    if value < RANGE_LOW_MMOL:
+        return "t-danger", "Low"
+    if value > RANGE_HIGH_MMOL:
+        return "t-warn", "High"
+    return "t-range", "In range"

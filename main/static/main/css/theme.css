@@ -1,10 +1,27 @@
 /* ==========================================================================
-   GlucoRead theme: the tokens and primitives shared by every page that uses
-   the new design language (landing, login, register, password reset).
+   GlucoRead theme: the tokens and primitives shared by every page — the
+   landing page, the auth screens, and the authenticated app.
 
-   Colour: one accent (cobalt) for anything the user can act on, one data
-   green for "in range", ink on warm paper for everything else.
-   Radius: surfaces 20px, inner elements 12px, controls are pills.
+   Design language ported from the "Hospital Data Management Dashboard" Figma
+   Make file (NSR3WfZlAKJSfIMPWmhgSu). That file is React + Tailwind; its
+   globals.css is stock shadcn boilerplate, so the real tokens are the Tailwind
+   literals in its components. Mapped here:
+
+     teal-600  #0d9488  -> --accent          the one brand/action colour
+     teal-500  #14b8a6  -> --accent-bright   chart strokes and fills
+     blue-600  #2563eb  -> --insulin         insulin is blue throughout
+     orange-600 #ea580c -> --meal            meals/carbs are orange
+     green-600 #16a34a  -> --range           in-range readings
+     red-600   #dc2626  -> --danger          low readings, destructive actions
+     gray-50   #f9fafb  -> --paper           the page ground
+     gray-200  #e5e7eb  -> --line
+     radius    0.625rem -> --r-lg (10px)
+
+   Shape rule, held everywhere: surfaces 10px, controls and inputs 8px, small
+   chrome 6px. Only icon pucks, avatars and status dots are circles. Nothing
+   else is a pill — the previous cobalt theme made every button a pill, and
+   mixing pill buttons into a 10px card grid is what made the old app read as
+   two designs stapled together.
 
    Theme resolution, in order:
      1. html[data-theme="light" | "dark"] - an explicit choice, stored by
@@ -13,50 +30,88 @@
    ========================================================================== */
 
 :root {
-  /* palettes */
-  --paper-l: #f6f5f2;
-  --paper-2-l: #eeece7;
-  --surface-l: #fdfdfb;
-  --ink-l: #14161a;
-  --ink-2-l: #565c66;
-  --ink-3-l: #787f8a;
-  --line-l: rgba(20, 22, 26, 0.12);
-  --line-soft-l: rgba(20, 22, 26, 0.07);
-  --accent-l: #1f4bd8;
-  --accent-hover-l: #17389f;
+  /* ---- light: the Figma's palette, which is the designed one ---- */
+  --paper-l: #f9fafb;
+  --paper-2-l: #f3f4f6;
+  --surface-l: #ffffff;
+  --ink-l: #111827;
+  --ink-2-l: #4b5563;
+  --ink-3-l: #6b7280;
+  --line-l: #e5e7eb;
+  --line-soft-l: #f3f4f6;
+
+  --accent-l: #0d9488;
+  --accent-hover-l: #0f766e;
   --accent-ink-l: #ffffff;
-  --accent-soft-l: rgba(31, 75, 216, 0.08);
-  --range-l: #12775a;
-  --range-soft-l: rgba(18, 119, 90, 0.13);
-  --warn-l: #9c5f0d;
-  --warn-soft-l: rgba(156, 95, 13, 0.1);
-  --danger-l: #b3261e;
-  --danger-soft-l: rgba(179, 38, 30, 0.08);
-  --shadow-sm-l: 0 1px 2px rgba(20, 22, 26, 0.05);
-  --shadow-lg-l: 0 1px 2px rgba(20, 22, 26, 0.04), 0 22px 48px -24px rgba(20, 22, 26, 0.28);
+  --accent-bright-l: #14b8a6;
+  --accent-soft-l: #ccfbf1;
+  --accent-wash-l: #f0fdfa;
+  --accent-line-l: #99f6e4;
+  --accent-deep-l: #115e59;
 
-  --paper-d: #0e1013;
-  --paper-2-d: #14171c;
-  --surface-d: #171a20;
-  --ink-d: #edeff3;
-  --ink-2-d: #a4abb6;
-  --ink-3-d: #838b96;
-  --line-d: rgba(255, 255, 255, 0.13);
-  --line-soft-d: rgba(255, 255, 255, 0.07);
-  --accent-d: #7f9dff;
-  --accent-hover-d: #9db4ff;
-  --accent-ink-d: #0c0f14;
-  --accent-soft-d: rgba(127, 157, 255, 0.13);
-  --range-d: #40d2a2;
-  --range-soft-d: rgba(64, 210, 162, 0.14);
-  --warn-d: #e0a349;
-  --warn-soft-d: rgba(224, 163, 73, 0.14);
-  --danger-d: #ff9a92;
-  --danger-soft-d: rgba(255, 154, 146, 0.13);
+  --insulin-l: #2563eb;
+  --insulin-soft-l: #dbeafe;
+  --insulin-wash-l: #eff6ff;
+  --meal-l: #ea580c;
+  --meal-soft-l: #ffedd5;
+  --meal-wash-l: #fff7ed;
+
+  --range-l: #16a34a;
+  --range-soft-l: #dcfce7;
+  --range-wash-l: #f0fdf4;
+  --warn-l: #d97706;
+  --warn-soft-l: #fef3c7;
+  --warn-wash-l: #fffbeb;
+  --danger-l: #dc2626;
+  --danger-soft-l: #fee2e2;
+  --danger-wash-l: #fef2f2;
+
+  --shadow-sm-l: 0 1px 2px rgba(17, 24, 39, 0.06);
+  --shadow-lg-l: 0 1px 3px rgba(17, 24, 39, 0.08), 0 12px 32px -16px rgba(17, 24, 39, 0.22);
+
+  /* ---- dark: derived, not designed. The source file's .dark block is the
+     unmodified shadcn grayscale, so it carries no intent to port. These keep
+     the same hue relationships (teal leads, blue/orange/green/red separate the
+     three log types and the range states) at dark-surface luminance. ---- */
+  --paper-d: #0d1214;
+  --paper-2-d: #151d20;
+  --surface-d: #121a1d;
+  --ink-d: #e6edf0;
+  --ink-2-d: #9fb0b6;
+  --ink-3-d: #7d9099;
+  --line-d: rgba(255, 255, 255, 0.11);
+  --line-soft-d: rgba(255, 255, 255, 0.06);
+
+  --accent-d: #2dd4bf;
+  --accent-hover-d: #5eead4;
+  --accent-ink-d: #04211d;
+  --accent-bright-d: #2dd4bf;
+  --accent-soft-d: rgba(45, 212, 191, 0.16);
+  --accent-wash-d: rgba(45, 212, 191, 0.08);
+  --accent-line-d: rgba(45, 212, 191, 0.32);
+  --accent-deep-d: #99f6e4;
+
+  --insulin-d: #7dabff;
+  --insulin-soft-d: rgba(125, 171, 255, 0.18);
+  --insulin-wash-d: rgba(125, 171, 255, 0.09);
+  --meal-d: #fb923c;
+  --meal-soft-d: rgba(251, 146, 60, 0.18);
+  --meal-wash-d: rgba(251, 146, 60, 0.09);
+
+  --range-d: #4ade80;
+  --range-soft-d: rgba(74, 222, 128, 0.17);
+  --range-wash-d: rgba(74, 222, 128, 0.08);
+  --warn-d: #fbbf24;
+  --warn-soft-d: rgba(251, 191, 36, 0.17);
+  --warn-wash-d: rgba(251, 191, 36, 0.08);
+  --danger-d: #f87171;
+  --danger-soft-d: rgba(248, 113, 113, 0.17);
+  --danger-wash-d: rgba(248, 113, 113, 0.09);
+
   --shadow-sm-d: 0 1px 2px rgba(0, 0, 0, 0.5);
-  --shadow-lg-d: 0 1px 2px rgba(0, 0, 0, 0.45), 0 24px 56px -26px rgba(0, 0, 0, 0.85);
+  --shadow-lg-d: 0 1px 3px rgba(0, 0, 0, 0.5), 0 16px 40px -20px rgba(0, 0, 0, 0.8);
 
-  /* light is the default binding */
+  /* ---- light is the default binding ---- */
   --paper: var(--paper-l);
   --paper-2: var(--paper-2-l);
   --surface: var(--surface-l);
@@ -68,28 +123,49 @@
   --accent: var(--accent-l);
   --accent-hover: var(--accent-hover-l);
   --accent-ink: var(--accent-ink-l);
+  --accent-bright: var(--accent-bright-l);
   --accent-soft: var(--accent-soft-l);
+  --accent-wash: var(--accent-wash-l);
+  --accent-line: var(--accent-line-l);
+  --accent-deep: var(--accent-deep-l);
+  --insulin: var(--insulin-l);
+  --insulin-soft: var(--insulin-soft-l);
+  --insulin-wash: var(--insulin-wash-l);
+  --meal: var(--meal-l);
+  --meal-soft: var(--meal-soft-l);
+  --meal-wash: var(--meal-wash-l);
   --range: var(--range-l);
   --range-soft: var(--range-soft-l);
+  --range-wash: var(--range-wash-l);
   --warn: var(--warn-l);
+  --warn-soft: var(--warn-soft-l);
+  --warn-wash: var(--warn-wash-l);
   --danger: var(--danger-l);
   --danger-soft: var(--danger-soft-l);
-  --warn-soft: var(--warn-soft-l);
+  --danger-wash: var(--danger-wash-l);
   --shadow-sm: var(--shadow-sm-l);
   --shadow-lg: var(--shadow-lg-l);
 
   color-scheme: light;
 
-  --r-lg: 20px;
-  --r-md: 12px;
+  --r-lg: 10px;
+  --r-md: 8px;
+  --r-sm: 6px;
   --r-pill: 999px;
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
   --maxw: 1160px;
   --gutter: clamp(1.25rem, 4vw, 2.5rem);
   --font-sans: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-mono: "Geist Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+
+  /* app shell metrics, straight from the source layout */
+  --rail-w: 256px;
+  --header-h: 64px;
 }
 
+/* The dark bindings are identical in both selectors below; they differ only in
+   what triggers them (system setting vs. explicit choice), so they are kept in
+   step by hand. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --paper: var(--paper-d);
@@ -103,13 +179,26 @@
     --accent: var(--accent-d);
     --accent-hover: var(--accent-hover-d);
     --accent-ink: var(--accent-ink-d);
+    --accent-bright: var(--accent-bright-d);
     --accent-soft: var(--accent-soft-d);
+    --accent-wash: var(--accent-wash-d);
+    --accent-line: var(--accent-line-d);
+    --accent-deep: var(--accent-deep-d);
+    --insulin: var(--insulin-d);
+    --insulin-soft: var(--insulin-soft-d);
+    --insulin-wash: var(--insulin-wash-d);
+    --meal: var(--meal-d);
+    --meal-soft: var(--meal-soft-d);
+    --meal-wash: var(--meal-wash-d);
     --range: var(--range-d);
     --range-soft: var(--range-soft-d);
+    --range-wash: var(--range-wash-d);
     --warn: var(--warn-d);
+    --warn-soft: var(--warn-soft-d);
+    --warn-wash: var(--warn-wash-d);
     --danger: var(--danger-d);
     --danger-soft: var(--danger-soft-d);
-    --warn-soft: var(--warn-soft-d);
+    --danger-wash: var(--danger-wash-d);
     --shadow-sm: var(--shadow-sm-d);
     --shadow-lg: var(--shadow-lg-d);
 
@@ -129,13 +218,26 @@
   --accent: var(--accent-d);
   --accent-hover: var(--accent-hover-d);
   --accent-ink: var(--accent-ink-d);
+  --accent-bright: var(--accent-bright-d);
   --accent-soft: var(--accent-soft-d);
+  --accent-wash: var(--accent-wash-d);
+  --accent-line: var(--accent-line-d);
+  --accent-deep: var(--accent-deep-d);
+  --insulin: var(--insulin-d);
+  --insulin-soft: var(--insulin-soft-d);
+  --insulin-wash: var(--insulin-wash-d);
+  --meal: var(--meal-d);
+  --meal-soft: var(--meal-soft-d);
+  --meal-wash: var(--meal-wash-d);
   --range: var(--range-d);
   --range-soft: var(--range-soft-d);
+  --range-wash: var(--range-wash-d);
   --warn: var(--warn-d);
+  --warn-soft: var(--warn-soft-d);
+  --warn-wash: var(--warn-wash-d);
   --danger: var(--danger-d);
   --danger-soft: var(--danger-soft-d);
-  --warn-soft: var(--warn-soft-d);
+  --danger-wash: var(--danger-wash-d);
   --shadow-sm: var(--shadow-sm-d);
   --shadow-lg: var(--shadow-lg-d);
 
@@ -188,6 +290,14 @@ a {
 svg {
   display: block;
   max-width: 100%;
+}
+
+/* The rule above is a type selector, so it outranks the user-agent's
+   `[hidden] { display: none }` — which made the inlined icon sprite paint as
+   an empty 300x150 replaced element at the top of every page. Anything marked
+   hidden stays hidden. */
+[hidden] {
+  display: none !important;
 }
 
 ::selection {
@@ -298,6 +408,7 @@ svg {
   border-radius: var(--r-pill);
   background: var(--accent);
   box-shadow: 0 0 0 4px var(--accent-soft);
+  flex: none;
 }
 
 .menu {
@@ -330,7 +441,7 @@ svg {
   color: var(--ink);
   background: transparent;
   border: 1px solid var(--line);
-  border-radius: var(--r-pill);
+  border-radius: var(--r-md);
   padding: 0.45rem 1rem;
   cursor: pointer;
 }
@@ -354,7 +465,7 @@ svg {
   padding: 3px;
   gap: 3px;
   background: var(--paper-2);
-  border-radius: var(--r-pill);
+  border-radius: var(--r-md);
 }
 
 .segmented button {
@@ -363,7 +474,7 @@ svg {
   color: var(--ink-2);
   background: transparent;
   border: 0;
-  border-radius: var(--r-pill);
+  border-radius: var(--r-sm);
   padding: 0.35rem 0.85rem;
   cursor: pointer;
   transition: color 0.25s var(--ease), background 0.25s var(--ease);
@@ -468,10 +579,10 @@ svg {
   gap: 0.5rem;
   white-space: nowrap;
   font: inherit;
-  font-size: 0.98rem;
+  font-size: 0.9rem;
   font-weight: 500;
-  padding: 0.8rem 1.5rem;
-  border-radius: var(--r-pill);
+  padding: 0.6rem 1.1rem;
+  border-radius: var(--r-md);
   border: 1px solid transparent;
   cursor: pointer;
   transition: transform 0.2s var(--ease), background 0.2s var(--ease),
@@ -479,8 +590,8 @@ svg {
 }
 
 .btn-sm {
-  font-size: 0.9rem;
-  padding: 0.5rem 1.05rem;
+  font-size: 0.84rem;
+  padding: 0.42rem 0.85rem;
 }
 
 .btn-full {
