@@ -370,6 +370,28 @@ class GlucoseTargetTest(TestCase):
         response = self._post(target_low="6.0", target_high="6.0")
         self.assertContains(response, "must be above the lower target")
 
+    def test_reset_control_offers_the_defaults_in_mmol(self):
+        response = self.client.get(reverse("user-profile"))
+        self.assertContains(response, 'data-target-low="3.9"')
+        self.assertContains(response, 'data-target-high="10.0"')
+
+    def test_reset_control_converts_the_defaults_for_a_mgdl_user(self):
+        """70.2, not a round 70 -- the honest conversion of the stored
+        default. Rounding it in the template would move the user's band."""
+        prefs = self.user.preferences
+        prefs.glucose_unit = UserPreferences.GLUCOSE_UNIT_MGDL
+        prefs.save()
+
+        response = self.client.get(reverse("user-profile"))
+        self.assertContains(response, 'data-target-low="70.2"')
+        self.assertContains(response, 'data-target-high="180.0"')
+
+    def test_reset_button_does_not_submit_the_form(self):
+        """It fills the inputs only; a default-type button inside the form
+        would submit every section instead."""
+        response = self.client.get(reverse("user-profile"))
+        self.assertContains(response, 'type="button"')
+
     def test_an_implausible_target_is_rejected_in_the_users_own_unit(self):
         response = self._post(target_low="0.2", target_high="10.0")
         self.assertEqual(response.status_code, 200)

@@ -2,7 +2,13 @@ from django.contrib.auth.forms import AdminUserCreationForm, UserChangeForm
 from .models import User
 
 from django import forms
-from logs.conversions import entry_bounds, mgdl_to_mmol, to_display
+from logs.conversions import (
+    DEFAULT_TARGET_HIGH_MMOL,
+    DEFAULT_TARGET_LOW_MMOL,
+    entry_bounds,
+    mgdl_to_mmol,
+    to_display,
+)
 
 from .models import UserPreferences, HealthProfile
 
@@ -67,6 +73,15 @@ class PreferencesForm(forms.ModelForm):
         suffix = "mg/dL" if unit else "mmol/L"
         self.fields["target_low"].label = f"Target low ({suffix})"
         self.fields["target_high"].label = f"Target high ({suffix})"
+
+        # The reset control offers these; computed here rather than in the
+        # template or the script so the mmol/L -> mg/dL factor stays in one
+        # place. Note the standard low is 70.2 mg/dL, not a round 70 — writing
+        # 70 into the field would quietly move the user's band.
+        self.default_targets = (
+            to_display(DEFAULT_TARGET_LOW_MMOL, unit),
+            to_display(DEFAULT_TARGET_HIGH_MMOL, unit),
+        )
 
         low, high = entry_bounds(unit)
         for name in ("target_low", "target_high"):

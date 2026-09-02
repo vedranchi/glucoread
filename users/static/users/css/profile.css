@@ -334,3 +334,29 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* A quiet, secondary action sitting under the fields it affects: it changes
+   nothing on its own, so it must not compete with Save Changes. */
+.link-btn {
+  font: inherit;
+  font-size: 0.8125rem;
+  color: var(--accent);
+  background: none;
+  border: 0;
+  border-radius: var(--r-sm);
+  padding: 0.35rem 0;
+  margin-top: 0.75rem;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.link-btn:hover {
+  color: var(--accent-hover);
+}
+
+.link-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  text-decoration: none;
+}

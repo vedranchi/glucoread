@@ -89,6 +89,22 @@ Account Settings — GlucoRead
                     {% endfor %}
                 </div>
             </div>
+            {% comment %}
+              Fills the two inputs and stops there — the reset is not saved
+              until the user submits, so it stays undoable and the page keeps
+              its all-or-nothing save. The values are rendered in the unit the
+              fields are labelled with.
+            {% endcomment %}
+            <button
+                type="button"
+                class="link-btn"
+                data-reset-targets
+                data-target-low="{{ preferences_form.default_targets.0 }}"
+                data-target-high="{{ preferences_form.default_targets.1 }}"
+            >
+                Reset to default ({{ preferences_form.default_targets.0 }}&ndash;{{ preferences_form.default_targets.1 }})
+            </button>
+
             {% for error in preferences_form.non_field_errors %}
                 <div class="field-error">{{ error }}</div>
             {% endfor %}
