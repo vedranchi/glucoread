@@ -754,10 +754,16 @@ a.row:hover,
   background: var(--tone, var(--accent));
 }
 
-/* The swatch has to name the shaded band, not the (absent) target line, so
-   it carries the band's own colour rather than a neutral grey. */
-.chart-legend .is-target {
-  --tone: var(--range);
+/* The swatch mirrors the band it names: green interior, red rules top and
+   bottom. A plain green dot would describe only half of what is drawn. */
+.chart-legend .is-target i {
+  width: 16px;
+  height: 11px;
+  border-radius: 2px;
+  /* --range-soft, not the --range-wash the band itself uses: a 16px swatch
+     needs more saturation than a full-width field to read as the same green. */
+  background: var(--range-soft);
+  border-block: 1.5px solid var(--danger);
 }
 
 /* Day stepper above the chart. */

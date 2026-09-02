@@ -32,8 +32,16 @@
   const rangeHigh = parseFloat(canvas.dataset.rangeHigh);
   const hasBand = Number.isFinite(rangeLow) && Number.isFinite(rangeHigh);
 
-  /* Shades the in-range band behind the line. Drawn on beforeDatasetsDraw so
-     the line and points stay on top of it. */
+  /* Shades the in-range band behind the line, and rules its two edges in red.
+     Those edges are the user's own targets — the exact values at which a
+     reading stops counting as in range — so they are the one place on the
+     chart where a limit colour is the honest one. The fill stays green: the
+     interior is still the good region, it is the boundary that is the
+     warning.
+
+     Solid, against a dashed grey grid, so the two never read as the same kind
+     of line. Drawn on beforeDatasetsDraw so the trend line and its points stay
+     on top. */
   const targetBand = {
     id: "targetBand",
     beforeDatasetsDraw(chart) {
@@ -52,9 +60,8 @@
       ctx.fillStyle = token("--range-wash");
       ctx.fillRect(chartArea.left, top, chartArea.width, bottom - top);
 
-      ctx.strokeStyle = token("--range-soft");
-      ctx.lineWidth = 1;
-      ctx.setLineDash([4, 4]);
+      ctx.strokeStyle = token("--danger");
+      ctx.lineWidth = 1.5;
       [top, bottom].forEach((y) => {
         ctx.beginPath();
         ctx.moveTo(chartArea.left, y);
