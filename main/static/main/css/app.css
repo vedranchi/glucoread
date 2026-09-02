@@ -135,8 +135,11 @@
   min-width: 0;
 }
 
+/* Never compressed: the label on the left truncates instead, so the theme
+   switch and account link stay reachable at every width. */
 .appbar-right {
   gap: 0.75rem;
+  flex: none;
 }
 
 /* The source header pairs a 40px teal→blue gradient tile carrying the Activity
@@ -160,25 +163,27 @@
   background: linear-gradient(135deg, var(--accent), var(--insulin));
 }
 
-.brand-text {
-  min-width: 0;
+.brand-home {
+  display: block;
+  flex: none;
+  border-radius: var(--r-lg);
 }
 
-.brand-title {
-  font-size: 1.0625rem;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  color: var(--ink);
-  line-height: 1.3;
-}
-
+/* Promoted from a subtitle to the header's only label, so it carries the
+   weight and colour the wordmark used to. It still truncates rather than
+   wrapping: the bar is a fixed 64px and a two-line label would break it. */
 .brand-sub {
-  font-size: 0.8125rem;
-  color: var(--ink-3);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--ink);
   line-height: 1.3;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  /* A flex item will not shrink below its content width without this, so the
+     nowrap label above would push the account controls off a narrow screen
+     rather than ellipsing. */
+  min-width: 0;
 }
 
 /* The "Current Glucose" chip from the source header. Rendered only when there
@@ -933,7 +938,6 @@ a.row:hover,
     display: block;
   }
 
-  .brand-sub,
   .avatar-name,
   .avatar-meta {
     display: none;

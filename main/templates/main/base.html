@@ -34,15 +34,19 @@
               <svg class="icon" aria-hidden="true"><use href="#i-menu" /></svg>
             </button>
 
-            <a class="brand-lockup" href="{% url 'glucoread-dashboard' %}">
-              <span class="brand-tile" aria-hidden="true">
-                <svg class="icon icon-lg"><use href="#i-activity" /></svg>
-              </span>
-              <span class="brand-text">
-                <span class="brand-title">GlucoRead</span>
-                <span class="brand-sub">{% block nav_title %}Diabetes management{% endblock %}</span>
-              </span>
-            </a>
+            {% comment %}
+              The mark links home; the page label beside it is context, not a
+              link. Keeping them as one anchor would name that link after the
+              page it is not going to ("Glucose log" pointing at Dashboard).
+            {% endcomment %}
+            <div class="brand-lockup">
+              <a class="brand-home" href="{% url 'glucoread-dashboard' %}" aria-label="GlucoRead dashboard">
+                <span class="brand-tile" aria-hidden="true">
+                  <svg class="icon icon-lg"><use href="#i-activity" /></svg>
+                </span>
+              </a>
+              <span class="brand-sub">{% block nav_title %}Diabetes management{% endblock %}</span>
+            </div>
           </div>
 
           <div class="appbar-right">
@@ -130,9 +134,11 @@
 
         <main class="page">
     {% else %}
-      {# 403 and 404 also extend this template and can render with no session.
-         The shell is skipped, but `content` must still be defined exactly once
-         or the block is unreachable for anonymous requests. #}
+      {% comment %}
+        403 and 404 also extend this template and can render with no session.
+        The shell is skipped, but `content` must still be defined exactly once
+        or the block is unreachable for anonymous requests.
+      {% endcomment %}
       <main class="page page-bare">
     {% endif %}
 
