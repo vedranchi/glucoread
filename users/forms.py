@@ -64,8 +64,17 @@ class PreferencesForm(forms.ModelForm):
 
     class Meta:
         model = UserPreferences
-        fields = ["glucose_unit"]
-        labels = {"glucose_unit": "Glucose Unit"}
+        fields = ["glucose_unit", "bread_unit_grams"]
+        labels = {
+            "glucose_unit": "Glucose Unit",
+            "bread_unit_grams": "Bread unit size (g of carbohydrate)",
+        }
+        help_texts = {
+            "bread_unit_grams": (
+                "12 g is the Central-European BE, 10 g the KE or UK carb "
+                "portion, 15 g the US exchange."
+            )
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

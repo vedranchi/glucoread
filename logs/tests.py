@@ -5,7 +5,13 @@ from django.contrib.auth import get_user_model
 from django.forms.models import model_to_dict
 from django.urls import reverse
 from logs.models import GlucoseLog, InsulinLog, MealLog
-from logs.conversions import MMOL_QUANTUM, MMOL_TO_MGDL, mgdl_to_mmol
+from logs.conversions import (
+    DEFAULT_BREAD_UNIT_GRAMS,
+    MMOL_QUANTUM,
+    MMOL_TO_MGDL,
+    mgdl_to_mmol,
+    to_bread_units,
+)
 from users.models import UserPreferences
 from django.utils import timezone
 from datetime import timedelta
@@ -759,3 +765,82 @@ class SeedDemoDataTest(TestCase):
                     stdout=StringIO(),
                     email="demo@glucoread.app",
                 )
+
+
+class BreadUnitConversionTest(TestCase):
+    """Bread units are a reading of the stored grams, never a stored value."""
+
+    def test_converts_at_the_supplied_unit_size(self):
+        self.assertEqual(to_bread_units(Decimal("48"), Decimal("12")), 4.0)
+        self.assertEqual(to_bread_units(Decimal("46"), Decimal("12")), 3.8)
+        # the same meal in a 10 g unit is a different number of units
+        self.assertEqual(to_bread_units(Decimal("46"), Decimal("10")), 4.6)
+        self.assertEqual(to_bread_units(Decimal("45"), Decimal("15")), 3.0)
+
+    def test_no_carbohydrate_recorded_is_not_zero_units(self):
+        """The macro fields are nullable. Rendering 0.0 BU would claim a
+        measurement that was never taken."""
+        self.assertIsNone(to_bread_units(None, Decimal("12")))
+
+    def test_zero_carbohydrate_is_zero_units(self):
+        self.assertEqual(to_bread_units(Decimal("0"), Decimal("12")), 0.0)
+
+    def test_a_non_positive_unit_size_does_not_raise(self):
+        """The field forbids one, but a divisor reaching here must not be able
+        to 500 the page it is rendering."""
+        self.assertIsNone(to_bread_units(Decimal("48"), Decimal("0")))
+        self.assertIsNone(to_bread_units(Decimal("48"), Decimal("-1")))
+
+    def test_accepts_floats_and_ints_without_binary_drift(self):
+        self.assertEqual(to_bread_units(48, 12), 4.0)
+        self.assertEqual(to_bread_units(46.0, 12.0), 3.8)
+
+
+class BreadUnitDisplayTest(TestCase):
+    """Grams stay the stored truth; the unit size only changes the reading."""
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="bu", email="bu@example.com", password="pw12345!"
+        )
+        self.client.login(email="bu@example.com", password="pw12345!")
+        MealLog.objects.create(
+            user=self.user, note="Porridge", carbs=Decimal("48.0"),
+            eaten_at=timezone.now(),
+        )
+
+    def test_defaults_to_the_central_european_be(self):
+        self.assertEqual(
+            self.user.preferences.bread_unit_grams, DEFAULT_BREAD_UNIT_GRAMS
+        )
+
+    def test_meal_rows_carry_their_bread_units(self):
+        response = self.client.get(reverse("log-meal"))
+        self.assertEqual(response.context["recent_meals"][0].bread_units, 4.0)
+        self.assertEqual(response.context["carbs_today_bread_units"], 4.0)
+
+    def test_changing_the_unit_size_changes_every_reading(self):
+        prefs = self.user.preferences
+        prefs.bread_unit_grams = Decimal("10.0")
+        prefs.save()
+
+        response = self.client.get(reverse("log-meal"))
+        self.assertEqual(response.context["recent_meals"][0].bread_units, 4.8)
+        self.assertEqual(response.context["carbs_today_bread_units"], 4.8)
+
+        # and the stored grams are untouched by any of it
+        self.assertEqual(
+            MealLog.objects.get(user=self.user).carbs, Decimal("48.0")
+        )
+
+    def test_dashboard_states_the_days_bread_units(self):
+        response = self.client.get(reverse("glucoread-dashboard"))
+        self.assertEqual(response.context["carbs_bread_units"], 4.0)
+
+    def test_a_meal_without_carbs_shows_no_unit_figure(self):
+        MealLog.objects.all().delete()
+        MealLog.objects.create(
+            user=self.user, note="Coffee", eaten_at=timezone.now()
+        )
+        response = self.client.get(reverse("log-meal"))
+        self.assertIsNone(response.context["recent_meals"][0].bread_units)

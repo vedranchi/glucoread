@@ -1,8 +1,13 @@
+from decimal import Decimal
+
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.conf import settings
 
+from django.core.validators import MinValueValidator
+
 from logs.conversions import (
+    DEFAULT_BREAD_UNIT_GRAMS,
     DEFAULT_TARGET_HIGH_MMOL,
     DEFAULT_TARGET_LOW_MMOL,
 )
@@ -61,6 +66,16 @@ class UserPreferences(models.Model):
     )
     target_high = models.DecimalField(
         max_digits=6, decimal_places=3, default=DEFAULT_TARGET_HIGH_MMOL
+    )
+
+    # Grams of carbohydrate in one bread unit. Varies by country (12 g BE,
+    # 10 g KE, 15 g US exchange), so it is the user's to set. The floor is a
+    # correctness guard, not a product opinion: this value is a divisor.
+    bread_unit_grams = models.DecimalField(
+        max_digits=4,
+        decimal_places=1,
+        default=DEFAULT_BREAD_UNIT_GRAMS,
+        validators=[MinValueValidator(Decimal("0.1"))],
     )
 
 

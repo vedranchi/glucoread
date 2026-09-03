@@ -105,6 +105,17 @@ Account Settings — GlucoRead
                 Reset to default ({{ preferences_form.default_targets.0 }}&ndash;{{ preferences_form.default_targets.1 }})
             </button>
 
+            <div class="form-group">
+                <label for="{{ preferences_form.bread_unit_grams.id_for_label }}">
+                    {{ preferences_form.bread_unit_grams.label }}
+                </label>
+                {{ preferences_form.bread_unit_grams }}
+                <p class="field-hint">{{ preferences_form.bread_unit_grams.help_text }}</p>
+                {% for error in preferences_form.bread_unit_grams.errors %}
+                    <div class="field-error">{{ error }}</div>
+                {% endfor %}
+            </div>
+
             {% for error in preferences_form.non_field_errors %}
                 <div class="field-error">{{ error }}</div>
             {% endfor %}

@@ -360,3 +360,11 @@
   outline-offset: 2px;
   text-decoration: none;
 }
+
+/* Help text under a field, distinct from .form-section-note which explains a
+   whole group. */
+.field-hint {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--ink-3);
+}

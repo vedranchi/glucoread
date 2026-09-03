@@ -96,3 +96,37 @@ def entry_bounds(is_mgdl):
     if is_mgdl:
         return MGDL_ENTRY_MIN, MGDL_ENTRY_MAX
     return MMOL_ENTRY_MIN, MMOL_ENTRY_MAX
+
+
+# --------------------------------------------------------------------------
+# Bread units.
+#
+# Carbohydrate is stored in grams and stays that way; a bread unit is a
+# presentation of that same figure, never a second source of truth. The size
+# of one unit differs by country — 12 g is the Central-European BE, 10 g the
+# KE/UK carb portion, 15 g the US exchange — so it is per-user
+# (UserPreferences.bread_unit_grams) rather than a constant, and the default
+# below is only what a new account starts with.
+#
+# Displayed as "BU" rather than "BE" because the figure is only a BE when the
+# factor is 12; the abbreviation has to stay true at whatever the user sets.
+# --------------------------------------------------------------------------
+DEFAULT_BREAD_UNIT_GRAMS = Decimal("12.0")
+
+
+def to_bread_units(grams, factor_grams):
+    """Express carbohydrate grams in bread units, to one decimal place.
+
+    Returns None for a meal with no carbohydrate recorded — the macro fields
+    are nullable, and rendering "0.0 BU" would claim a measurement that was
+    never taken. A non-positive factor also yields None rather than raising:
+    the field forbids one, but a division here must not be able to 500 a page.
+    """
+    if grams is None:
+        return None
+
+    factor = Decimal(str(factor_grams))
+    if factor <= 0:
+        return None
+
+    return float(round(Decimal(str(grams)) / factor, 1))

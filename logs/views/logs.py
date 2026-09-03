@@ -16,6 +16,7 @@ from logs.conversions import (
     MMOL_ENTRY_MIN,
     mgdl_to_mmol,
     reading_status,
+    to_bread_units,
     to_display,
 )
 
@@ -410,6 +411,8 @@ def delete_glucose_reading(request, pk):
 @login_required
 def log_meal(request):
     today = timezone.now().date()
+    preferences, _ = UserPreferences.objects.get_or_create(user=request.user)
+    bread_unit_grams = preferences.bread_unit_grams
 
     totals = MealLog.objects.filter(
         user=request.user, eaten_at__date=today, is_deleted=False
@@ -426,12 +429,20 @@ def log_meal(request):
     fats_today = totals["fats_today"] or 0
     calories_today = totals["calories_today"] or 0
 
-    recent_meals = MealLog.objects.filter(user=request.user, is_deleted=False).order_by(
-        "-eaten_at"
-    )[:5]
+    recent_meals = list(
+        MealLog.objects.filter(user=request.user, is_deleted=False).order_by(
+            "-eaten_at"
+        )[:5]
+    )
+    # Attached rather than annotated: the divisor is a Python Decimal on the
+    # user's preferences, and five rows do not justify pushing it into SQL.
+    for meal in recent_meals:
+        meal.bread_units = to_bread_units(meal.carbs, bread_unit_grams)
 
     context = {
         "carbs_today": carbs_today,
+        "carbs_today_bread_units": to_bread_units(carbs_today, bread_unit_grams),
+        "bread_unit_grams": bread_unit_grams,
         "protein_today": protein_today,
         "fats_today": fats_today,
         "calories_today": calories_today,
@@ -543,10 +554,19 @@ def add_meal(request, pk=None):
                 )
             return redirect("log-meal")
 
+    # The form shows a live bread-unit reading beside the carbs field, so it
+    # needs the user's unit size to divide by.
+    preferences, _ = UserPreferences.objects.get_or_create(user=request.user)
+
     return render(
         request,
         "logs/add_meal.html",
-        {"meal": meal, "is_edit_mode": bool(meal), "form": form},
+        {
+            "meal": meal,
+            "is_edit_mode": bool(meal),
+            "form": form,
+            "bread_unit_grams": preferences.bread_unit_grams,
+        },
     )
 
 

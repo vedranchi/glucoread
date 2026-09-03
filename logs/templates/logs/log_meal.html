@@ -31,7 +31,13 @@
                 <svg class="icon icon-lg"><use href="#i-utensils-crossed" /></svg>
             </span>
         </div>
-        <p class="stat-foot">The figure insulin dosing follows</p>
+        <p class="stat-foot">
+            {% if carbs_today_bread_units %}
+                {{ carbs_today_bread_units }} BU at {{ bread_unit_grams|floatformat:"-1" }} g each
+            {% else %}
+                The figure insulin dosing follows
+            {% endif %}
+        </p>
     </article>
 
     <article class="card stat t-meal">
@@ -89,6 +95,7 @@
                         <th>Time</th>
                         <th>Description</th>
                         <th>Carbs</th>
+                        <th>BU</th>
                         <th>Protein</th>
                         <th>Fats</th>
                         <th>Calories</th>
@@ -102,6 +109,13 @@
                             </td>
                             <td data-label="Description">{{ meal.note|default:"—" }}</td>
                             <td class="num" data-label="Carbs">{{ meal.carbs|floatformat:1|default:"0" }} g</td>
+                            <td class="num" data-label="BU">
+                                {% if meal.bread_units %}
+                                    {{ meal.bread_units }}
+                                {% else %}
+                                    <span class="muted">&mdash;</span>
+                                {% endif %}
+                            </td>
                             <td class="num" data-label="Protein">{{ meal.protein|floatformat:1|default:"0" }} g</td>
                             <td class="num" data-label="Fats">{{ meal.fats|floatformat:1|default:"0" }} g</td>
                             <td class="num" data-label="Calories">{{ meal.calories|floatformat:0|default:"0" }}</td>

@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 
 from users.models import UserPreferences
 from users.services import get_user_preferences
-from logs.conversions import to_display
+from logs.conversions import to_bread_units, to_display
 
 
 @login_required
@@ -137,6 +137,7 @@ def dashboard(request):
         "avg_glucose": avg_glucose,
         "total_insulin": total_insulin,
         "carbs_consumed": carbs_consumed,
+        "carbs_bread_units": to_bread_units(carbs_consumed, profile.bread_unit_grams),
         "recent_activity": recent_activity,
         "glucose_count_today": glucose_stats["count"],
         "insulin_count_today": insulin_stats["count"],

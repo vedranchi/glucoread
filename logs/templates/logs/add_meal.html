@@ -51,7 +51,11 @@
             id="carbs"
             value="{{ form.carbs|default_if_none:'' }}"
             min="0"
+            data-bread-unit-grams="{{ bread_unit_grams|floatformat:'-1' }}"
         >
+        <small class="field-hint" id="carbsBreadUnits" aria-live="polite">
+            1 BU = {{ bread_unit_grams|floatformat:"-1" }} g, set on your profile
+        </small>
 
         <label for="protein">Protein (g)</label>
         <input

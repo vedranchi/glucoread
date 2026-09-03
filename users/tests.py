@@ -173,6 +173,7 @@ class ProfileUpdateTest(TestCase):
             "diabetes_type": "type1",
             "target_low": "3.9",
             "target_high": "10.0",
+            "bread_unit_grams": "12.0",
         }
         data.update(overrides)
         return self.client.post(reverse("user-profile"), data)
@@ -318,6 +319,7 @@ class GlucoseTargetTest(TestCase):
             "diabetes_type": "type1",
             "target_low": "3.9",
             "target_high": "10.0",
+            "bread_unit_grams": "12.0",
         }
         data.update(overrides)
         return self.client.post(reverse("user-profile"), data)
@@ -369,6 +371,18 @@ class GlucoseTargetTest(TestCase):
     def test_equal_targets_are_rejected(self):
         response = self._post(target_low="6.0", target_high="6.0")
         self.assertContains(response, "must be above the lower target")
+
+    def test_bread_unit_size_is_editable_and_rejects_a_zero_divisor(self):
+        response = self._post(bread_unit_grams="10.0")
+        self.assertRedirects(response, reverse("user-profile"))
+        self.user.preferences.refresh_from_db()
+        self.assertEqual(self.user.preferences.bread_unit_grams, Decimal("10.0"))
+
+        response = self._post(bread_unit_grams="0")
+        self.assertEqual(response.status_code, 200)
+        self.user.preferences.refresh_from_db()
+        # unchanged -- a zero would be a division by zero on every meal row
+        self.assertEqual(self.user.preferences.bread_unit_grams, Decimal("10.0"))
 
     def test_reset_control_offers_the_defaults_in_mmol(self):
         response = self.client.get(reverse("user-profile"))

@@ -98,6 +98,7 @@
                 </span>
             </div>
             <p class="stat-foot">
+                {% if carbs_bread_units %}{{ carbs_bread_units }} BU &middot; {% endif %}
                 {{ meal_count_today }} meal{{ meal_count_today|pluralize }} logged
             </p>
         </article>
