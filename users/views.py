@@ -1,6 +1,8 @@
 from django.conf import settings
 from django.shortcuts import render, redirect, resolve_url
 from django.contrib import messages
+
+from logs.views.export import EXPORT_RANGES, EXPORT_TYPES
 from django.contrib.auth import login, logout
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.decorators import login_required
@@ -98,6 +100,11 @@ def user_profile_view(request):
         "preferences_form": preferences_form,
         "health_profile_form": health_profile_form,
         "update_profile_form": profile_form,
+        # The export form is a plain GET to logs, deliberately outside the
+        # combined POST above — downloading is not a settings change and must
+        # not be able to fail because an unrelated section is invalid.
+        "export_types": EXPORT_TYPES,
+        "export_ranges": EXPORT_RANGES,
     }
     return render(request, "users/profile.html", context)
 

@@ -1,3 +1,5 @@
+import csv
+import io
 from decimal import Decimal
 
 from django.test import TestCase
@@ -994,3 +996,132 @@ class FormRerenderKeepsInputTest(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "NovoRapid")
+
+
+class CsvExportTest(TestCase):
+    """One file per log type, scoped to the signed-in user."""
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="exp", email="exp@example.com", password="pw12345!"
+        )
+        self.client.login(email="exp@example.com", password="pw12345!")
+        self.now = timezone.now()
+        GlucoseLog.objects.create(
+            user=self.user, value=Decimal("5.5"), context="fasting",
+            note="steady", measured_at=self.now - timedelta(days=1),
+        )
+        InsulinLog.objects.create(
+            user=self.user, units=Decimal("6.0"), insulin_type="bolus",
+            brand="NovoRapid", taken_at=self.now - timedelta(days=1),
+        )
+        MealLog.objects.create(
+            user=self.user, note="Porridge", carbs=Decimal("48.0"),
+            context="breakfast", eaten_at=self.now - timedelta(days=1),
+        )
+
+    def _rows(self, log_type, days=30):
+        response = self.client.get(
+            reverse("export-csv"), {"type": log_type, "days": str(days)}
+        )
+        self.assertEqual(response.status_code, 200)
+        body = response.content.decode("utf-8-sig")
+        return response, [r for r in csv.reader(io.StringIO(body)) if r]
+
+    def test_glucose_export_carries_value_status_and_context(self):
+        response, rows = self._rows("glucose")
+        self.assertEqual(rows[0], ["Taken at", "Value (mmol/L)", "Status", "Context", "Note"])
+        self.assertEqual(rows[1][1], "5.5")
+        self.assertEqual(rows[1][2], "In range")
+        self.assertEqual(rows[1][3], "Fasting")
+        self.assertEqual(rows[1][4], "steady")
+        self.assertIn("attachment;", response["Content-Disposition"])
+        self.assertIn("glucoread-glucose-last-30-days", response["Content-Disposition"])
+
+    def test_glucose_exports_in_the_users_own_unit(self):
+        prefs = self.user.preferences
+        prefs.glucose_unit = UserPreferences.GLUCOSE_UNIT_MGDL
+        prefs.save()
+
+        _, rows = self._rows("glucose")
+        self.assertEqual(rows[0][1], "Value (mg/dL)")
+        self.assertEqual(rows[1][1], "99.0")
+
+    def test_status_follows_the_users_own_targets(self):
+        prefs = self.user.preferences
+        prefs.target_high = Decimal("5.0")
+        prefs.save()
+        _, rows = self._rows("glucose")
+        self.assertEqual(rows[1][2], "High")
+
+    def test_meal_export_carries_bread_units_and_blanks_absent_macros(self):
+        _, rows = self._rows("meals")
+        self.assertEqual(rows[0][4], "Bread units (12 g each)")
+        self.assertEqual(rows[1][3], "48.0")
+        self.assertEqual(rows[1][4], "4.0")
+        # protein/fats/calories were never recorded -- blank, never 0
+        self.assertEqual(rows[1][5], "")
+        self.assertEqual(rows[1][6], "")
+        self.assertEqual(rows[1][7], "")
+
+    def test_insulin_export_uses_readable_type_names(self):
+        _, rows = self._rows("insulin")
+        self.assertEqual(rows[1][2], "Bolus")
+        self.assertEqual(rows[1][3], "NovoRapid")
+
+    def test_timestamps_state_their_offset(self):
+        _, rows = self._rows("glucose")
+        # ISO 8601 with a UTC offset, so the file is unambiguous elsewhere
+        self.assertRegex(rows[1][0], r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]\d{2}:\d{2}$")
+
+    def test_soft_deleted_records_are_excluded(self):
+        GlucoseLog.objects.update(is_deleted=True, deleted_at=timezone.now())
+        _, rows = self._rows("glucose")
+        self.assertEqual(len(rows), 1, "only the header should remain")
+
+    def test_records_outside_the_window_are_excluded(self):
+        GlucoseLog.objects.create(
+            user=self.user, value=Decimal("7.0"),
+            measured_at=self.now - timedelta(days=45),
+        )
+        _, in_thirty = self._rows("glucose", days=30)
+        _, in_ninety = self._rows("glucose", days=90)
+        self.assertEqual(len(in_thirty), 2)
+        self.assertEqual(len(in_ninety), 3)
+
+    def test_an_empty_range_still_returns_headers(self):
+        GlucoseLog.objects.all().delete()
+        _, rows = self._rows("glucose", days=7)
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0][0], "Taken at")
+
+    def test_another_users_records_never_appear(self):
+        """This is PHI leaving the app; the queryset must be session-scoped."""
+        other = User.objects.create_user(
+            username="other", email="other@example.com", password="pw12345!"
+        )
+        GlucoseLog.objects.create(
+            user=other, value=Decimal("9.9"), note="not mine",
+            measured_at=self.now - timedelta(days=1),
+        )
+        _, rows = self._rows("glucose")
+        self.assertEqual(len(rows), 2, "only the signed-in user's own reading")
+        self.assertNotIn("not mine", "".join(str(r) for r in rows))
+
+    def test_an_unknown_type_or_range_is_refused(self):
+        for params in (
+            {"type": "everything", "days": "30"},
+            {"type": "glucose", "days": "3650"},
+            {"type": "glucose"},
+            {},
+        ):
+            response = self.client.get(reverse("export-csv"), params)
+            self.assertRedirects(response, reverse("user-profile"))
+
+    def test_export_requires_a_session(self):
+        self.client.logout()
+        response = self.client.get(
+            reverse("export-csv"), {"type": "glucose", "days": "30"}
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("/login", response["Location"])

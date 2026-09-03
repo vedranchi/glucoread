@@ -142,6 +142,44 @@ Account Settings — GlucoRead
         </div>
     </form>
 
+    {% comment %}
+      A GET form to the logs app, deliberately outside the settings <form>
+      above. Downloading is not a settings change, and nesting it would make an
+      export fail whenever an unrelated section had a validation error.
+    {% endcomment %}
+    <section class="form-section">
+        <h3>Export your data</h3>
+        <p class="form-section-note">
+            Download your own records as a CSV, one file per log type. Glucose
+            is exported in the unit you have chosen and meals carry their bread
+            units. Deleted entries are not included.
+        </p>
+        <form method="GET" action="{% url 'export-csv' %}" class="export-form">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="export-type">What to export</label>
+                    <select name="type" id="export-type">
+                        {% for value, label in export_types.items %}
+                            <option value="{{ value }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="export-days">Period</label>
+                    <select name="days" id="export-days">
+                        {% for value, label in export_ranges.items %}
+                            <option value="{{ value }}" {% if value == "30" %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <button type="submit" class="btn-secondary">
+                <svg class="icon icon-sm" aria-hidden="true"><use href="#i-download" /></svg>
+                Download CSV
+            </button>
+        </form>
+    </section>
+
     <div class="account-actions">
         <form method="POST" action="{% url 'glucoread-logout' %}">
             {% csrf_token %}
