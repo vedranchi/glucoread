@@ -145,6 +145,7 @@
   --danger-wash: var(--danger-wash-l);
   --shadow-sm: var(--shadow-sm-l);
   --shadow-lg: var(--shadow-lg-l);
+  --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
 
   color-scheme: light;
 
@@ -201,6 +202,7 @@
     --danger-wash: var(--danger-wash-d);
     --shadow-sm: var(--shadow-sm-d);
     --shadow-lg: var(--shadow-lg-d);
+    --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%237d9099' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
 
     color-scheme: dark;
   }
@@ -240,6 +242,7 @@
   --danger-wash: var(--danger-wash-d);
   --shadow-sm: var(--shadow-sm-d);
   --shadow-lg: var(--shadow-lg-d);
+  --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%237d9099' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
 
   color-scheme: dark;
 }
@@ -656,7 +659,7 @@ svg {
   font: inherit;
   width: 100%;
   color: var(--ink);
-  background: var(--surface);
+  background-color: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--r-md);
   padding: 0.7rem 0.85rem;
@@ -697,6 +700,69 @@ svg {
   background: var(--surface);
   border: 1px solid var(--danger);
   border-radius: var(--r-md);
+}
+
+
+/* -------------------------------- selects -------------------------------- */
+/* Native select chrome ignores the theme entirely — on macOS it paints its own
+   grey capsule, which sits in a teal-and-white card looking like a control from
+   a different application. `appearance: none` strips that and the rules below
+   put it back in the app's own language.
+
+   Still a real <select>: the options list stays the platform's own, so keyboard
+   behaviour, type-ahead, screen readers and mobile pickers all keep working. A
+   JS-driven listbox would let the popup be styled too, and would forfeit every
+   one of those unless painstakingly rebuilt. Not a trade worth making for a
+   chevron.
+
+   The chevron is lucide's chevron-down as a data URI, held in --select-chevron
+   so the light and dark variants are set once, next to the other tokens. Its
+   stroke colour has to be baked in — a data URI cannot read a custom property —
+   so the two hexes are --ink-3 light and dark, and MUST be updated with that
+   token. Routing it through a variable also means exactly one rule sets
+   background-image on a select, which is what lets the list-box rule below
+   override it; setting the image directly in each theme block outranked that
+   override and put a chevron on multi-selects. */
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  background-image: var(--select-chevron);
+  background-repeat: no-repeat;
+  background-position: right 0.7rem center;
+  background-size: 16px 16px;
+}
+
+/* :root deliberately raises specificity above the page stylesheets' own
+   `padding` shorthands (.form-card select, .profile-container select), which
+   would otherwise reset the gutter and let a long option run under the
+   chevron. */
+:root select:not([multiple]) {
+  padding-right: 2.4rem;
+}
+
+select:hover {
+  border-color: var(--ink-3);
+}
+
+/* A list box, not a drop-down: no collapsed state, so a chevron would point at
+   nothing. Covers <select multiple> and any sized select. */
+select[multiple],
+select[size]:not([size="1"]) {
+  background-image: none;
+  cursor: default;
+}
+
+select[multiple] option {
+  padding: 0.3rem 0.4rem;
+  border-radius: var(--r-sm);
+}
+
+/* Windows and Linux paint the popup from these; macOS uses the system menu and
+   ignores them, which is why `color-scheme` on :root carries the dark popup. */
+select option {
+  background-color: var(--surface);
+  color: var(--ink);
 }
 
 /* ----------------------------- reduced motion ---------------------------- */

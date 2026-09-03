@@ -55,6 +55,9 @@
   color: var(--ink);
 }
 
+/* background-COLOR, not the shorthand: the shared select rule in theme.css
+   paints its chevron with background-image, which a shorthand here would
+   silently reset. */
 .form-card input,
 .form-card select,
 .form-card textarea {
@@ -62,7 +65,7 @@
   font-size: 0.9375rem;
   width: 100%;
   color: var(--ink);
-  background: var(--surface);
+  background-color: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--r-md);
   padding: 0.6rem 0.75rem;

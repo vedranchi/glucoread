@@ -164,6 +164,7 @@
 
 /* Django renders these widgets itself, so they are matched by element rather
    than by a class this stylesheet controls. */
+/* background-COLOR, not the shorthand — see the note in forms.css. */
 .profile-container input[type="text"],
 .profile-container input[type="email"],
 .profile-container select {
@@ -171,7 +172,7 @@
   font-size: 0.9375rem;
   width: 100%;
   color: var(--ink);
-  background: var(--surface);
+  background-color: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--r-md);
   padding: 0.6rem 0.75rem;
@@ -316,7 +317,7 @@
   font-size: 0.9375rem;
   width: 100%;
   color: var(--ink);
-  background: var(--surface);
+  background-color: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--r-md);
   padding: 0.6rem 0.75rem;
