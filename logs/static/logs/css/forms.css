@@ -18,16 +18,31 @@
   margin-inline: auto;
 }
 
+/* Spacing is carried by margins on the labels, not a flex gap on the form.
+   These fields are hand-rendered with no wrapper, so a gap applies the same
+   distance between a label and its own input as between two separate fields —
+   which leaves every label floating equidistant from the control above it and
+   the one below, binding to neither. The margin only ever precedes a label, so
+   the pair reads as a pair. */
 .form-card .card-body > form {
-  display: flex;
-  flex-direction: column;
-  gap: 1.1rem;
+  display: block;
 }
 
-/* Hand-rendered fields have no wrapping element, so the label sits directly
-   above its control and the pair is spaced by the form's own gap. */
-.form-card .card-body > form > small {
-  margin-top: -0.75rem;
+.form-card .card-body > form > label,
+.form-card .field-group > label,
+.form-card .field-row {
+  margin-top: 1.35rem;
+}
+
+.form-card .card-body > form > label:first-of-type,
+.form-card .field-group > label:first-of-type,
+.form-card .field-row label {
+  margin-top: 0;
+}
+
+.form-card small {
+  display: block;
+  margin-top: 0.4rem;
 }
 
 /* The templates hand-render fields without a wrapping element, so the label /
@@ -72,6 +87,42 @@
   gap: 1rem;
 }
 
+/* ------------------------------ field groups ----------------------------- */
+/* Related fields carry a heading and their own spacing instead of a border or
+   a tinted panel. A nested bordered box inside an already-bordered card reads
+   as two containers arguing; the heading and the gap are enough to say "these
+   four belong together". */
+.field-group {
+  border: 0;
+  padding: 0;
+  /* Fieldsets default to min-width: min-content, which stops the grid child
+     above from shrinking and pushes the form wider than its card. */
+  min-width: 0;
+  /* Matches the gap that precedes an ordinary label, so the group starts a new
+     field rather than crowding the control above it. */
+  margin: 1.35rem 0 0;
+}
+
+.field-group > legend {
+  padding: 0;
+  margin-bottom: 0.9rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+/* Marks a field as not required, inline with its label, without shouting. */
+.optional {
+  margin-left: 0.4rem;
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--ink-3);
+}
+
+.field-group > legend .optional {
+  font-weight: 400;
+}
+
 .field-hint {
   margin-top: 0.3rem;
   font-size: 0.75rem;
@@ -103,7 +154,7 @@
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  padding-top: 0.25rem;
+  margin-top: 1.75rem;
 }
 
 .button-group button[type="submit"] {

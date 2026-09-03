@@ -914,3 +914,83 @@ class InsulinWeeklySplitTest(TestCase):
         yesterday = days[(self.now - timedelta(days=1)).date()]
         self.assertEqual(today["basal_share"], 100)
         self.assertEqual(yesterday["bolus_share"], 100)
+
+
+class GlucoseFormGuidanceTest(TestCase):
+    """The add form states the band the user actually set, not the default."""
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="guide", email="guide@example.com", password="pw12345!"
+        )
+        self.client.login(email="guide@example.com", password="pw12345!")
+
+    def test_states_the_users_own_band(self):
+        prefs = self.user.preferences
+        prefs.target_low = Decimal("4.4")
+        prefs.target_high = Decimal("8.8")
+        prefs.save()
+
+        response = self.client.get(reverse("add-glucose"))
+        self.assertEqual(response.context["range_low"], 4.4)
+        self.assertEqual(response.context["range_high"], 8.8)
+        self.assertContains(response, "4.4")
+        self.assertContains(response, "8.8")
+
+    def test_the_band_is_stated_in_the_users_display_unit(self):
+        prefs = self.user.preferences
+        prefs.glucose_unit = UserPreferences.GLUCOSE_UNIT_MGDL
+        prefs.save()
+
+        response = self.client.get(reverse("add-glucose"))
+        # 3.9 and 10.0 mmol/L, converted for a mg/dL reader
+        self.assertEqual(response.context["range_low"], 70.2)
+        self.assertEqual(response.context["range_high"], 180.0)
+
+
+class FormRerenderKeepsInputTest(TestCase):
+    """A rejected submit must re-render with what was typed, never redirect.
+
+    CLAUDE.md records this as a shipped bug: redirecting rebuilt the form from
+    the database and silently discarded the user's entry. The restructured
+    templates must not have reintroduced it.
+    """
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="keep", email="keep@example.com", password="pw12345!"
+        )
+        self.client.login(email="keep@example.com", password="pw12345!")
+
+    def test_glucose_keeps_the_rejected_value_and_note(self):
+        response = self.client.post(
+            reverse("add-glucose"),
+            {"value": "999", "context": "fasting", "note": "after a run"},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "999")
+        self.assertContains(response, "after a run")
+
+    def test_meal_keeps_every_macro_it_was_given(self):
+        response = self.client.post(
+            reverse("add-meal"),
+            {
+                "note": "Pasta",
+                "carbs": "-5",
+                "protein": "20",
+                "fats": "11",
+                "context": "dinner",
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Pasta")
+        self.assertContains(response, "20")
+        self.assertContains(response, "11")
+
+    def test_insulin_keeps_the_rejected_entry(self):
+        response = self.client.post(
+            reverse("add-insulin"),
+            {"units": "-4", "insulin_type": "bolus", "brand": "NovoRapid"},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "NovoRapid")

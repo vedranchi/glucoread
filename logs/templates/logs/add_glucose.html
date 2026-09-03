@@ -23,7 +23,7 @@
             {% else %}
                 <h2>Add glucose reading</h2>
             {% endif %}
-            <p class="card-desc">Readings are stored in mmol/L and shown in your chosen unit.</p>
+            <p class="card-desc">Stored in mmol/L, shown in the unit you have chosen.</p>
         </div>
     </div>
     <div class="card-body">
@@ -31,7 +31,7 @@
     <form method="POST">
         {% csrf_token %}
         
-        <label for="value">Glucose Value ({{ unit_label }})</label>
+        <label for="value">Glucose reading ({{ unit_label }})</label>
         <input
             type="number"
             name="value"
@@ -44,10 +44,14 @@
         {% if error %}
         <p class="error-message">{{ error }}</p>
         {% endif %}
+        <small class="field-hint">
+            Your target range is {{ range_low }}&ndash;{{ range_high }} {{ unit_label }}.
+            Anything outside it is flagged on the log and the chart.
+        </small>
 
-        <label for="context">Context</label>
+        <label for="context">When it was taken</label>
         <select name="context" id="context">
-            <option value="">Select context</option>
+            <option value="">Select when</option>
             <option value="fasting" {% if form.context == 'fasting' %}selected{% endif %}>Fasting</option>
             <option value="before meal" {% if form.context == 'before meal' %}selected{% endif %}>Before Meal</option>
             <option value="after meal" {% if form.context == 'after meal' %}selected{% endif %}>After Meal</option>
@@ -55,12 +59,12 @@
             <option value="other" {% if form.context == 'other' %}selected{% endif %}>Other</option>
         </select>
 
-        <label for="note">Note</label>
+        <label for="note">Note <span class="optional">optional</span></label>
         <input
             type="text"
             name="note"
             id="note"
-            placeholder="Optional note"
+            placeholder="e.g. before a run"
             maxlength="255"
             value="{{ form.note|default_if_none:'' }}"
         >
@@ -68,9 +72,9 @@
         <div class="button-group">
             <button type="submit">
                 {% if request.resolver_match.url_name == 'edit-glucose' %}
-                    Save Changes
+                    Save changes
                 {% else %}
-                    Log Reading
+                    Log reading
                 {% endif %}
             </button>
             <a href="{% url 'log-glucose' %}" class="cancel-link">Cancel</a>
@@ -81,7 +85,7 @@
     <div class="danger-zone">
     <form method="post" action="{% url 'delete-glucose' pk=glucose.id %}" onsubmit="return confirm('Are you sure you want to delete this glucose reading?');">
         {% csrf_token %}
-        <button type="submit" class="btn-delete"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-trash-2" /></svg>Delete Reading</button>
+        <button type="submit" class="btn-delete"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-trash-2" /></svg>Delete reading</button>
     </form>
     </div>
     {% endif %}

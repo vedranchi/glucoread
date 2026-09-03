@@ -410,6 +410,11 @@ def add_glucose(request, pk=None):
             "unit_label": unit_label,
             "error": error,
             "form": form,
+            # The form asks for a number without saying what counts as in
+            # range. The user's own band is already stored, so state it rather
+            # than leaving them to remember it. Display units, like the field.
+            "range_low": to_display(profile.target_low, is_mgdl),
+            "range_high": to_display(profile.target_high, is_mgdl),
         },
     )
 
