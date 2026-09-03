@@ -142,3 +142,137 @@
     padding-top: 0.6rem;
   }
 }
+
+/* ==========================================================================
+   Insulin: the weekly basal/bolus split.
+
+   The card's point is the ratio between the two, which three numeric columns
+   stated but never showed. One bar per day carries it at a glance; the figures
+   stay beside it, because a bar alone cannot be read off precisely and a dose
+   is not something to estimate from a picture.
+
+   Two tones only — the page's own --insulin for bolus, and a neutral for
+   basal. Basal is the flat background dose, so the quiet tone is the correct
+   one: what varies day to day is the bolus.
+   ========================================================================== */
+.daylist {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.day {
+  display: grid;
+  grid-template-columns: 5.5rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 1rem;
+}
+
+.day-date {
+  font-size: 0.8125rem;
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+
+.split {
+  display: flex;
+  height: 10px;
+  border-radius: var(--r-pill);
+  overflow: hidden;
+  background: var(--paper-2);
+}
+
+.split > span {
+  display: block;
+  height: 100%;
+}
+
+.split .is-basal {
+  background: var(--ink-3);
+}
+
+.split .is-bolus {
+  background: var(--insulin);
+}
+
+/* A day with doses logged but no units recorded still gets its track, so the
+   row does not collapse and lose its rhythm. */
+.split.is-empty {
+  background: var(--line-soft);
+}
+
+.day-total {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--ink);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.day-breakdown {
+  font-size: 0.75rem;
+  color: var(--ink-3);
+}
+
+/* Key sits in the card head, so the bars need no repeated labelling. */
+.split-key {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-size: 0.75rem;
+  color: var(--ink-3);
+}
+
+.split-key span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.split-key i {
+  width: 10px;
+  height: 10px;
+  border-radius: var(--r-pill);
+}
+
+.split-key .is-basal i {
+  background: var(--ink-3);
+}
+
+.split-key .is-bolus i {
+  background: var(--insulin);
+}
+
+/* Brand sits inside the row title as supporting detail, not as a badge — it
+   is free text, so it must not look like the constrained type value beside it. */
+.row-brand {
+  font-size: 0.8125rem;
+  color: var(--ink-3);
+}
+
+@media (max-width: 720px) {
+  .day {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "date total"
+      "split split";
+    gap: 0.4rem 1rem;
+  }
+
+  .day-date {
+    grid-area: date;
+  }
+
+  .day-total {
+    grid-area: total;
+  }
+
+  .split {
+    grid-area: split;
+  }
+}

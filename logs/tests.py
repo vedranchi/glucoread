@@ -844,3 +844,73 @@ class BreadUnitDisplayTest(TestCase):
         )
         response = self.client.get(reverse("log-meal"))
         self.assertIsNone(response.context["recent_meals"][0].bread_units)
+
+
+class InsulinWeeklySplitTest(TestCase):
+    """Each day's basal/bolus share, computed in the view.
+
+    The percentages drive a bar, so they must be whole and must always sum to
+    100 — a rounded pair that sums to 99 leaves a visible gap in the track.
+    """
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="ins", email="ins@example.com", password="pw12345!"
+        )
+        self.client.login(email="ins@example.com", password="pw12345!")
+        self.now = timezone.now()
+
+    def _dose(self, units, insulin_type, days_ago=0):
+        InsulinLog.objects.create(
+            user=self.user,
+            units=Decimal(units),
+            insulin_type=insulin_type,
+            taken_at=self.now - timedelta(days=days_ago),
+        )
+
+    def _days(self):
+        return self.client.get(reverse("log-insulin")).context["weekly_insulin"]
+
+    def test_an_even_day_splits_in_half(self):
+        self._dose("10.0", "basal")
+        self._dose("10.0", "bolus")
+        day = self._days()[0]
+        self.assertEqual(day["basal_share"], 50)
+        self.assertEqual(day["bolus_share"], 50)
+
+    def test_shares_always_sum_to_one_hundred(self):
+        """Rounding each side independently would leave a gap in the bar."""
+        self._dose("10.0", "basal")
+        self._dose("20.0", "bolus")
+        day = self._days()[0]
+        self.assertEqual(day["basal_share"] + day["bolus_share"], 100)
+        self.assertEqual(day["basal_share"], 33)
+        self.assertEqual(day["bolus_share"], 67)
+
+    def test_a_basal_only_day_is_entirely_basal(self):
+        self._dose("14.0", "basal")
+        day = self._days()[0]
+        self.assertEqual(day["basal_share"], 100)
+        self.assertEqual(day["bolus_share"], 0)
+
+    def test_a_bolus_only_day_is_entirely_bolus(self):
+        self._dose("6.0", "bolus")
+        day = self._days()[0]
+        self.assertEqual(day["basal_share"], 0)
+        self.assertEqual(day["bolus_share"], 100)
+
+    def test_a_day_with_no_units_recorded_has_no_share(self):
+        """Zero units must not divide by zero; the row shows an empty track."""
+        self._dose("0.0", "basal")
+        day = self._days()[0]
+        self.assertIsNone(day["basal_share"])
+        self.assertIsNone(day["bolus_share"])
+
+    def test_each_day_is_scored_separately(self):
+        self._dose("10.0", "basal", days_ago=0)
+        self._dose("10.0", "bolus", days_ago=1)
+        days = {d["date"]: d for d in self._days()}
+        today = days[(self.now).date()]
+        yesterday = days[(self.now - timedelta(days=1)).date()]
+        self.assertEqual(today["basal_share"], 100)
+        self.assertEqual(yesterday["bolus_share"], 100)

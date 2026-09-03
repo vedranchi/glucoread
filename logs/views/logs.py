@@ -90,6 +90,22 @@ def log_insulin(request):
         .order_by("-date")
     )
 
+    # The card's point is the basal/bolus split, so each day carries its own
+    # share as a percentage. Computed here, never in the template: `add`
+    # coerces through int(), which is what shipped a wrong insulin total to
+    # production once already. A day with no units recorded gets no bar rather
+    # than a division by zero.
+    for day in weekly_insulin:
+        basal = day["basal_units"] or 0
+        bolus = day["bolus_units"] or 0
+        recorded = basal + bolus
+        if recorded > 0:
+            day["basal_share"] = round(basal / recorded * 100)
+            day["bolus_share"] = 100 - day["basal_share"]
+        else:
+            day["basal_share"] = None
+            day["bolus_share"] = None
+
     # doses the user marked as corrections (note="correction", case-insensitive)
     correction_logs = list(
         InsulinLog.objects.filter(

@@ -65,10 +65,15 @@
   --tone-line: var(--danger-soft);
 }
 
+/* The quiet tone, for a value that is deliberately not colour-coded — basal
+   insulin, which is the flat background dose. --surface rather than --paper-2
+   for the soft fill: rows are themselves --paper-2, so a puck filled with it
+   vanished into the row it sat on. This pairs with the grey half of the
+   basal/bolus split bar, so the two say the same thing. */
 .t-neutral {
   --tone: var(--ink-2);
-  --tone-soft: var(--paper-2);
-  --tone-wash: var(--paper-2);
+  --tone-soft: var(--surface);
+  --tone-wash: var(--surface);
   --tone-line: var(--line);
 }
 
