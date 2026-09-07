@@ -71,12 +71,22 @@ def log_insulin(request):
         )
     recent_activity = sorted(recent_activity, key=lambda a: a["when"], reverse=True)[:5]
 
-    last_seven_days = timezone.now() - timedelta(days=7)
+    # Seven calendar days ending today, matching the glucose weekly summary.
+    #
+    # This was a rolling `now - 7 days` instant, which does not survive the
+    # TruncDate grouping below: the oldest group was whatever part of that day
+    # happened to fall after the cutoff, but the card presents each group as a
+    # whole day's total and draws its basal/bolus split from it. A day holding
+    # 20 U basal in the morning and 6 U bolus in the evening rendered as "6 U,
+    # all bolus" once the morning dose aged past the instant — a wrong insulin
+    # figure, and an inverted split. It also produced an eighth row under a
+    # heading that says seven.
+    last_seven_days = timezone.localdate() - timedelta(days=6)
 
     # daily basal/bolus totals for the weekly chart
     weekly_insulin = list(
         InsulinLog.objects.filter(
-            user=request.user, taken_at__gte=last_seven_days, is_deleted=False
+            user=request.user, taken_at__date__gte=last_seven_days, is_deleted=False
         )
         .annotate(date=TruncDate("taken_at"))
         .values("date")
@@ -110,10 +120,12 @@ def log_insulin(request):
             day["bolus_share"] = None
 
     # doses the user marked as corrections (note="correction", case-insensitive)
+    # Same window as the card above: both are labelled "last seven days" on the
+    # one page, so they must not mean two different things.
     correction_logs = list(
         InsulinLog.objects.filter(
             user=request.user,
-            taken_at__gte=last_seven_days,
+            taken_at__date__gte=last_seven_days,
             note__iexact="correction",
             is_deleted=False,
         )

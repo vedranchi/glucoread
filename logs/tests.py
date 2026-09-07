@@ -16,7 +16,7 @@ from logs.conversions import (
 )
 from users.models import UserPreferences
 from django.utils import timezone
-from datetime import timedelta
+from datetime import datetime, time, timedelta
 
 User = get_user_model()
 
@@ -1204,3 +1204,93 @@ class LocalDayBoundaryTest(TestCase):
             self.assertEqual(response.context["chart_date"], timezone.localdate())
             self.assertEqual(response.context["glucose_values"], [6.1])
             self.assertIsNone(response.context["next_chart_date"])
+
+
+class InsulinWeekIsCalendarDaysTest(TestCase):
+    """The weekly card groups by calendar date, so its window must be one too.
+
+    The filter was a rolling `now - 7 days` instant while the rows were grouped
+    with TruncDate. The oldest group was therefore only the part of that day
+    falling after the cutoff — but the card presents each group as a whole day's
+    total and draws its basal/bolus split bar from it. A day of 20 U basal in
+    the morning and 6 U bolus at night rendered as "6 U, all bolus" once the
+    morning dose aged past the instant: a wrong insulin figure and an inverted
+    split. It also yielded an eighth row under a heading that says seven.
+    """
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="week", email="week@example.com", password="pw12345!"
+        )
+        self.client.login(email="week@example.com", password="pw12345!")
+
+    @staticmethod
+    def _in_the_dropped_tail():
+        """An instant the old window kept and the calendar window does not.
+
+        The old cutoff is `now - 7 days`; the new one is local midnight seven
+        calendar days back, which is always the later of the two. The span
+        between them is the tail of that eighth day, and it is never empty —
+        so its midpoint reproduces the bug whatever hour the suite runs at.
+        A hard-coded timestamp would only land there for part of the day.
+        """
+        old_cutoff = timezone.now() - timedelta(days=7)
+        new_cutoff = timezone.make_aware(
+            datetime.combine(timezone.localdate() - timedelta(days=6), time.min),
+            timezone.get_current_timezone(),
+        )
+        return old_cutoff + (new_cutoff - old_cutoff) / 2
+
+    def _dose(self, units, insulin_type, when, note=""):
+        dose = InsulinLog.objects.create(
+            user=self.user, units=Decimal(units), insulin_type=insulin_type, note=note
+        )
+        InsulinLog.objects.filter(pk=dose.pk).update(taken_at=when)
+        return dose
+
+    def test_the_eighth_day_is_not_reported_as_a_whole_one(self):
+        tail = self._in_the_dropped_tail()
+        # Both doses sit on the same calendar day; only the later one survived
+        # the rolling cutoff, so that day was summarised from half its data.
+        self._dose("20.0", "basal", tail - timedelta(hours=3))
+        self._dose("6.0", "bolus", tail)
+        self._dose("10.0", "basal", timezone.now())
+
+        rows = self.client.get(reverse("log-insulin")).context["weekly_insulin"]
+        dates = [row["date"] for row in rows]
+
+        self.assertNotIn(
+            timezone.localtime(tail).date(),
+            dates,
+            "a day outside the seven cannot appear, least of all half-summed",
+        )
+        self.assertLessEqual(len(rows), 7, "seven calendar days means seven rows")
+        self.assertEqual(dates, [timezone.localdate()])
+
+    def test_a_day_inside_the_window_reports_all_of_itself(self):
+        """The point of the fix: whole days, whatever the hour of the run."""
+        midnight = timezone.make_aware(
+            datetime.combine(timezone.localdate() - timedelta(days=3), time.min),
+            timezone.get_current_timezone(),
+        )
+        self._dose("20.0", "basal", midnight + timedelta(minutes=30))
+        self._dose("6.0", "bolus", midnight + timedelta(hours=23))
+
+        rows = self.client.get(reverse("log-insulin")).context["weekly_insulin"]
+        day = next(r for r in rows if r["date"] == midnight.date())
+
+        self.assertEqual(day["total_units"], Decimal("26.0"))
+        self.assertEqual(day["basal_units"], Decimal("20.0"))
+        self.assertEqual(day["bolus_units"], Decimal("6.0"))
+        # 20 of 26 is basal — the bar must not read as an all-bolus day.
+        self.assertEqual(day["basal_share"], 77)
+        self.assertEqual(day["bolus_share"], 23)
+
+    def test_corrections_use_the_same_window_as_the_card(self):
+        """Both are labelled "last seven days" on the one page."""
+        self._dose("4.0", "bolus", self._in_the_dropped_tail(), note="correction")
+
+        corrections = self.client.get(reverse("log-insulin")).context[
+            "weekly_corrections"
+        ]
+        self.assertEqual(corrections, [])
