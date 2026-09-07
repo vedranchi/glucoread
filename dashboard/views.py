@@ -17,7 +17,10 @@ def dashboard(request):
     is_mgdl = profile.glucose_unit == UserPreferences.GLUCOSE_UNIT_MGDL
     unit_label = "mg/dL" if is_mgdl else "mmol/L"
 
-    today = timezone.now().date()
+    # localdate(), never now().date(): the __date lookups below resolve in
+    # TIME_ZONE, so a UTC date empties the whole page for the first hours of
+    # the local day.
+    today = timezone.localdate()
 
     glucose_today = GlucoseLog.objects.filter(
         user=request.user, measured_at__date=today, is_deleted=False

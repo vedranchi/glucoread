@@ -1125,3 +1125,82 @@ class CsvExportTest(TestCase):
         )
         self.assertEqual(response.status_code, 302)
         self.assertIn("/login", response["Location"])
+
+
+class LocalDayBoundaryTest(TestCase):
+    """"Today" must mean the user's day, not UTC's.
+
+    Every "today" queryset pairs a Python date with a `__date` lookup, and that
+    lookup resolves in TIME_ZONE. Computing the date with `timezone.now().date()`
+    therefore made the two disagree for the first hours of the local day: a
+    reading logged at 1am matched no filter and every surface — dashboard cards,
+    the header chip, the range meter, all three log pages — reported an empty
+    day back to the person who had just logged it.
+
+    Europe/Skopje is only UTC+2/+3, so the window is a couple of hours a night
+    and easy to miss by hand. The offset below is picked to put the test inside
+    that window whatever time it runs at.
+    """
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="boundary", email="boundary@example.com", password="pw12345!"
+        )
+        self.client.login(email="boundary@example.com", password="pw12345!")
+
+    @staticmethod
+    def _skewed_timezone():
+        """A zone whose local date is guaranteed to differ from the UTC date.
+
+        Ahead of UTC once UTC is past 10:00, behind it before then — so one of
+        the two always straddles a date line at the moment the suite runs. A
+        fixed zone would only reproduce the bug for part of the day and would
+        otherwise pass against the broken code.
+        """
+        return "Pacific/Kiritimati" if timezone.now().hour >= 10 else "Pacific/Niue"
+
+    def test_a_reading_logged_now_counts_as_today_everywhere(self):
+        with self.settings(TIME_ZONE=self._skewed_timezone()):
+            timezone.deactivate()
+            self.assertNotEqual(
+                timezone.localdate(),
+                timezone.now().date(),
+                "the test zone must actually straddle a date boundary",
+            )
+
+            GlucoseLog.objects.create(user=self.user, value=Decimal("5.5"))
+            InsulinLog.objects.create(
+                user=self.user, units=Decimal("8.0"), insulin_type="bolus"
+            )
+            MealLog.objects.create(user=self.user, carbs=Decimal("30.0"))
+
+            dashboard = self.client.get(reverse("glucoread-dashboard"))
+            self.assertEqual(dashboard.context["glucose_count_today"], 1)
+            self.assertEqual(dashboard.context["insulin_count_today"], 1)
+            self.assertEqual(dashboard.context["meal_count_today"], 1)
+
+            # The shell chip and range meter come from the context processor,
+            # which had its own copy of the same date arithmetic.
+            self.assertIsNotNone(dashboard.context["latest_reading"])
+            self.assertEqual(dashboard.context["reading_count"], 1)
+            self.assertEqual(dashboard.context["time_in_range"], 100)
+
+            glucose = self.client.get(reverse("log-glucose"))
+            self.assertEqual(glucose.context["reading_count"], 1)
+
+            insulin = self.client.get(reverse("log-insulin"))
+            self.assertEqual(insulin.context["total_units_today"], Decimal("8.0"))
+
+            meal = self.client.get(reverse("log-meal"))
+            self.assertEqual(meal.context["carbs_today"], Decimal("30.0"))
+
+    def test_the_chart_plots_todays_readings(self):
+        """The dashboard chart defaults to `today` and clamps "next" against it."""
+        with self.settings(TIME_ZONE=self._skewed_timezone()):
+            timezone.deactivate()
+            GlucoseLog.objects.create(user=self.user, value=Decimal("6.1"))
+
+            response = self.client.get(reverse("glucoread-dashboard"))
+            self.assertEqual(response.context["chart_date"], timezone.localdate())
+            self.assertEqual(response.context["glucose_values"], [6.1])
+            self.assertIsNone(response.context["next_chart_date"])

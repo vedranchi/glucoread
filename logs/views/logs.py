@@ -37,7 +37,10 @@ def clean_text(value, max_length, label):
 
 @login_required
 def log_insulin(request):
-    today = timezone.now().date()
+    # localdate(), never now().date(): the __date lookups in this module all
+    # resolve in TIME_ZONE, so a UTC date disagrees with them for the first
+    # hours of the local day and reports an empty one.
+    today = timezone.localdate()
     insulin_today = InsulinLog.objects.filter(
         user=request.user, taken_at__date=today, is_deleted=False
     )
@@ -215,7 +218,7 @@ def log_glucose(request):
     is_mgdl = profile.glucose_unit == UserPreferences.GLUCOSE_UNIT_MGDL
     unit_label = "mg/dL" if is_mgdl else "mmol/L"
 
-    today = timezone.now().date()
+    today = timezone.localdate()
 
     # most recent reading across all time, not just today
     current_glucose = (
@@ -258,7 +261,7 @@ def log_glucose(request):
     )
 
     # daily averages for the weekly summary table
-    last_seven_days = timezone.now().date() - timedelta(days=6)
+    last_seven_days = timezone.localdate() - timedelta(days=6)
     weekly_glucose = list(
         GlucoseLog.objects.filter(
             user=request.user, measured_at__date__gte=last_seven_days, is_deleted=False
@@ -431,7 +434,7 @@ def delete_glucose_reading(request, pk):
 
 @login_required
 def log_meal(request):
-    today = timezone.now().date()
+    today = timezone.localdate()
     preferences, _ = UserPreferences.objects.get_or_create(user=request.user)
     bread_unit_grams = preferences.bread_unit_grams
 

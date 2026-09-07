@@ -48,7 +48,11 @@ def shell(request):
     is_mgdl = preferences.glucose_unit == UserPreferences.GLUCOSE_UNIT_MGDL
     unit_label = "mg/dL" if is_mgdl else "mmol/L"
 
-    today = timezone.now().date()
+    # localdate(), never now().date(). The __date lookup below resolves in
+    # TIME_ZONE, so pairing it with a UTC date makes the two disagree for the
+    # first hours of the local day — and this chip is what tells a user their
+    # 1am reading registered at all.
+    today = timezone.localdate()
     today_readings = GlucoseLog.objects.filter(
         user=user, measured_at__date=today, is_deleted=False
     )
