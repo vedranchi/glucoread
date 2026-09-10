@@ -1,7 +1,9 @@
 import re
+from datetime import datetime
 from decimal import Decimal
 
 from django.test import TestCase
+from django.utils import timezone
 from django.urls import reverse
 from django.contrib.auth import get_user_model
 
@@ -140,3 +142,79 @@ class ExternalScriptIntegrityTest(TestCase):
             response.content.decode(), "the landing page"
         )
         self.assertTrue(tags, "expected the landing page to load Chart.js from a CDN")
+
+
+class ChartLabelTimezoneTest(TestCase):
+    """The chart's x-axis has to agree with every other time on the page.
+
+    `measured_at` comes back from the database as an aware UTC datetime, and
+    strftime() formats whatever tzinfo it carries. So the labels were UTC while
+    the activity list beside them went through the |date filter, which
+    localises — the two disagreed by the offset.
+
+    Across midnight it was worse than an offset. The queryset orders by real
+    time and filters on the *local* date, so a local day's readings came out in
+    the right order but carried the previous UTC day's hours: an axis reading
+    22:00, 23:00, 00:00, 01:00 for one day.
+
+    chart_date is passed explicitly throughout so these do not depend on what
+    "today" is when the suite runs.
+    """
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="tz", email="tz@example.com", password="pw12345!"
+        )
+        self.client.login(email="tz@example.com", password="pw12345!")
+
+    def _reading_at(self, year, month, day, hour, minute):
+        """Create a reading at a wall-clock time in the project's timezone."""
+        moment = timezone.make_aware(
+            datetime(year, month, day, hour, minute),
+            timezone.get_current_timezone(),
+        )
+        return GlucoseLog.objects.create(
+            user=self.user, value=Decimal("5.5"), measured_at=moment
+        )
+
+    def _labels_for(self, date_string):
+        response = self.client.get(
+            reverse("glucoread-dashboard"), {"chart_date": date_string}
+        )
+        return response.context["glucose_labels"]
+
+    def test_a_reading_is_labelled_with_the_time_it_was_taken(self):
+        self._reading_at(2026, 1, 15, 14, 30)
+        self.assertEqual(self._labels_for("2026-01-15"), ["14:30"])
+
+    def test_a_reading_just_after_midnight_keeps_its_own_date(self):
+        """The case that made the axis wrap. In January the project timezone is
+        UTC+1, so 00:30 local is 23:30 UTC on the *previous* day."""
+        self._reading_at(2026, 1, 15, 0, 30)
+        self.assertEqual(self._labels_for("2026-01-15"), ["00:30"])
+
+    def test_a_summer_reading_uses_the_summer_offset(self):
+        """July is UTC+2, so a fixed offset would not have fixed this either —
+        it has to go through the timezone, not a constant."""
+        self._reading_at(2026, 7, 15, 9, 15)
+        self.assertEqual(self._labels_for("2026-07-15"), ["09:15"])
+
+    def test_a_whole_day_reads_in_order_without_wrapping(self):
+        for hour, minute in ((0, 15), (8, 0), (13, 45), (23, 50)):
+            self._reading_at(2026, 1, 15, hour, minute)
+        labels = self._labels_for("2026-01-15")
+        self.assertEqual(labels, ["00:15", "08:00", "13:45", "23:50"])
+        # Ordering is by real time, so a correct axis is also a sorted one.
+        self.assertEqual(labels, sorted(labels))
+
+    def test_the_labels_agree_with_the_activity_feed(self):
+        """Both surfaces render the same reading; they must not disagree."""
+        self._reading_at(2026, 1, 15, 6, 45)
+        response = self.client.get(
+            reverse("glucoread-dashboard"), {"chart_date": "2026-01-15"}
+        )
+        chart_label = response.context["glucose_labels"][0]
+        feed_time = timezone.localtime(
+            GlucoseLog.objects.get(user=self.user).measured_at
+        ).strftime("%H:%M")
+        self.assertEqual(chart_label, feed_time)
