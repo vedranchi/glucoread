@@ -248,10 +248,18 @@
 {% endblock %}
 
 {% block extra_js %}
+{# Pinned to dist/chart.umd.js, the file that actually ships in the npm
+   package -- the .min.js this used to name does not exist upstream, jsdelivr
+   synthesises it by minifying this one on request. That made the hash
+   unverifiable against any canonical artefact, and tied it to jsdelivr's
+   minifier: a change there would fail SRI and silently blank the chart. This
+   hash was checked byte-for-byte against the chart.js 4.4.7 npm tarball. The
+   packaged build is already minified and is marginally smaller. #}
 <script
-  src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"
-  integrity="sha384-vsrfeLOOY6KuIYKDlmVH5UiBmgIdB1oEf7p01YgWHuqmOHfZr374+odEv96n9tNC"
+  src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.js"
+  integrity="sha384-zYPBGXwO4633CABX/5Spf6emCKUJCfoOkhOMYyxMsatqQZPnDblmmOewfjsIVWCM"
   crossorigin="anonymous"
+  referrerpolicy="no-referrer"
 ></script>
 <script src="{% static 'dashboard/js/dashboard.js' %}"></script>
 {% endblock %}

@@ -1,3 +1,4 @@
+import re
 from decimal import Decimal
 
 from django.test import TestCase
@@ -87,3 +88,55 @@ class RecentActivityLabelTest(TestCase):
     def test_meal_with_a_note_still_shows_it(self):
         MealLog.objects.create(user=self.user, note="Chicken wrap", context="lunch")
         self.assertEqual(self._labels(), ["Meal (Chicken wrap)"])
+
+class ExternalScriptIntegrityTest(TestCase):
+    """Every third-party script must be pinned AND hash-checked.
+
+    Chart.js is the only script this app loads from a CDN, and it runs on the
+    authenticated dashboard with full DOM access. A version pin alone does not
+    help if the CDN serves something else under that version, so the tag needs
+    `integrity`. This asserts it over the rendered HTML rather than the
+    template source, so a tag added via an include or a base template is
+    covered too.
+    """
+
+    # src="..." on any absolute URL, plus whatever else is in the tag.
+    _EXTERNAL_SCRIPT = re.compile(
+        r"<script\b[^>]*\bsrc=[\"']https?://[^>]*>", re.IGNORECASE | re.DOTALL
+    )
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="sri", email="sri@example.com", password="pw12345!"
+        )
+
+    def _assert_all_pinned(self, html, page):
+        tags = self._EXTERNAL_SCRIPT.findall(html)
+        for tag in tags:
+            self.assertIn(
+                "integrity=",
+                tag,
+                f"{page} loads a script from a third party with no subresource "
+                f"integrity hash: {tag[:120]}",
+            )
+            # Without CORS the browser cannot read the response to hash it, and
+            # silently declines to enforce integrity at all.
+            self.assertIn("crossorigin=", tag, f"{page}: {tag[:120]}")
+        return tags
+
+    def test_the_dashboard_pins_every_external_script(self):
+        self.client.login(email="sri@example.com", password="pw12345!")
+        response = self.client.get(reverse("glucoread-dashboard"))
+        tags = self._assert_all_pinned(
+            response.content.decode(), "the dashboard"
+        )
+        # Guards the regex itself: if it stops matching, the loop above passes
+        # vacuously and this test would protect nothing.
+        self.assertTrue(tags, "expected the dashboard to load Chart.js from a CDN")
+
+    def test_the_landing_page_pins_every_external_script(self):
+        response = self.client.get(reverse("glucoread-home"))
+        tags = self._assert_all_pinned(
+            response.content.decode(), "the landing page"
+        )
+        self.assertTrue(tags, "expected the landing page to load Chart.js from a CDN")

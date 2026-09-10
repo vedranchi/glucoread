@@ -303,11 +303,14 @@
       </div>
     </footer>
 
-    <!-- same charting library the dashboard uses, pinned and hash-checked -->
+    <!-- Same charting library the dashboard uses, pinned and hash-checked
+         against the npm tarball. See the note in dashboard.html for why this
+         names chart.umd.js rather than a .min.js jsdelivr builds on the fly. -->
     <script
-      src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"
-      integrity="sha384-vsrfeLOOY6KuIYKDlmVH5UiBmgIdB1oEf7p01YgWHuqmOHfZr374+odEv96n9tNC"
+      src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.js"
+      integrity="sha384-zYPBGXwO4633CABX/5Spf6emCKUJCfoOkhOMYyxMsatqQZPnDblmmOewfjsIVWCM"
       crossorigin="anonymous"
+      referrerpolicy="no-referrer"
       defer
     ></script>
     <script src="{% static 'main/js/theme.js' %}" defer></script>
