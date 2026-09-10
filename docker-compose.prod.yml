@@ -58,7 +58,14 @@ services:
     environment:
       SITE_DOMAIN: ${SITE_DOMAIN}
     volumes:
-      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      # A DIRECTORY, not the Caddyfile itself. Docker resolves a single-file
+      # bind mount to an inode when the container starts, and git replaces a
+      # file rather than editing it in place — so after a deploy the container
+      # went on serving the pre-merge Caddyfile while the checkout showed the
+      # new one. `caddy reload` then validated and applied that stale file and
+      # logged success. A directory mount resolves by path on every lookup, so
+      # the replacement is seen normally.
+      - ./deploy/caddy:/etc/caddy:ro
       - static_data:/srv/static:ro
       - media_data:/srv/media:ro
       - caddy_data:/data
