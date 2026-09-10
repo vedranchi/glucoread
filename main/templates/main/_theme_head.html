@@ -15,8 +15,13 @@ page's own stylesheet after it.
 />
 <link rel="stylesheet" href="{% static 'main/css/theme.css' %}" />
 
-{# Runs before first paint so a stored choice never flashes the other theme. #}
-<script>
+{% comment %}
+  Runs before first paint so a stored choice never flashes the other theme.
+  The nonce is what lets it run at all under the CSP — see
+  main.middleware.ContentSecurityPolicyMiddleware. Any inline script added
+  anywhere in this app needs one too.
+{% endcomment %}
+<script nonce="{{ request.csp_nonce }}">
   (function () {
     var choice = null;
     try {

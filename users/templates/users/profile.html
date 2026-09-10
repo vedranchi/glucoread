@@ -203,7 +203,7 @@ Account Settings — GlucoRead
   the current one. Production hashes static filenames and would not have this
   problem, but the control has to work while it is being built too.
 {% endcomment %}
-<script>
+<script nonce="{{ request.csp_nonce }}">
   (function () {
     var reset = document.querySelector("[data-reset-targets]");
     if (!reset) return;

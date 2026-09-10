@@ -1,7 +1,9 @@
 import csv
 import io
 from decimal import Decimal
+from pathlib import Path
 
+from django.conf import settings
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 from django.forms.models import model_to_dict
@@ -1294,3 +1296,42 @@ class InsulinWeekIsCalendarDaysTest(TestCase):
             "weekly_corrections"
         ]
         self.assertEqual(corrections, [])
+
+
+class DeleteConfirmationTest(TestCase):
+    """The delete prompt moved out of the markup, so something must hold it.
+
+    It used to be onsubmit="return confirm(...)" on each delete form. CSP
+    cannot authorise an inline event handler with a nonce, so the prompt now
+    comes from a delegated listener in base.js keyed off data-confirm. That
+    split means the attribute and the listener can drift apart silently, and
+    the failure mode is a medical record deleted with no confirmation at all.
+    """
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="confirm", email="confirm@example.com", password="pw12345!"
+        )
+        self.client.login(email="confirm@example.com", password="pw12345!")
+
+    def test_every_delete_form_asks_for_confirmation(self):
+        records = {
+            "edit-glucose": GlucoseLog.objects.create(
+                user=self.user, value=Decimal("5.5")
+            ),
+            "edit-insulin": InsulinLog.objects.create(
+                user=self.user, units=Decimal("4.0"), insulin_type="bolus"
+            ),
+            "edit-meal": MealLog.objects.create(user=self.user, carbs=Decimal("30.0")),
+        }
+        for name, record in records.items():
+            with self.subTest(page=name):
+                response = self.client.get(reverse(name, kwargs={"pk": record.pk}))
+                self.assertContains(response, "data-confirm=")
+
+    def test_the_listener_that_reads_the_attribute_still_exists(self):
+        script = (
+            Path(settings.BASE_DIR) / "main" / "static" / "main" / "js" / "base.js"
+        ).read_text()
+        self.assertIn("data-confirm", script)
+        self.assertIn('addEventListener("submit"', script)

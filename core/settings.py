@@ -206,7 +206,13 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     # new
     "main.middleware.NoCacheMiddleware",
+    "main.middleware.ContentSecurityPolicyMiddleware",
 ]
+
+# Switches the CSP header to Content-Security-Policy-Report-Only. This is the
+# rollback lever for a policy problem in production: a VM .env change rather
+# than an image rollback. See main/middleware.py.
+CSP_REPORT_ONLY = env.bool("CSP_REPORT_ONLY", default=False)
 
 ROOT_URLCONF = "core.urls"
 

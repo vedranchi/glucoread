@@ -85,7 +85,7 @@
 
     {% if request.resolver_match.url_name == 'edit-insulin' %}
     <div class="danger-zone">
-    <form method="post" action="{% url 'delete-insulin' pk=insulin.id %}" onsubmit="return confirm('Are you sure you want to delete this insulin log?');">
+    <form method="post" action="{% url 'delete-insulin' pk=insulin.id %}" data-confirm="Are you sure you want to delete this insulin log?">
         {% csrf_token %}
         <button type="submit" class="btn-delete"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-trash-2" /></svg>Delete dose</button>
     </form>

@@ -1,9 +1,22 @@
-/* App shell behaviour: dismissable messages, and the navigation rail's
-   overlay mode below the 900px breakpoint. */
+/* App shell behaviour: delete confirmations, dismissable messages, and the
+   navigation rail's overlay mode below the 900px breakpoint. */
 
 document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll(".message").forEach((message) => {
     message.addEventListener("click", () => message.remove());
+  });
+
+  // Delete confirmations. These were inline `onsubmit="return confirm(...)"`
+  // attributes, which no nonce can authorise -- CSP treats an inline handler
+  // as inline script, and the only ways to keep one are 'unsafe-inline' or
+  // 'unsafe-hashes', both of which give back most of what the policy buys.
+  //
+  // Delegated from the document so it covers any form on any page, and bound
+  // ABOVE the rail lookup below: that returns early on pages without a
+  // navigation rail, which would leave those pages deleting without a prompt.
+  document.addEventListener("submit", (event) => {
+    const message = event.target.getAttribute?.("data-confirm");
+    if (message && !window.confirm(message)) event.preventDefault();
   });
 
   const toggle = document.getElementById("railToggle");
