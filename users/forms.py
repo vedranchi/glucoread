@@ -33,10 +33,52 @@ class CustomUserChangeForm(UserChangeForm):
         fields = ("username", "email")
 
 
+# A profile picture has no business being larger than this. The cap is a real
+# control rather than a nicety: without one Django streams a body of any size
+# to disk before a single validator runs, and this app lives on a 956 MiB VM.
+MAX_IMAGE_BYTES = 5 * 1024 * 1024
+
+# Guards decompression bombs, which the extension list on User.image cannot: a
+# small PNG can still decode to hundreds of megabytes of pixels, and
+# User.save() decodes every upload to resize it.
+MAX_IMAGE_EDGE = 8000
+
+# Checked against what Pillow actually decoded. The model validator sees only
+# the filename, so a .png holding some other format satisfies it.
+ALLOWED_IMAGE_FORMATS = {"JPEG", "PNG", "WEBP"}
+
+
 class ProfileUpdateForm(forms.ModelForm):
     class Meta:
         model = User
         fields = ['username', 'email', 'image']
+
+    def clean_image(self):
+        upload = self.cleaned_data.get("image")
+
+        # forms.ImageField attaches the Pillow object it opened during
+        # validation. A submit that did not touch the file field leaves the
+        # stored ImageFieldFile here instead, which has no such attribute and
+        # has already been through these checks once.
+        decoded = getattr(upload, "image", None)
+        if upload is None or decoded is None:
+            return upload
+
+        if upload.size > MAX_IMAGE_BYTES:
+            raise forms.ValidationError(
+                f"Image must be {MAX_IMAGE_BYTES // (1024 * 1024)} MB or smaller."
+            )
+
+        if decoded.format not in ALLOWED_IMAGE_FORMATS:
+            raise forms.ValidationError("Image must be a JPEG, PNG or WebP file.")
+
+        width, height = decoded.size
+        if width > MAX_IMAGE_EDGE or height > MAX_IMAGE_EDGE:
+            raise forms.ValidationError(
+                f"Image must be no larger than {MAX_IMAGE_EDGE}x{MAX_IMAGE_EDGE} pixels."
+            )
+
+        return upload
 
 class PreferencesForm(forms.ModelForm):
     """Glucose unit plus the user's in-range band.

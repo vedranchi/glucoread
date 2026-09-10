@@ -13,6 +13,16 @@
 {$SITE_DOMAIN} {
 	encode gzip zstd
 
+	# The only upload the app accepts is a profile picture, and the form caps
+	# that at 5 MB. Django has no global file-size limit --
+	# DATA_UPLOAD_MAX_MEMORY_SIZE does not apply to file fields and
+	# FILE_UPLOAD_MAX_MEMORY_SIZE only chooses memory vs disk -- so without this
+	# a body of any size is streamed onto the VM's disk before a validator runs.
+	# Refusing it at the proxy means it never arrives.
+	request_body {
+		max_size 10MB
+	}
+
 	handle_path /static/* {
 		root * /srv/static
 		file_server

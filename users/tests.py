@@ -1,11 +1,15 @@
+import tempfile
 from decimal import Decimal
+from io import BytesIO
 
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.core import mail
 from django.core.cache import cache
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from django.utils import timezone
+from PIL import Image as PILImage
 
 from logs.conversions import (
     DEFAULT_TARGET_HIGH_MMOL,
@@ -15,6 +19,7 @@ from logs.conversions import (
     to_display,
 )
 from logs.models import GlucoseLog
+from users.forms import MAX_IMAGE_BYTES, MAX_IMAGE_EDGE
 from users.models import UserPreferences
 
 User = get_user_model()
@@ -479,3 +484,164 @@ class TimeInRangeUsesUserTargetsTest(TestCase):
         response = self.client.get(reverse("glucoread-dashboard"))
         self.assertEqual(response.context["range_low"], 4.4)
         self.assertEqual(response.context["range_high"], 9.0)
+
+
+# --------------------------------------------------------------------------
+# Profile picture upload.
+#
+# This field is the only route by which a user hands the server a file, and
+# User.save() decodes every upload to resize it. Django's own ImageField check
+# accepts all 70 extensions Pillow registers and only calls Image.verify(),
+# which does not decode pixel data -- so the decode in save() reached exotic C
+# decoders (PSD, TGA, JPEG 2000, GD) that have carried out-of-bounds writes.
+# There was also no size limit of any kind.
+#
+# These assert the narrowed surface directly, so widening it again fails here
+# rather than quietly at a decoder.
+# --------------------------------------------------------------------------
+class ProfileImageUploadTest(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        # Uploads land on disk. Point MEDIA_ROOT at a scratch directory so a
+        # test run cannot litter the repo's media/ with avatar fixtures.
+        super().setUpClass()
+        cls._media = tempfile.TemporaryDirectory()
+        cls._media_override = override_settings(MEDIA_ROOT=cls._media.name)
+        cls._media_override.enable()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls._media_override.disable()
+        cls._media.cleanup()
+        super().tearDownClass()
+
+    def setUp(self):
+        cache.clear()
+        self.user = User.objects.create_user(
+            username="uploader", email="upload@example.com", password="pw12345!"
+        )
+        self.client.login(email="upload@example.com", password="pw12345!")
+
+    @staticmethod
+    def _png(size=(10, 10), colour="blue"):
+        buffer = BytesIO()
+        PILImage.new("RGB", size, colour).save(buffer, format="PNG")
+        buffer.seek(0)
+        return buffer
+
+    def _post(self, upload=None, **overrides):
+        data = {
+            "username": self.user.username,
+            "email": self.user.email,
+            "glucose_unit": "mmol",
+            "diabetes_type": "type1",
+            "target_low": "3.9",
+            "target_high": "10.0",
+            "bread_unit_grams": "12.0",
+        }
+        data.update(overrides)
+        if upload is not None:
+            data["image"] = upload
+        return self.client.post(reverse("user-profile"), data)
+
+    def test_a_png_is_accepted_and_resized(self):
+        upload = SimpleUploadedFile(
+            "avatar.png", self._png(size=(600, 400)).read(), content_type="image/png"
+        )
+        response = self._post(upload=upload)
+        self.assertRedirects(response, reverse("user-profile"))
+
+        self.user.refresh_from_db()
+        self.assertNotEqual(self.user.image.name, "default.jpg")
+        # save() thumbnails anything over 300px on either edge
+        self.assertLessEqual(self.user.image.width, 300)
+        self.assertLessEqual(self.user.image.height, 300)
+
+    def test_an_exotic_pillow_format_is_rejected(self):
+        """A TGA is a real image Pillow will decode -- and must not be offered one.
+
+        Before the extension list was narrowed this saved happily, putting
+        user bytes through the TGA decoder that Pillow 12.3.0 patched an
+        out-of-bounds read in.
+        """
+        buffer = BytesIO()
+        PILImage.new("RGB", (10, 10), "red").save(buffer, format="TGA")
+        buffer.seek(0)
+        upload = SimpleUploadedFile(
+            "avatar.tga", buffer.read(), content_type="image/x-tga"
+        )
+
+        response = self._post(upload=upload)
+        self.assertEqual(response.status_code, 200)
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.image.name, "default.jpg")
+
+    def test_a_real_image_under_a_lying_extension_is_rejected(self):
+        """The extension validator sees the filename; this checks the bytes.
+
+        A GIF named .png satisfies FileExtensionValidator and Image.verify()
+        both. Only the decoded format tells the truth.
+        """
+        buffer = BytesIO()
+        PILImage.new("RGB", (10, 10), "green").save(buffer, format="GIF")
+        buffer.seek(0)
+        upload = SimpleUploadedFile(
+            "avatar.png", buffer.read(), content_type="image/png"
+        )
+
+        response = self._post(upload=upload)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "JPEG, PNG or WebP")
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.image.name, "default.jpg")
+
+    def test_an_oversized_upload_is_rejected(self):
+        oversized = SimpleUploadedFile(
+            "avatar.png",
+            self._png().read() + b"\x00" * (MAX_IMAGE_BYTES + 1),
+            content_type="image/png",
+        )
+        response = self._post(upload=oversized)
+        self.assertEqual(response.status_code, 200)
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.image.name, "default.jpg")
+
+    def test_an_image_with_too_many_pixels_is_rejected(self):
+        """Guards decompression bombs, which the extension list cannot.
+
+        A single-colour PNG this large compresses to a few kilobytes but
+        decodes to hundreds of megabytes -- and save() decodes it, on a VM
+        with under a gigabyte of RAM.
+        """
+        upload = SimpleUploadedFile(
+            "avatar.png",
+            self._png(size=(MAX_IMAGE_EDGE + 1, 10)).read(),
+            content_type="image/png",
+        )
+        response = self._post(upload=upload)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "pixels")
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.image.name, "default.jpg")
+
+    def test_a_rejected_upload_saves_no_other_section(self):
+        """The profile is one combined form -- a bad image must not let the
+        rest through, the same rule the three text sections already follow."""
+        upload = SimpleUploadedFile(
+            "avatar.tga", b"not really a tga", content_type="image/x-tga"
+        )
+        self._post(upload=upload, username="renamed")
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.username, "uploader")
+
+    def test_a_submit_that_does_not_touch_the_file_field_keeps_the_picture(self):
+        """clean_image() sees a stored ImageFieldFile, not a fresh upload, and
+        must let it through rather than re-running checks it cannot perform."""
+        self.user.image = "profile_pics/existing.png"
+        self.user.save()
+
+        response = self._post(username="renamed")
+        self.assertRedirects(response, reverse("user-profile"))
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.username, "renamed")
+        self.assertEqual(self.user.image.name, "profile_pics/existing.png")

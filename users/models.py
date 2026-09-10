@@ -4,7 +4,7 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.conf import settings
 
-from django.core.validators import MinValueValidator
+from django.core.validators import FileExtensionValidator, MinValueValidator
 
 from logs.conversions import (
     DEFAULT_BREAD_UNIT_GRAMS,
@@ -18,7 +18,20 @@ class User(AbstractUser):
     """Custom user model — email is the login credential, not username."""
 
     email = models.EmailField(unique=True)
-    image = models.ImageField(default="default.jpg", upload_to="profile_pics")
+    # The extension list is an attack-surface cut, not a format preference.
+    # Django's ImageField validator accepts every extension Pillow registers --
+    # 70 of them, including PSD, EPS, TGA, JPEG 2000, GD and FLI. Its own check
+    # is only Image.verify(), which does not decode pixel data, but save()
+    # below then calls thumbnail(), which does. That put user-supplied bytes
+    # through every one of those C decoders; CVE-2026-25990 was an
+    # out-of-bounds write in the PSD one. Four formats cover a profile picture.
+    image = models.ImageField(
+        default="default.jpg",
+        upload_to="profile_pics",
+        validators=[
+            FileExtensionValidator(allowed_extensions=["jpg", "jpeg", "png", "webp"])
+        ],
+    )
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["username"]
@@ -36,7 +49,11 @@ class User(AbstractUser):
                 if img.height > 300 or img.width > 300:
                     img.thumbnail((300, 300))
                     img.save(self.image.path)
-            except (FileNotFoundError, OSError):
+            # DecompressionBombError derives from Exception, not OSError, so it
+            # was not caught here and reached the user as a 500. The form
+            # rejects oversized pixel dimensions before this runs; this is the
+            # backstop for anything that reaches save() by another route.
+            except (FileNotFoundError, OSError, Image.DecompressionBombError):
                 pass
 
 
