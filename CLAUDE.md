@@ -185,8 +185,6 @@ credential — is unverified.
 * **Branch per change.** Create a `feature/`, `fix/`, or `chore/` branch off the synced
   `dev` before working. Never commit directly to `dev` or `main`.
 * **PRs target `dev`**, not `main`. Use the `gh` CLI (`gh pr create --base dev`).
-* **No AI attribution.** Do NOT add `Co-Authored-By` trailers or "Generated with Claude
-  Code" to commits or PR bodies.
 * Commit/push only when asked. Never commit secrets — `.env`, `email.env`, and
   `.claude/` are gitignored; keep them that way.
 
