@@ -1,4 +1,5 @@
 import os
+import sys
 
 from django.contrib.staticfiles import finders
 from django.contrib.staticfiles.storage import staticfiles_storage
@@ -8,7 +9,72 @@ import re
 from pathlib import Path
 
 from django.conf import settings
-from django.test import TestCase
+from django.test import RequestFactory, TestCase
+from django.views.debug import ExceptionReporter
+
+
+class ErrorReportRedactionTest(TestCase):
+    """A 500 mail must not carry the health data of the request that caused it.
+
+    LOGGING mails 5xx to ADMINS. Django builds that mail from
+    technical_500.txt, which renders the POST body, and its default filter
+    redacts a value only when the *key* looks like a credential. In this app
+    the ordinary field names are the sensitive ones -- `value` is a glucose
+    reading, `note` is free text a patient wrote -- so a 500 during any log
+    entry POST mailed the reading itself in clear text.
+
+    Django already redacts the session cookie (by SESSION_COOKIE_NAME) and
+    csrftoken (it contains "TOKEN"). The cookie assertions below cover the
+    rest, which the stock filter passes through untouched.
+
+    Asserted against the real report text rather than the filter's return
+    value, so a future Django template change that reintroduces any of it is
+    caught here.
+    """
+
+    factory = RequestFactory()
+
+    def _report_text(self):
+        request = self.factory.post(
+            "/log/glucose/add",
+            {"value": "17.4", "note": "felt awful after lunch", "context": "fasting"},
+        )
+        request.COOKIES["sessionid"] = "s3ss10n-c00k13-value"
+        # Matches none of Django's patterns, so only the override redacts it.
+        request.COOKIES["glucoread-last-reading"] = "17.4-mmol"
+
+        try:
+            raise ValueError("boom")
+        except ValueError:
+            return ExceptionReporter(request, *sys.exc_info()).get_traceback_text()
+
+    @override_settings(DEBUG=False)
+    def test_the_glucose_reading_is_not_in_the_report(self):
+        report = self._report_text()
+        self.assertNotIn("17.4", report)
+        self.assertNotIn("felt awful after lunch", report)
+        # The field names survive -- knowing which field was posted is the
+        # diagnostic value, and a field name is not health data.
+        self.assertIn("value", report)
+
+    @override_settings(DEBUG=False)
+    def test_no_cookie_value_reaches_the_report(self):
+        report = self._report_text()
+        self.assertNotIn("s3ss10n-c00k13-value", report)
+        # The one Django's own patterns do not catch.
+        self.assertNotIn("17.4-mmol", report)
+
+    def test_the_filter_is_the_configured_one(self):
+        self.assertEqual(
+            settings.DEFAULT_EXCEPTION_REPORTER_FILTER,
+            "main.reporting.PHISafeExceptionReporterFilter",
+        )
+
+    @override_settings(DEBUG=True)
+    def test_local_debugging_still_sees_the_real_values(self):
+        """Redacting the yellow debug page would only make development harder,
+        and it is never mailed anywhere."""
+        self.assertIn("17.4", self._report_text())
 
 
 class ObservabilityConfigTest(TestCase):

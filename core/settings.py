@@ -188,6 +188,13 @@ LOGGING = {
     },
 }
 
+# Django renders the mail_admins report from technical_500.txt, which includes
+# the POST body and the cookies. Its default filter only redacts keys that look
+# like credentials, and in this app the ordinary field names are the sensitive
+# ones -- `value` is a glucose reading -- while `sessionid` does not match that
+# pattern at all. See main/reporting.py.
+DEFAULT_EXCEPTION_REPORTER_FILTER = "main.reporting.PHISafeExceptionReporterFilter"
+
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
