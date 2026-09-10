@@ -9,7 +9,16 @@ from users.models import UserPreferences
 from django.utils import timezone
 from datetime import timedelta
 from decimal import Decimal, InvalidOperation
-from logs.conversions import mgdl_to_mmol, to_display
+from logs.conversions import (
+    MGDL_ENTRY_MAX,
+    MGDL_ENTRY_MIN,
+    MMOL_ENTRY_MAX,
+    MMOL_ENTRY_MIN,
+    mgdl_to_mmol,
+    reading_status,
+    to_bread_units,
+    to_display,
+)
 
 
 def clean_text(value, max_length, label):
@@ -28,7 +37,10 @@ def clean_text(value, max_length, label):
 
 @login_required
 def log_insulin(request):
-    today = timezone.now().date()
+    # localdate(), never now().date(): the __date lookups in this module all
+    # resolve in TIME_ZONE, so a UTC date disagrees with them for the first
+    # hours of the local day and reports an empty one.
+    today = timezone.localdate()
     insulin_today = InsulinLog.objects.filter(
         user=request.user, taken_at__date=today, is_deleted=False
     )
@@ -59,12 +71,22 @@ def log_insulin(request):
         )
     recent_activity = sorted(recent_activity, key=lambda a: a["when"], reverse=True)[:5]
 
-    last_seven_days = timezone.now() - timedelta(days=7)
+    # Seven calendar days ending today, matching the glucose weekly summary.
+    #
+    # This was a rolling `now - 7 days` instant, which does not survive the
+    # TruncDate grouping below: the oldest group was whatever part of that day
+    # happened to fall after the cutoff, but the card presents each group as a
+    # whole day's total and draws its basal/bolus split from it. A day holding
+    # 20 U basal in the morning and 6 U bolus in the evening rendered as "6 U,
+    # all bolus" once the morning dose aged past the instant — a wrong insulin
+    # figure, and an inverted split. It also produced an eighth row under a
+    # heading that says seven.
+    last_seven_days = timezone.localdate() - timedelta(days=6)
 
     # daily basal/bolus totals for the weekly chart
     weekly_insulin = list(
         InsulinLog.objects.filter(
-            user=request.user, taken_at__gte=last_seven_days, is_deleted=False
+            user=request.user, taken_at__date__gte=last_seven_days, is_deleted=False
         )
         .annotate(date=TruncDate("taken_at"))
         .values("date")
@@ -81,11 +103,29 @@ def log_insulin(request):
         .order_by("-date")
     )
 
+    # The card's point is the basal/bolus split, so each day carries its own
+    # share as a percentage. Computed here, never in the template: `add`
+    # coerces through int(), which is what shipped a wrong insulin total to
+    # production once already. A day with no units recorded gets no bar rather
+    # than a division by zero.
+    for day in weekly_insulin:
+        basal = day["basal_units"] or 0
+        bolus = day["bolus_units"] or 0
+        recorded = basal + bolus
+        if recorded > 0:
+            day["basal_share"] = round(basal / recorded * 100)
+            day["bolus_share"] = 100 - day["basal_share"]
+        else:
+            day["basal_share"] = None
+            day["bolus_share"] = None
+
     # doses the user marked as corrections (note="correction", case-insensitive)
+    # Same window as the card above: both are labelled "last seven days" on the
+    # one page, so they must not mean two different things.
     correction_logs = list(
         InsulinLog.objects.filter(
             user=request.user,
-            taken_at__gte=last_seven_days,
+            taken_at__date__gte=last_seven_days,
             note__iexact="correction",
             is_deleted=False,
         )
@@ -190,7 +230,7 @@ def log_glucose(request):
     is_mgdl = profile.glucose_unit == UserPreferences.GLUCOSE_UNIT_MGDL
     unit_label = "mg/dL" if is_mgdl else "mmol/L"
 
-    today = timezone.now().date()
+    today = timezone.localdate()
 
     # most recent reading across all time, not just today
     current_glucose = (
@@ -209,9 +249,12 @@ def log_glucose(request):
         user=request.user, measured_at__date=today, is_deleted=False
     )
 
-    # today's readings list, converted to display unit
+    # today's readings list, converted to display unit. The status pair comes
+    # from the stored mmol/L value, never the converted one, so a mg/dL user
+    # and an mmol/L user classify the same reading identically.
     recent_activity = []
     for g in glucose_today:
+        tone, label = reading_status(g.value, profile.target_low, profile.target_high)
         recent_activity.append(
             {
                 "id": g.id,
@@ -219,6 +262,8 @@ def log_glucose(request):
                 "note": g.note,
                 "context": g.context,
                 "when": g.measured_at,
+                "tone": tone,
+                "status": label,
             }
         )
     recent_activity = sorted(recent_activity, key=lambda a: a["when"], reverse=True)[:10]
@@ -228,7 +273,7 @@ def log_glucose(request):
     )
 
     # daily averages for the weekly summary table
-    last_seven_days = timezone.now().date() - timedelta(days=6)
+    last_seven_days = timezone.localdate() - timedelta(days=6)
     weekly_glucose = list(
         GlucoseLog.objects.filter(
             user=request.user, measured_at__date__gte=last_seven_days, is_deleted=False
@@ -247,6 +292,7 @@ def log_glucose(request):
 
     recent_7_days = []
     for g in recent_7_days_qs:
+        tone, label = reading_status(g.value, profile.target_low, profile.target_high)
         recent_7_days.append(
             {
                 "value": to_display(g.value, is_mgdl),
@@ -254,6 +300,8 @@ def log_glucose(request):
                 "context": g.context,
                 "note": g.note,
                 "id": g.id,
+                "tone": tone,
+                "status": label,
             }
         )
 
@@ -339,14 +387,14 @@ def add_glucose(request, pk=None):
             if not value.is_finite():
                 error = error or "Enter a valid number"
             elif is_mgdl:  # convert to mmol/L before storing
-                if value < Decimal("20") or value > Decimal("700"):
+                if value < MGDL_ENTRY_MIN or value > MGDL_ENTRY_MAX:
                     error = error or (
                         "Too high/low for mg/dL. Check if unit preference is correct"
                     )
                 else:
                     mmol_value = mgdl_to_mmol(value)
             else:
-                if value < Decimal("1") or value > Decimal("40"):
+                if value < MMOL_ENTRY_MIN or value > MMOL_ENTRY_MAX:
                     error = error or (
                         "Too high/low for mmol/L. Check if unit preference is correct"
                     )
@@ -377,6 +425,11 @@ def add_glucose(request, pk=None):
             "unit_label": unit_label,
             "error": error,
             "form": form,
+            # The form asks for a number without saying what counts as in
+            # range. The user's own band is already stored, so state it rather
+            # than leaving them to remember it. Display units, like the field.
+            "range_low": to_display(profile.target_low, is_mgdl),
+            "range_high": to_display(profile.target_high, is_mgdl),
         },
     )
 
@@ -393,7 +446,9 @@ def delete_glucose_reading(request, pk):
 
 @login_required
 def log_meal(request):
-    today = timezone.now().date()
+    today = timezone.localdate()
+    preferences, _ = UserPreferences.objects.get_or_create(user=request.user)
+    bread_unit_grams = preferences.bread_unit_grams
 
     totals = MealLog.objects.filter(
         user=request.user, eaten_at__date=today, is_deleted=False
@@ -410,12 +465,20 @@ def log_meal(request):
     fats_today = totals["fats_today"] or 0
     calories_today = totals["calories_today"] or 0
 
-    recent_meals = MealLog.objects.filter(user=request.user, is_deleted=False).order_by(
-        "-eaten_at"
-    )[:5]
+    recent_meals = list(
+        MealLog.objects.filter(user=request.user, is_deleted=False).order_by(
+            "-eaten_at"
+        )[:5]
+    )
+    # Attached rather than annotated: the divisor is a Python Decimal on the
+    # user's preferences, and five rows do not justify pushing it into SQL.
+    for meal in recent_meals:
+        meal.bread_units = to_bread_units(meal.carbs, bread_unit_grams)
 
     context = {
         "carbs_today": carbs_today,
+        "carbs_today_bread_units": to_bread_units(carbs_today, bread_unit_grams),
+        "bread_unit_grams": bread_unit_grams,
         "protein_today": protein_today,
         "fats_today": fats_today,
         "calories_today": calories_today,
@@ -527,10 +590,19 @@ def add_meal(request, pk=None):
                 )
             return redirect("log-meal")
 
+    # The form shows a live bread-unit reading beside the carbs field, so it
+    # needs the user's unit size to divide by.
+    preferences, _ = UserPreferences.objects.get_or_create(user=request.user)
+
     return render(
         request,
         "logs/add_meal.html",
-        {"meal": meal, "is_edit_mode": bool(meal), "form": form},
+        {
+            "meal": meal,
+            "is_edit_mode": bool(meal),
+            "form": form,
+            "bread_unit_grams": preferences.bread_unit_grams,
+        },
     )
 
 

@@ -1,57 +1,140 @@
 {% extends 'main/base.html' %}
 {% load static %}
 
-{% block title %}Log Meals — GlucoRead{% endblock %}
-{% block nav_title %}Track Meals{% endblock %}
+{% block title %}Meals &amp; Macros — GlucoRead{% endblock %}
+{% block nav_title %}Meals and macros{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'logs/css/logs.css' %}">
 {% endblock %}
 
 {% block content %}
-<div class="summary-box">
-    <h2>Today's Summary</h2>
-    <p><strong>Carbs:</strong> {{ carbs_today|floatformat:1 }} g</p>
-    <p><strong>Protein:</strong> {{ protein_today|floatformat:1 }} g</p>
-    <p><strong>Fats:</strong> {{ fats_today|floatformat:1 }} g</p>
-    <p><strong>Calories:</strong> {{ calories_today|floatformat:0 }} kcal</p>
+<div class="page-head">
+    <div>
+        <h1>Meals &amp; macros</h1>
+        <p>What you ate today, and the macros behind it.</p>
+    </div>
+    <a class="btn btn-primary" href="{% url 'add-meal' %}">
+        <svg class="icon icon-sm" aria-hidden="true"><use href="#i-plus" /></svg>
+        Add meal
+    </a>
 </div>
 
-<a href="{% url 'add-meal' %}" class="primary-action-link">+ Add Meal</a>
+<div class="stat-grid">
+    <article class="card stat t-meal">
+        <div class="stat-top">
+            <div>
+                <p class="stat-label">Carbs</p>
+                <p class="stat-value">{{ carbs_today|floatformat:1 }} <span class="unit">g</span></p>
+            </div>
+            <span class="puck" aria-hidden="true">
+                <svg class="icon icon-lg"><use href="#i-utensils-crossed" /></svg>
+            </span>
+        </div>
+        <p class="stat-foot">
+            {% if carbs_today_bread_units %}
+                {{ carbs_today_bread_units }} BU at {{ bread_unit_grams|floatformat:"-1" }} g each
+            {% else %}
+                The figure insulin dosing follows
+            {% endif %}
+        </p>
+    </article>
 
-<h2>Recent Meals (Last 5)</h2>
+    <article class="card stat t-meal">
+        <div class="stat-top">
+            <div>
+                <p class="stat-label">Protein</p>
+                <p class="stat-value">{{ protein_today|floatformat:1 }} <span class="unit">g</span></p>
+            </div>
+            <span class="puck" aria-hidden="true">
+                <svg class="icon icon-lg"><use href="#i-utensils-crossed" /></svg>
+            </span>
+        </div>
+        <p class="stat-foot">Logged across today's meals</p>
+    </article>
 
-{% if recent_meals %}
-<table>
-    <thead>
-        <tr>
-            <th>Time</th>
-            <th>Description</th>
-            <th>Carbs (g)</th>
-            <th>Protein (g)</th>
-            <th>Fats (g)</th>
-            <th>Calories</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for meal in recent_meals %}
-        <tr class="clickable-row">
-            <td data-label="Time">
-                <a href="{% url 'edit-meal' pk=meal.id %}">
-                    {{ meal.eaten_at|date:"H:i" }}
-                </a>
-            </td>
-            <td data-label="Description">{{ meal.note|default:"-" }}</td>
-            <td data-label="Carbs">{{ meal.carbs|floatformat:1|default:"0" }}</td>
-            <td data-label="Protein">{{ meal.protein|floatformat:1|default:"0" }}</td>
-            <td data-label="Fats">{{ meal.fats|floatformat:1|default:"0" }}</td>
-            <td data-label="Calories">{{ meal.calories|floatformat:0|default:"0" }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
-{% else %}
-<p>No meals logged yet. Start tracking your nutrition!</p>
-{% endif %}
+    <article class="card stat t-meal">
+        <div class="stat-top">
+            <div>
+                <p class="stat-label">Fats</p>
+                <p class="stat-value">{{ fats_today|floatformat:1 }} <span class="unit">g</span></p>
+            </div>
+            <span class="puck" aria-hidden="true">
+                <svg class="icon icon-lg"><use href="#i-utensils-crossed" /></svg>
+            </span>
+        </div>
+        <p class="stat-foot">Logged across today's meals</p>
+    </article>
 
+    <article class="card stat t-meal">
+        <div class="stat-top">
+            <div>
+                <p class="stat-label">Calories</p>
+                <p class="stat-value">{{ calories_today|floatformat:0 }} <span class="unit">kcal</span></p>
+            </div>
+            <span class="puck" aria-hidden="true">
+                <svg class="icon icon-lg"><use href="#i-activity" /></svg>
+            </span>
+        </div>
+        <p class="stat-foot">Logged across today's meals</p>
+    </article>
+</div>
+
+<article class="card table-card">
+    <div class="card-head">
+        <div>
+            <h2>Recent meals</h2>
+            <p class="card-desc">Your five most recent entries</p>
+        </div>
+    </div>
+    {% if recent_meals %}
+        <div class="table-scroll">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Description</th>
+                        <th>Carbs</th>
+                        <th>BU</th>
+                        <th>Protein</th>
+                        <th>Fats</th>
+                        <th>Calories</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for meal in recent_meals %}
+                        <tr>
+                            <td class="cell-primary">
+                                <a href="{% url 'edit-meal' pk=meal.id %}">{{ meal.eaten_at|date:"H:i" }}</a>
+                            </td>
+                            <td data-label="Description">{{ meal.note|default:"—" }}</td>
+                            <td class="num" data-label="Carbs">{{ meal.carbs|floatformat:1|default:"0" }} g</td>
+                            <td class="num" data-label="BU">
+                                {% if meal.bread_units %}
+                                    {{ meal.bread_units }}
+                                {% else %}
+                                    <span class="muted">&mdash;</span>
+                                {% endif %}
+                            </td>
+                            <td class="num" data-label="Protein">{{ meal.protein|floatformat:1|default:"0" }} g</td>
+                            <td class="num" data-label="Fats">{{ meal.fats|floatformat:1|default:"0" }} g</td>
+                            <td class="num" data-label="Calories">{{ meal.calories|floatformat:0|default:"0" }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="card-body">
+            <div class="empty">
+                <span class="puck" aria-hidden="true">
+                    <svg class="icon icon-lg"><use href="#i-utensils-crossed" /></svg>
+                </span>
+                <b>No meals logged</b>
+                <p>Log a meal with its carbs and it will appear here.</p>
+                <a class="btn btn-primary btn-sm" href="{% url 'add-meal' %}">Add meal</a>
+            </div>
+        </div>
+    {% endif %}
+</article>
 {% endblock %}

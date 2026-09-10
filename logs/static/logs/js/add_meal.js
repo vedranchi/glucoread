@@ -16,6 +16,29 @@ document.addEventListener("DOMContentLoaded", () => {
     caloriesInput.value = Math.round(calories);
   };
 
+  // Bread units are a reading of the carbs field, never an input: grams stay
+  // the only thing typed and the only thing stored. The divisor comes from a
+  // data attribute so the user's own unit size is used rather than a constant
+  // duplicated here.
+  const breadUnitsHint = document.getElementById("carbsBreadUnits");
+  const gramsPerUnit = parseFloat(carbsInput.dataset.breadUnitGrams);
+  const defaultHint = breadUnitsHint ? breadUnitsHint.textContent.trim() : "";
+
+  const showBreadUnits = () => {
+    if (!breadUnitsHint || !(gramsPerUnit > 0)) return;
+
+    const carbs = parseFloat(carbsInput.value);
+    if (!Number.isFinite(carbs) || carbs <= 0) {
+      breadUnitsHint.textContent = defaultHint;
+      return;
+    }
+
+    const units = Math.round((carbs / gramsPerUnit) * 10) / 10;
+    breadUnitsHint.textContent =
+      units + " BU at " + gramsPerUnit + " g each";
+  };
+
+  carbsInput.addEventListener("input", showBreadUnits);
   carbsInput.addEventListener("input", calculateCalories);
   proteinInput.addEventListener("input", calculateCalories);
   fatsInput.addEventListener("input", calculateCalories);
@@ -30,4 +53,5 @@ document.addEventListener("DOMContentLoaded", () => {
   if (hasMacros) {
     calculateCalories();
   }
+  showBreadUnits();
 });

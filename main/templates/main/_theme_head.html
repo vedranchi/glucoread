@@ -4,8 +4,8 @@ Shared <head> pieces for pages using the new design language: fonts, the token
 stylesheet, and the pre-paint theme resolution. Include it first, then add the
 page's own stylesheet after it.
 {% endcomment %}
-<meta name="theme-color" media="(prefers-color-scheme: light)" content="#f6f5f2" />
-<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0e1013" />
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#f9fafb" />
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0d1214" />
 
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -15,8 +15,13 @@ page's own stylesheet after it.
 />
 <link rel="stylesheet" href="{% static 'main/css/theme.css' %}" />
 
-{# Runs before first paint so a stored choice never flashes the other theme. #}
-<script>
+{% comment %}
+  Runs before first paint so a stored choice never flashes the other theme.
+  The nonce is what lets it run at all under the CSP — see
+  main.middleware.ContentSecurityPolicyMiddleware. Any inline script added
+  anywhere in this app needs one too.
+{% endcomment %}
+<script nonce="{{ request.csp_nonce }}">
   (function () {
     var choice = null;
     try {

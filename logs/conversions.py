@@ -45,3 +45,88 @@ def to_display(value, is_mgdl):
         return None
     value = float(value)
     return round(value * MMOL_TO_MGDL if is_mgdl else value, 1)
+
+
+# --------------------------------------------------------------------------
+# Target range.
+#
+# The app surfaces range status in four places — the header chip, the rail's
+# time-in-range meter, the dashboard's shaded chart band, and each row of the
+# glucose log — so the classification lives here, next to the unit conversion,
+# rather than being restated at each of those call sites.
+#
+# The band itself is per-user (UserPreferences.target_low / target_high); the
+# constants below are only the defaults those fields ship with. 3.9-10.0 mmol/L
+# is the standard adult target band. Held in mmol/L because that is the storage
+# unit: classifying on the stored value means a mg/dL user and an mmol/L user
+# never disagree about whether the same reading was in range.
+# --------------------------------------------------------------------------
+DEFAULT_TARGET_LOW_MMOL = Decimal("3.9")
+DEFAULT_TARGET_HIGH_MMOL = Decimal("10.0")
+
+
+def reading_status(value_mmol, low_mmol, high_mmol):
+    """Classify a stored reading against a band, returning (tone, label).
+
+    All three arguments are mmol/L. Decimal and float compare exactly here, so
+    a caller may pass either without a coercion step.
+    """
+    if value_mmol < low_mmol:
+        return "t-danger", "Low"
+    if value_mmol > high_mmol:
+        return "t-warn", "High"
+    return "t-range", "In range"
+
+
+# --------------------------------------------------------------------------
+# Plausible-entry bounds.
+#
+# A figure outside these is far likelier to be a unit mix-up than a real
+# reading, so both the log entry forms and the target fields on the profile
+# reject it. Stated per display unit because that is what the user typed.
+# --------------------------------------------------------------------------
+MGDL_ENTRY_MIN = Decimal("20")
+MGDL_ENTRY_MAX = Decimal("700")
+MMOL_ENTRY_MIN = Decimal("1")
+MMOL_ENTRY_MAX = Decimal("40")
+
+
+def entry_bounds(is_mgdl):
+    """The accepted range for a typed glucose figure, in the user's unit."""
+    if is_mgdl:
+        return MGDL_ENTRY_MIN, MGDL_ENTRY_MAX
+    return MMOL_ENTRY_MIN, MMOL_ENTRY_MAX
+
+
+# --------------------------------------------------------------------------
+# Bread units.
+#
+# Carbohydrate is stored in grams and stays that way; a bread unit is a
+# presentation of that same figure, never a second source of truth. The size
+# of one unit differs by country — 12 g is the Central-European BE, 10 g the
+# KE/UK carb portion, 15 g the US exchange — so it is per-user
+# (UserPreferences.bread_unit_grams) rather than a constant, and the default
+# below is only what a new account starts with.
+#
+# Displayed as "BU" rather than "BE" because the figure is only a BE when the
+# factor is 12; the abbreviation has to stay true at whatever the user sets.
+# --------------------------------------------------------------------------
+DEFAULT_BREAD_UNIT_GRAMS = Decimal("12.0")
+
+
+def to_bread_units(grams, factor_grams):
+    """Express carbohydrate grams in bread units, to one decimal place.
+
+    Returns None for a meal with no carbohydrate recorded — the macro fields
+    are nullable, and rendering "0.0 BU" would claim a measurement that was
+    never taken. A non-positive factor also yields None rather than raising:
+    the field forbids one, but a division here must not be able to 500 a page.
+    """
+    if grams is None:
+        return None
+
+    factor = Decimal(str(factor_grams))
+    if factor <= 0:
+        return None
+
+    return float(round(Decimal(str(grams)) / factor, 1))

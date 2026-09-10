@@ -2,8 +2,6 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css" />
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>
@@ -12,61 +10,157 @@
       {% endblock %}
     </title>
     {% include "main/_theme_head.html" %}
-    <link rel="stylesheet" href="{% static 'main/css/base.css' %}" />
+    <link rel="stylesheet" href="{% static 'main/css/app.css' %}" />
     {% block extra_css %}
 
     {% endblock %}
   </head>
 
   <body>
+    {% include "main/_icon_sprite.html" %}
+
     {% if user.is_authenticated %}
-      <div class="app-layout">
-        <nav class="sidebar-nav">
-          <div class="nav-left">
-            <a href="{% url 'glucoread-dashboard' %}">Dashboard</a>
-            <a href="{% url 'log-insulin' %}">Insulin</a>
-            <a href="{% url 'log-glucose' %}">Glucose</a>
-            <a href="{% url 'log-meal' %}">Meals</a>
-          </div>
-        </nav>
-        <div class="page-layout">
-          <header class="top-profile">
-            <div class="top-title">
-              {% block nav_title %}GlucoRead{% endblock %}
-            </div>
-            <div class="top-actions">
-              {% include "main/_theme_switch.html" %}
-              <a href="{% url 'user-profile' %}" class="profile-link">
-              <img class="profile-avatar"
-                   src="{% if user.image and user.image.name != 'default.jpg' %}{{ user.image.url }}{% else %}{% static 'main/images/default.jpg' %}{% endif %}"
-                   alt="{{ user.username }}" />
-                <span>{{ user.username }}</span>
+      <div class="app">
+        <header class="appbar">
+          <div class="appbar-left">
+            <button
+              type="button"
+              class="rail-toggle"
+              id="railToggle"
+              aria-controls="rail"
+              aria-expanded="false"
+              aria-label="Open navigation"
+            >
+              <svg class="icon" aria-hidden="true"><use href="#i-menu" /></svg>
+            </button>
+
+            {% comment %}
+              The mark links home; the page label beside it is context, not a
+              link. Keeping them as one anchor would name that link after the
+              page it is not going to ("Glucose log" pointing at Dashboard).
+            {% endcomment %}
+            <div class="brand-lockup">
+              <a class="brand-home" href="{% url 'glucoread-dashboard' %}" aria-label="GlucoRead dashboard">
+                <span class="brand-tile" aria-hidden="true">
+                  <svg class="icon icon-lg"><use href="#i-activity" /></svg>
+                </span>
               </a>
+              <span class="brand-sub">{% block nav_title %}Diabetes management{% endblock %}</span>
             </div>
-          </header>
+          </div>
+
+          <div class="appbar-right">
+            {# Rendered only when there is a reading today — see context_processors.latest_reading. #}
+            {% if latest_reading %}
+              <div class="reading-chip {{ latest_reading.tone }}">
+                <svg class="icon icon-sm" aria-hidden="true"><use href="#i-droplet" /></svg>
+                <span>
+                  <span class="reading-chip-label">Latest reading</span>
+                  <span class="reading-chip-value">
+                    {{ latest_reading.value }} {{ latest_reading.unit }}
+                  </span>
+                </span>
+                <span class="badge {{ latest_reading.tone }}">{{ latest_reading.label }}</span>
+              </div>
+            {% endif %}
+
+            {% include "main/_theme_switch.html" %}
+
+            <a href="{% url 'user-profile' %}" class="avatar-link">
+              <img
+                class="avatar"
+                src="{% if user.image and user.image.name != 'default.jpg' %}{{ user.image.url }}{% else %}{% static 'main/images/default.jpg' %}{% endif %}"
+                alt=""
+              />
+              <span>
+                <span class="avatar-name">{{ user.username }}</span>
+                {% if diabetes_type %}
+                  <span class="avatar-meta">{{ diabetes_type }}</span>
+                {% endif %}
+              </span>
+            </a>
+          </div>
+        </header>
+
+        <div class="rail-scrim" id="railScrim" hidden></div>
+
+        <nav class="rail" id="rail" aria-label="Sections">
+          <div class="rail-nav">
+            <a href="{% url 'glucoread-dashboard' %}"
+               {% if nav_section == 'dashboard' %}aria-current="page"{% endif %}>
+              <svg class="icon" aria-hidden="true"><use href="#i-house" /></svg>
+              Dashboard
+            </a>
+            <a href="{% url 'log-glucose' %}"
+               {% if nav_section == 'glucose' %}aria-current="page"{% endif %}>
+              <svg class="icon" aria-hidden="true"><use href="#i-droplet" /></svg>
+              Glucose Log
+            </a>
+            <a href="{% url 'log-insulin' %}"
+               {% if nav_section == 'insulin' %}aria-current="page"{% endif %}>
+              <svg class="icon" aria-hidden="true"><use href="#i-syringe" /></svg>
+              Insulin Log
+            </a>
+            <a href="{% url 'log-meal' %}"
+               {% if nav_section == 'meals' %}aria-current="page"{% endif %}>
+              <svg class="icon" aria-hidden="true"><use href="#i-utensils-crossed" /></svg>
+              Meals &amp; Macros
+            </a>
+            <a href="{% url 'user-profile' %}"
+               {% if nav_section == 'profile' %}aria-current="page"{% endif %}>
+              <svg class="icon" aria-hidden="true"><use href="#i-user" /></svg>
+              Profile
+            </a>
+          </div>
+
+          {# The source's sidebar progress card, carrying real time-in-range. #}
+          {% if time_in_range is not None %}
+            <div class="rail-note">
+              <p class="rail-note-head">
+                <svg class="icon icon-sm" aria-hidden="true"><use href="#i-activity" /></svg>
+                Today's progress
+              </p>
+              <p class="rail-note-value">{{ time_in_range }}% time in range</p>
+              <div class="meter" role="img"
+                   aria-label="{{ time_in_range }} percent of today's readings are in range">
+                <span style="width: {{ time_in_range }}%"></span>
+              </div>
+              <p class="rail-note-foot">
+                {{ in_range_count }} of {{ reading_count }} readings today
+              </p>
+            </div>
+          {% endif %}
+        </nav>
+
+        <main class="page">
+    {% else %}
+      {% comment %}
+        403 and 404 also extend this template and can render with no session.
+        The shell is skipped, but `content` must still be defined exactly once
+        or the block is unreachable for anonymous requests.
+      {% endcomment %}
+      <main class="page page-bare">
     {% endif %}
 
-    {% if messages %}
-      <div class="messages">
-        {% for message in messages %}
-          <div class="message {{ message.tags }}">{{ message }}</div>
-        {% endfor %}
-      </div>
-    {% endif %}
+        {% if messages %}
+          <div class="messages">
+            {% for message in messages %}
+              <div class="message {{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+          </div>
+        {% endif %}
 
-    <main>
-      {% block content %}{% endblock %}
-    </main>
+        {% block content %}{% endblock %}
+      </main>
 
     {% if user.is_authenticated %}
-        </div><!-- page-layout -->
-      </div><!-- app-layout -->
+      </div><!-- .app -->
     {% endif %}
 
     <script src="{% static 'main/js/theme.js' %}" defer></script>
+    <script src="{% static 'main/js/base.js' %}" defer></script>
     {% block extra_js %}
 
     {% endblock %}
-    <script src="{% static 'main/js/base.js' %}"></script>
   </body>
 </html>

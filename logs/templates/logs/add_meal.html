@@ -15,83 +15,109 @@
 {% endblock %}
 
 {% block content %}
-<div class="form-container">
-    {% if request.resolver_match.url_name == 'edit-meal' %}
-        <h1>Edit Meal</h1>
-    {% else %}
-        <h1>Add Meal</h1>
-    {% endif %}
+<article class="card form-card">
+    <div class="card-head">
+        <div>
+            {% if request.resolver_match.url_name == 'edit-meal' %}
+                <h2>Edit meal</h2>
+            {% else %}
+                <h2>Add meal</h2>
+            {% endif %}
+            <p class="card-desc">Calories are worked out from the macros you enter.</p>
+        </div>
+    </div>
+    <div class="card-body">
 
     <form method="POST">
         {% csrf_token %}
         
-        <label for="note">Meal Description</label>
+        <label for="note">What you ate</label>
         <input 
             type="text" 
             name="note" 
             id="note" 
-            placeholder="e.g., Chicken wrap, Oatmeal, Grilled salmon"
+            placeholder="e.g. Chicken wrap, Oatmeal, Grilled salmon"
             required
             maxlength="255"
             value="{{ form.note|default_if_none:'' }}"
         >
-        <small>Brief description of what you ate</small>
 
-        <label for="carbs">Carbohydrates (g)</label>
-        <input
-            type="number"
-            step="0.1"
-            name="carbs"
-            id="carbs"
-            value="{{ form.carbs|default_if_none:'' }}"
-            min="0"
-        >
-
-        <label for="protein">Protein (g)</label>
-        <input
-            type="number"
-            step="0.1"
-            name="protein"
-            id="protein"
-            value="{{ form.protein|default_if_none:'' }}"
-            min="0"
-        >
-
-        <label for="fats">Fats (g)</label>
-        <input
-            type="number"
-            step="0.1"
-            name="fats"
-            id="fats"
-            value="{{ form.fats|default_if_none:'' }}"
-            min="0"
-        >
-
-        <label for="calories">Calories (kcal)</label>
-        <input
-            type="number"
-            name="calories"
-            id="calories"
-            value="{{ form.calories|default_if_none:'' }}"
-            readonly
-        >
-        <small>Automatically calculated from macros</small>
-
-        <label for="context">Meal Type</label>
+        <label for="context">Meal</label>
         <select name="context" id="context">
-            <option value="">Select meal type</option>
+            <option value="">Select which meal</option>
             <option value="breakfast" {% if form.context == 'breakfast' %}selected{% endif %}>Breakfast</option>
             <option value="lunch" {% if form.context == 'lunch' %}selected{% endif %}>Lunch</option>
             <option value="dinner" {% if form.context == 'dinner' %}selected{% endif %}>Dinner</option>
             <option value="snack" {% if form.context == 'snack' %}selected{% endif %}>Snack</option>
         </select>
-        
+
+        {% comment %}
+          The four macros are one idea, not four unrelated fields, so they get
+          their own group. Carbs leads and stands alone because it is the
+          figure that drives dosing; the rest are secondary and sit in a row.
+        {% endcomment %}
+        <fieldset class="field-group">
+            <legend>Nutrition <span class="optional">all optional</span></legend>
+
+            <label for="carbs">Carbohydrates (g)</label>
+            <input
+                type="number"
+                step="0.1"
+                name="carbs"
+                id="carbs"
+                value="{{ form.carbs|default_if_none:'' }}"
+                min="0"
+                data-bread-unit-grams="{{ bread_unit_grams|floatformat:'-1' }}"
+            >
+            <small class="field-hint" id="carbsBreadUnits" aria-live="polite">
+                1 BU = {{ bread_unit_grams|floatformat:"-1" }} g, set on your profile
+            </small>
+
+            <div class="field-row">
+                <div>
+                    <label for="protein">Protein (g)</label>
+                    <input
+                        type="number"
+                        step="0.1"
+                        name="protein"
+                        id="protein"
+                        value="{{ form.protein|default_if_none:'' }}"
+                        min="0"
+                    >
+                </div>
+                <div>
+                    <label for="fats">Fats (g)</label>
+                    <input
+                        type="number"
+                        step="0.1"
+                        name="fats"
+                        id="fats"
+                        value="{{ form.fats|default_if_none:'' }}"
+                        min="0"
+                    >
+                </div>
+            </div>
+
+            <label for="calories">Calories (kcal)</label>
+            <input
+                type="number"
+                name="calories"
+                id="calories"
+                value="{{ form.calories|default_if_none:'' }}"
+                readonly
+            >
+            <small class="field-hint">
+                Worked out from the macros above &mdash; 4 kcal per gram of carbohydrate
+                and protein, 9 per gram of fat.
+            </small>
+        </fieldset>
+
         <div class="button-group">
             <button type="submit">
                 {% if request.resolver_match.url_name == 'edit-meal' %}
-                    Save Changes
+                    Save changes
                 {% else %}
-                    Log Meal
+                    Log meal
                 {% endif %}
             </button>
             <a href="{% url 'log-meal' %}" class="cancel-link">Cancel</a>
@@ -99,12 +125,15 @@
     </form>
 
     {% if request.resolver_match.url_name == 'edit-meal' %}
-    <form method="post" action="{% url 'delete-meal' pk=meal.id %}" onsubmit="return confirm('Are you sure you want to delete this meal log?');">
+    <div class="danger-zone">
+    <form method="post" action="{% url 'delete-meal' pk=meal.id %}" data-confirm="Are you sure you want to delete this meal log?">
         {% csrf_token %}
-        <button type="submit" class="btn-delete">Delete Meal Log</button>
+        <button type="submit" class="btn-delete"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-trash-2" /></svg>Delete meal</button>
     </form>
+    </div>
     {% endif %}
-</div>
+    </div>
+</article>
 {% endblock %}
 
 {% block extra_js %}

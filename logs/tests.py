@@ -1,14 +1,24 @@
+import csv
+import io
 from decimal import Decimal
+from pathlib import Path
 
+from django.conf import settings
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 from django.forms.models import model_to_dict
 from django.urls import reverse
 from logs.models import GlucoseLog, InsulinLog, MealLog
-from logs.conversions import MMOL_QUANTUM, MMOL_TO_MGDL, mgdl_to_mmol
+from logs.conversions import (
+    DEFAULT_BREAD_UNIT_GRAMS,
+    MMOL_QUANTUM,
+    MMOL_TO_MGDL,
+    mgdl_to_mmol,
+    to_bread_units,
+)
 from users.models import UserPreferences
 from django.utils import timezone
-from datetime import timedelta
+from datetime import datetime, time, timedelta
 
 User = get_user_model()
 
@@ -759,3 +769,569 @@ class SeedDemoDataTest(TestCase):
                     stdout=StringIO(),
                     email="demo@glucoread.app",
                 )
+
+
+class BreadUnitConversionTest(TestCase):
+    """Bread units are a reading of the stored grams, never a stored value."""
+
+    def test_converts_at_the_supplied_unit_size(self):
+        self.assertEqual(to_bread_units(Decimal("48"), Decimal("12")), 4.0)
+        self.assertEqual(to_bread_units(Decimal("46"), Decimal("12")), 3.8)
+        # the same meal in a 10 g unit is a different number of units
+        self.assertEqual(to_bread_units(Decimal("46"), Decimal("10")), 4.6)
+        self.assertEqual(to_bread_units(Decimal("45"), Decimal("15")), 3.0)
+
+    def test_no_carbohydrate_recorded_is_not_zero_units(self):
+        """The macro fields are nullable. Rendering 0.0 BU would claim a
+        measurement that was never taken."""
+        self.assertIsNone(to_bread_units(None, Decimal("12")))
+
+    def test_zero_carbohydrate_is_zero_units(self):
+        self.assertEqual(to_bread_units(Decimal("0"), Decimal("12")), 0.0)
+
+    def test_a_non_positive_unit_size_does_not_raise(self):
+        """The field forbids one, but a divisor reaching here must not be able
+        to 500 the page it is rendering."""
+        self.assertIsNone(to_bread_units(Decimal("48"), Decimal("0")))
+        self.assertIsNone(to_bread_units(Decimal("48"), Decimal("-1")))
+
+    def test_accepts_floats_and_ints_without_binary_drift(self):
+        self.assertEqual(to_bread_units(48, 12), 4.0)
+        self.assertEqual(to_bread_units(46.0, 12.0), 3.8)
+
+
+class BreadUnitDisplayTest(TestCase):
+    """Grams stay the stored truth; the unit size only changes the reading."""
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="bu", email="bu@example.com", password="pw12345!"
+        )
+        self.client.login(email="bu@example.com", password="pw12345!")
+        MealLog.objects.create(
+            user=self.user, note="Porridge", carbs=Decimal("48.0"),
+            eaten_at=timezone.now(),
+        )
+
+    def test_defaults_to_the_central_european_be(self):
+        self.assertEqual(
+            self.user.preferences.bread_unit_grams, DEFAULT_BREAD_UNIT_GRAMS
+        )
+
+    def test_meal_rows_carry_their_bread_units(self):
+        response = self.client.get(reverse("log-meal"))
+        self.assertEqual(response.context["recent_meals"][0].bread_units, 4.0)
+        self.assertEqual(response.context["carbs_today_bread_units"], 4.0)
+
+    def test_changing_the_unit_size_changes_every_reading(self):
+        prefs = self.user.preferences
+        prefs.bread_unit_grams = Decimal("10.0")
+        prefs.save()
+
+        response = self.client.get(reverse("log-meal"))
+        self.assertEqual(response.context["recent_meals"][0].bread_units, 4.8)
+        self.assertEqual(response.context["carbs_today_bread_units"], 4.8)
+
+        # and the stored grams are untouched by any of it
+        self.assertEqual(
+            MealLog.objects.get(user=self.user).carbs, Decimal("48.0")
+        )
+
+    def test_dashboard_states_the_days_bread_units(self):
+        response = self.client.get(reverse("glucoread-dashboard"))
+        self.assertEqual(response.context["carbs_bread_units"], 4.0)
+
+    def test_a_meal_without_carbs_shows_no_unit_figure(self):
+        MealLog.objects.all().delete()
+        MealLog.objects.create(
+            user=self.user, note="Coffee", eaten_at=timezone.now()
+        )
+        response = self.client.get(reverse("log-meal"))
+        self.assertIsNone(response.context["recent_meals"][0].bread_units)
+
+
+class InsulinWeeklySplitTest(TestCase):
+    """Each day's basal/bolus share, computed in the view.
+
+    The percentages drive a bar, so they must be whole and must always sum to
+    100 — a rounded pair that sums to 99 leaves a visible gap in the track.
+    """
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="ins", email="ins@example.com", password="pw12345!"
+        )
+        self.client.login(email="ins@example.com", password="pw12345!")
+        self.now = timezone.now()
+
+    def _dose(self, units, insulin_type, days_ago=0):
+        InsulinLog.objects.create(
+            user=self.user,
+            units=Decimal(units),
+            insulin_type=insulin_type,
+            taken_at=self.now - timedelta(days=days_ago),
+        )
+
+    def _days(self):
+        return self.client.get(reverse("log-insulin")).context["weekly_insulin"]
+
+    def test_an_even_day_splits_in_half(self):
+        self._dose("10.0", "basal")
+        self._dose("10.0", "bolus")
+        day = self._days()[0]
+        self.assertEqual(day["basal_share"], 50)
+        self.assertEqual(day["bolus_share"], 50)
+
+    def test_shares_always_sum_to_one_hundred(self):
+        """Rounding each side independently would leave a gap in the bar."""
+        self._dose("10.0", "basal")
+        self._dose("20.0", "bolus")
+        day = self._days()[0]
+        self.assertEqual(day["basal_share"] + day["bolus_share"], 100)
+        self.assertEqual(day["basal_share"], 33)
+        self.assertEqual(day["bolus_share"], 67)
+
+    def test_a_basal_only_day_is_entirely_basal(self):
+        self._dose("14.0", "basal")
+        day = self._days()[0]
+        self.assertEqual(day["basal_share"], 100)
+        self.assertEqual(day["bolus_share"], 0)
+
+    def test_a_bolus_only_day_is_entirely_bolus(self):
+        self._dose("6.0", "bolus")
+        day = self._days()[0]
+        self.assertEqual(day["basal_share"], 0)
+        self.assertEqual(day["bolus_share"], 100)
+
+    def test_a_day_with_no_units_recorded_has_no_share(self):
+        """Zero units must not divide by zero; the row shows an empty track."""
+        self._dose("0.0", "basal")
+        day = self._days()[0]
+        self.assertIsNone(day["basal_share"])
+        self.assertIsNone(day["bolus_share"])
+
+    def test_each_day_is_scored_separately(self):
+        self._dose("10.0", "basal", days_ago=0)
+        self._dose("10.0", "bolus", days_ago=1)
+        days = {d["date"]: d for d in self._days()}
+        today = days[(self.now).date()]
+        yesterday = days[(self.now - timedelta(days=1)).date()]
+        self.assertEqual(today["basal_share"], 100)
+        self.assertEqual(yesterday["bolus_share"], 100)
+
+
+class GlucoseFormGuidanceTest(TestCase):
+    """The add form states the band the user actually set, not the default."""
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="guide", email="guide@example.com", password="pw12345!"
+        )
+        self.client.login(email="guide@example.com", password="pw12345!")
+
+    def test_states_the_users_own_band(self):
+        prefs = self.user.preferences
+        prefs.target_low = Decimal("4.4")
+        prefs.target_high = Decimal("8.8")
+        prefs.save()
+
+        response = self.client.get(reverse("add-glucose"))
+        self.assertEqual(response.context["range_low"], 4.4)
+        self.assertEqual(response.context["range_high"], 8.8)
+        self.assertContains(response, "4.4")
+        self.assertContains(response, "8.8")
+
+    def test_the_band_is_stated_in_the_users_display_unit(self):
+        prefs = self.user.preferences
+        prefs.glucose_unit = UserPreferences.GLUCOSE_UNIT_MGDL
+        prefs.save()
+
+        response = self.client.get(reverse("add-glucose"))
+        # 3.9 and 10.0 mmol/L, converted for a mg/dL reader
+        self.assertEqual(response.context["range_low"], 70.2)
+        self.assertEqual(response.context["range_high"], 180.0)
+
+
+class FormRerenderKeepsInputTest(TestCase):
+    """A rejected submit must re-render with what was typed, never redirect.
+
+    CLAUDE.md records this as a shipped bug: redirecting rebuilt the form from
+    the database and silently discarded the user's entry. The restructured
+    templates must not have reintroduced it.
+    """
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="keep", email="keep@example.com", password="pw12345!"
+        )
+        self.client.login(email="keep@example.com", password="pw12345!")
+
+    def test_glucose_keeps_the_rejected_value_and_note(self):
+        response = self.client.post(
+            reverse("add-glucose"),
+            {"value": "999", "context": "fasting", "note": "after a run"},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "999")
+        self.assertContains(response, "after a run")
+
+    def test_meal_keeps_every_macro_it_was_given(self):
+        response = self.client.post(
+            reverse("add-meal"),
+            {
+                "note": "Pasta",
+                "carbs": "-5",
+                "protein": "20",
+                "fats": "11",
+                "context": "dinner",
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Pasta")
+        self.assertContains(response, "20")
+        self.assertContains(response, "11")
+
+    def test_insulin_keeps_the_rejected_entry(self):
+        response = self.client.post(
+            reverse("add-insulin"),
+            {"units": "-4", "insulin_type": "bolus", "brand": "NovoRapid"},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "NovoRapid")
+
+
+class CsvExportTest(TestCase):
+    """One file per log type, scoped to the signed-in user."""
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="exp", email="exp@example.com", password="pw12345!"
+        )
+        self.client.login(email="exp@example.com", password="pw12345!")
+        self.now = timezone.now()
+        GlucoseLog.objects.create(
+            user=self.user, value=Decimal("5.5"), context="fasting",
+            note="steady", measured_at=self.now - timedelta(days=1),
+        )
+        InsulinLog.objects.create(
+            user=self.user, units=Decimal("6.0"), insulin_type="bolus",
+            brand="NovoRapid", taken_at=self.now - timedelta(days=1),
+        )
+        MealLog.objects.create(
+            user=self.user, note="Porridge", carbs=Decimal("48.0"),
+            context="breakfast", eaten_at=self.now - timedelta(days=1),
+        )
+
+    def _rows(self, log_type, days=30):
+        response = self.client.get(
+            reverse("export-csv"), {"type": log_type, "days": str(days)}
+        )
+        self.assertEqual(response.status_code, 200)
+        body = response.content.decode("utf-8-sig")
+        return response, [r for r in csv.reader(io.StringIO(body)) if r]
+
+    def test_glucose_export_carries_value_status_and_context(self):
+        response, rows = self._rows("glucose")
+        self.assertEqual(rows[0], ["Taken at", "Value (mmol/L)", "Status", "Context", "Note"])
+        self.assertEqual(rows[1][1], "5.5")
+        self.assertEqual(rows[1][2], "In range")
+        self.assertEqual(rows[1][3], "Fasting")
+        self.assertEqual(rows[1][4], "steady")
+        self.assertIn("attachment;", response["Content-Disposition"])
+        self.assertIn("glucoread-glucose-last-30-days", response["Content-Disposition"])
+
+    def test_glucose_exports_in_the_users_own_unit(self):
+        prefs = self.user.preferences
+        prefs.glucose_unit = UserPreferences.GLUCOSE_UNIT_MGDL
+        prefs.save()
+
+        _, rows = self._rows("glucose")
+        self.assertEqual(rows[0][1], "Value (mg/dL)")
+        self.assertEqual(rows[1][1], "99.0")
+
+    def test_status_follows_the_users_own_targets(self):
+        prefs = self.user.preferences
+        prefs.target_high = Decimal("5.0")
+        prefs.save()
+        _, rows = self._rows("glucose")
+        self.assertEqual(rows[1][2], "High")
+
+    def test_meal_export_carries_bread_units_and_blanks_absent_macros(self):
+        _, rows = self._rows("meals")
+        self.assertEqual(rows[0][4], "Bread units (12 g each)")
+        self.assertEqual(rows[1][3], "48.0")
+        self.assertEqual(rows[1][4], "4.0")
+        # protein/fats/calories were never recorded -- blank, never 0
+        self.assertEqual(rows[1][5], "")
+        self.assertEqual(rows[1][6], "")
+        self.assertEqual(rows[1][7], "")
+
+    def test_insulin_export_uses_readable_type_names(self):
+        _, rows = self._rows("insulin")
+        self.assertEqual(rows[1][2], "Bolus")
+        self.assertEqual(rows[1][3], "NovoRapid")
+
+    def test_timestamps_state_their_offset(self):
+        _, rows = self._rows("glucose")
+        # ISO 8601 with a UTC offset, so the file is unambiguous elsewhere
+        self.assertRegex(rows[1][0], r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]\d{2}:\d{2}$")
+
+    def test_soft_deleted_records_are_excluded(self):
+        GlucoseLog.objects.update(is_deleted=True, deleted_at=timezone.now())
+        _, rows = self._rows("glucose")
+        self.assertEqual(len(rows), 1, "only the header should remain")
+
+    def test_records_outside_the_window_are_excluded(self):
+        GlucoseLog.objects.create(
+            user=self.user, value=Decimal("7.0"),
+            measured_at=self.now - timedelta(days=45),
+        )
+        _, in_thirty = self._rows("glucose", days=30)
+        _, in_ninety = self._rows("glucose", days=90)
+        self.assertEqual(len(in_thirty), 2)
+        self.assertEqual(len(in_ninety), 3)
+
+    def test_an_empty_range_still_returns_headers(self):
+        GlucoseLog.objects.all().delete()
+        _, rows = self._rows("glucose", days=7)
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0][0], "Taken at")
+
+    def test_another_users_records_never_appear(self):
+        """This is PHI leaving the app; the queryset must be session-scoped."""
+        other = User.objects.create_user(
+            username="other", email="other@example.com", password="pw12345!"
+        )
+        GlucoseLog.objects.create(
+            user=other, value=Decimal("9.9"), note="not mine",
+            measured_at=self.now - timedelta(days=1),
+        )
+        _, rows = self._rows("glucose")
+        self.assertEqual(len(rows), 2, "only the signed-in user's own reading")
+        self.assertNotIn("not mine", "".join(str(r) for r in rows))
+
+    def test_an_unknown_type_or_range_is_refused(self):
+        for params in (
+            {"type": "everything", "days": "30"},
+            {"type": "glucose", "days": "3650"},
+            {"type": "glucose"},
+            {},
+        ):
+            response = self.client.get(reverse("export-csv"), params)
+            self.assertRedirects(response, reverse("user-profile"))
+
+    def test_export_requires_a_session(self):
+        self.client.logout()
+        response = self.client.get(
+            reverse("export-csv"), {"type": "glucose", "days": "30"}
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("/login", response["Location"])
+
+
+class LocalDayBoundaryTest(TestCase):
+    """"Today" must mean the user's day, not UTC's.
+
+    Every "today" queryset pairs a Python date with a `__date` lookup, and that
+    lookup resolves in TIME_ZONE. Computing the date with `timezone.now().date()`
+    therefore made the two disagree for the first hours of the local day: a
+    reading logged at 1am matched no filter and every surface — dashboard cards,
+    the header chip, the range meter, all three log pages — reported an empty
+    day back to the person who had just logged it.
+
+    Europe/Skopje is only UTC+2/+3, so the window is a couple of hours a night
+    and easy to miss by hand. The offset below is picked to put the test inside
+    that window whatever time it runs at.
+    """
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="boundary", email="boundary@example.com", password="pw12345!"
+        )
+        self.client.login(email="boundary@example.com", password="pw12345!")
+
+    @staticmethod
+    def _skewed_timezone():
+        """A zone whose local date is guaranteed to differ from the UTC date.
+
+        Ahead of UTC once UTC is past 10:00, behind it before then — so one of
+        the two always straddles a date line at the moment the suite runs. A
+        fixed zone would only reproduce the bug for part of the day and would
+        otherwise pass against the broken code.
+        """
+        return "Pacific/Kiritimati" if timezone.now().hour >= 10 else "Pacific/Niue"
+
+    def test_a_reading_logged_now_counts_as_today_everywhere(self):
+        with self.settings(TIME_ZONE=self._skewed_timezone()):
+            timezone.deactivate()
+            self.assertNotEqual(
+                timezone.localdate(),
+                timezone.now().date(),
+                "the test zone must actually straddle a date boundary",
+            )
+
+            GlucoseLog.objects.create(user=self.user, value=Decimal("5.5"))
+            InsulinLog.objects.create(
+                user=self.user, units=Decimal("8.0"), insulin_type="bolus"
+            )
+            MealLog.objects.create(user=self.user, carbs=Decimal("30.0"))
+
+            dashboard = self.client.get(reverse("glucoread-dashboard"))
+            self.assertEqual(dashboard.context["glucose_count_today"], 1)
+            self.assertEqual(dashboard.context["insulin_count_today"], 1)
+            self.assertEqual(dashboard.context["meal_count_today"], 1)
+
+            # The shell chip and range meter come from the context processor,
+            # which had its own copy of the same date arithmetic.
+            self.assertIsNotNone(dashboard.context["latest_reading"])
+            self.assertEqual(dashboard.context["reading_count"], 1)
+            self.assertEqual(dashboard.context["time_in_range"], 100)
+
+            glucose = self.client.get(reverse("log-glucose"))
+            self.assertEqual(glucose.context["reading_count"], 1)
+
+            insulin = self.client.get(reverse("log-insulin"))
+            self.assertEqual(insulin.context["total_units_today"], Decimal("8.0"))
+
+            meal = self.client.get(reverse("log-meal"))
+            self.assertEqual(meal.context["carbs_today"], Decimal("30.0"))
+
+    def test_the_chart_plots_todays_readings(self):
+        """The dashboard chart defaults to `today` and clamps "next" against it."""
+        with self.settings(TIME_ZONE=self._skewed_timezone()):
+            timezone.deactivate()
+            GlucoseLog.objects.create(user=self.user, value=Decimal("6.1"))
+
+            response = self.client.get(reverse("glucoread-dashboard"))
+            self.assertEqual(response.context["chart_date"], timezone.localdate())
+            self.assertEqual(response.context["glucose_values"], [6.1])
+            self.assertIsNone(response.context["next_chart_date"])
+
+
+class InsulinWeekIsCalendarDaysTest(TestCase):
+    """The weekly card groups by calendar date, so its window must be one too.
+
+    The filter was a rolling `now - 7 days` instant while the rows were grouped
+    with TruncDate. The oldest group was therefore only the part of that day
+    falling after the cutoff — but the card presents each group as a whole day's
+    total and draws its basal/bolus split bar from it. A day of 20 U basal in
+    the morning and 6 U bolus at night rendered as "6 U, all bolus" once the
+    morning dose aged past the instant: a wrong insulin figure and an inverted
+    split. It also yielded an eighth row under a heading that says seven.
+    """
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="week", email="week@example.com", password="pw12345!"
+        )
+        self.client.login(email="week@example.com", password="pw12345!")
+
+    @staticmethod
+    def _in_the_dropped_tail():
+        """An instant the old window kept and the calendar window does not.
+
+        The old cutoff is `now - 7 days`; the new one is local midnight seven
+        calendar days back, which is always the later of the two. The span
+        between them is the tail of that eighth day, and it is never empty —
+        so its midpoint reproduces the bug whatever hour the suite runs at.
+        A hard-coded timestamp would only land there for part of the day.
+        """
+        old_cutoff = timezone.now() - timedelta(days=7)
+        new_cutoff = timezone.make_aware(
+            datetime.combine(timezone.localdate() - timedelta(days=6), time.min),
+            timezone.get_current_timezone(),
+        )
+        return old_cutoff + (new_cutoff - old_cutoff) / 2
+
+    def _dose(self, units, insulin_type, when, note=""):
+        dose = InsulinLog.objects.create(
+            user=self.user, units=Decimal(units), insulin_type=insulin_type, note=note
+        )
+        InsulinLog.objects.filter(pk=dose.pk).update(taken_at=when)
+        return dose
+
+    def test_the_eighth_day_is_not_reported_as_a_whole_one(self):
+        tail = self._in_the_dropped_tail()
+        # Both doses sit on the same calendar day; only the later one survived
+        # the rolling cutoff, so that day was summarised from half its data.
+        self._dose("20.0", "basal", tail - timedelta(hours=3))
+        self._dose("6.0", "bolus", tail)
+        self._dose("10.0", "basal", timezone.now())
+
+        rows = self.client.get(reverse("log-insulin")).context["weekly_insulin"]
+        dates = [row["date"] for row in rows]
+
+        self.assertNotIn(
+            timezone.localtime(tail).date(),
+            dates,
+            "a day outside the seven cannot appear, least of all half-summed",
+        )
+        self.assertLessEqual(len(rows), 7, "seven calendar days means seven rows")
+        self.assertEqual(dates, [timezone.localdate()])
+
+    def test_a_day_inside_the_window_reports_all_of_itself(self):
+        """The point of the fix: whole days, whatever the hour of the run."""
+        midnight = timezone.make_aware(
+            datetime.combine(timezone.localdate() - timedelta(days=3), time.min),
+            timezone.get_current_timezone(),
+        )
+        self._dose("20.0", "basal", midnight + timedelta(minutes=30))
+        self._dose("6.0", "bolus", midnight + timedelta(hours=23))
+
+        rows = self.client.get(reverse("log-insulin")).context["weekly_insulin"]
+        day = next(r for r in rows if r["date"] == midnight.date())
+
+        self.assertEqual(day["total_units"], Decimal("26.0"))
+        self.assertEqual(day["basal_units"], Decimal("20.0"))
+        self.assertEqual(day["bolus_units"], Decimal("6.0"))
+        # 20 of 26 is basal — the bar must not read as an all-bolus day.
+        self.assertEqual(day["basal_share"], 77)
+        self.assertEqual(day["bolus_share"], 23)
+
+    def test_corrections_use_the_same_window_as_the_card(self):
+        """Both are labelled "last seven days" on the one page."""
+        self._dose("4.0", "bolus", self._in_the_dropped_tail(), note="correction")
+
+        corrections = self.client.get(reverse("log-insulin")).context[
+            "weekly_corrections"
+        ]
+        self.assertEqual(corrections, [])
+
+
+class DeleteConfirmationTest(TestCase):
+    """The delete prompt moved out of the markup, so something must hold it.
+
+    It used to be onsubmit="return confirm(...)" on each delete form. CSP
+    cannot authorise an inline event handler with a nonce, so the prompt now
+    comes from a delegated listener in base.js keyed off data-confirm. That
+    split means the attribute and the listener can drift apart silently, and
+    the failure mode is a medical record deleted with no confirmation at all.
+    """
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="confirm", email="confirm@example.com", password="pw12345!"
+        )
+        self.client.login(email="confirm@example.com", password="pw12345!")
+
+    def test_every_delete_form_asks_for_confirmation(self):
+        records = {
+            "edit-glucose": GlucoseLog.objects.create(
+                user=self.user, value=Decimal("5.5")
+            ),
+            "edit-insulin": InsulinLog.objects.create(
+                user=self.user, units=Decimal("4.0"), insulin_type="bolus"
+            ),
+            "edit-meal": MealLog.objects.create(user=self.user, carbs=Decimal("30.0")),
+        }
+        for name, record in records.items():
+            with self.subTest(page=name):
+                response = self.client.get(reverse(name, kwargs={"pk": record.pk}))
+                self.assertContains(response, "data-confirm=")
+
+    def test_the_listener_that_reads_the_attribute_still_exists(self):
+        script = (
+            Path(settings.BASE_DIR) / "main" / "static" / "main" / "js" / "base.js"
+        ).read_text()
+        self.assertIn("data-confirm", script)
+        self.assertIn('addEventListener("submit"', script)

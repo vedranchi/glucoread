@@ -13,13 +13,34 @@
 {$SITE_DOMAIN} {
 	encode gzip zstd
 
+	# The only upload the app accepts is a profile picture, and the form caps
+	# that at 5 MB. Django has no global file-size limit --
+	# DATA_UPLOAD_MAX_MEMORY_SIZE does not apply to file fields and
+	# FILE_UPLOAD_MAX_MEMORY_SIZE only chooses memory vs disk -- so without this
+	# a body of any size is streamed onto the VM's disk before a validator runs.
+	# Refusing it at the proxy means it never arrives.
+	request_body {
+		max_size 10MB
+	}
+
+	# These two paths are served straight off the volumes and never reach
+	# Django, so SecurityMiddleware sets nothing on them. Whatever they need,
+	# they need stated here.
 	handle_path /static/* {
 		root * /srv/static
+		header X-Content-Type-Options nosniff
 		file_server
 	}
 
 	handle_path /media/* {
 		root * /srv/media
+		# User-uploaded content on the same origin as the session cookie. The
+		# upload path only accepts JPEG, PNG and WebP (users.forms), so this is
+		# defence in depth rather than the control -- but if anything ever does
+		# get through, navigating to it directly executes nothing: no scripts, no
+		# subresources, and a unique opaque origin from `sandbox`.
+		header X-Content-Type-Options nosniff
+		header Content-Security-Policy "default-src 'none'; sandbox"
 		file_server
 	}
 

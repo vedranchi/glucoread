@@ -7,6 +7,32 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+### Security
+
+- **Patched Django and Pillow up to their current security releases.** Django
+  was nine patch releases behind on the 5.2 LTS line, which carries
+  security-only fixes; four of the Highs land on paths this app exposes,
+  including unencrypted email over STARTTLS (CVE-2026-7666) — the password
+  reset path. Pillow closes an out-of-bounds write in the PSD decoder
+  (CVE-2026-25990) plus a batch of decoder OOB reads and decompression bombs,
+  all of which were reachable from the profile picture upload.
+- **Narrowed the profile picture upload to JPEG, PNG and WebP, and capped its
+  size.** It previously accepted all 70 extensions Pillow registers and fully
+  decoded every one, with no size limit anywhere. Uploads are now checked for
+  byte size, decoded format (not just filename) and pixel dimensions, and
+  Caddy refuses an oversized body before it reaches the disk.
+- **Stopped mailing health data to `ADMINS`.** Unhandled 500s are reported by
+  email, and Django's report includes the POST body — redacting only keys that
+  look like credentials. Here the ordinary field names are the sensitive ones,
+  so a failed glucose submission mailed the reading itself in clear text.
+- **Added a nonce-based Content-Security-Policy**, with no `'unsafe-inline'`
+  in `script-src`. `/static/*` and `/media/*` now carry `nosniff`, and uploads
+  are served sandboxed so navigating directly to one executes nothing.
+- **Pinned Chart.js to an artefact whose hash can be verified.** The SRI hash
+  covered a path jsdelivr generates on the fly rather than one that ships in
+  the npm package, so it attested only to their minifier — and would have
+  silently blanked the chart if that ever changed.
+
 ### Fixed
 
 - **Mobile menu was unreachable once the page was scrolled.** Opening the

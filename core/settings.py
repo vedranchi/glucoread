@@ -188,6 +188,13 @@ LOGGING = {
     },
 }
 
+# Django renders the mail_admins report from technical_500.txt, which includes
+# the POST body and the cookies. Its default filter only redacts keys that look
+# like credentials, and in this app the ordinary field names are the sensitive
+# ones -- `value` is a glucose reading -- while `sessionid` does not match that
+# pattern at all. See main/reporting.py.
+DEFAULT_EXCEPTION_REPORTER_FILTER = "main.reporting.PHISafeExceptionReporterFilter"
+
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
@@ -199,7 +206,13 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     # new
     "main.middleware.NoCacheMiddleware",
+    "main.middleware.ContentSecurityPolicyMiddleware",
 ]
+
+# Switches the CSP header to Content-Security-Policy-Report-Only. This is the
+# rollback lever for a policy problem in production: a VM .env change rather
+# than an image rollback. See main/middleware.py.
+CSP_REPORT_ONLY = env.bool("CSP_REPORT_ONLY", default=False)
 
 ROOT_URLCONF = "core.urls"
 
@@ -213,6 +226,9 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                # Feeds the app shell (nav highlight, header reading chip,
+                # time-in-range meter) on every authenticated page.
+                "main.context_processors.shell",
             ],
         },
     },
@@ -280,7 +296,10 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+# Subclasses WhiteNoise's manifest storage; identical in production, and
+# stamps URLs with the source mtime in DEBUG so an edited asset is never
+# served from a stale browser cache. See main/storage.py.
+STATICFILES_STORAGE = "main.storage.CacheBustingStaticFilesStorage"
 
 STORAGES = {
     "staticfiles": {"BACKEND": STATICFILES_STORAGE},

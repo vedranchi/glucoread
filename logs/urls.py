@@ -1,5 +1,5 @@
 from django.urls import path
-from logs.views import logs
+from logs.views import export, logs
 
 urlpatterns = [
   path('insulin/', logs.log_insulin, name='log-insulin'),
@@ -13,6 +13,7 @@ urlpatterns = [
   path('meal/', logs.log_meal, name='log-meal'),
   path('meal/add', logs.add_meal, name='add-meal'),
   path('meal/<int:pk>/edit/', logs.add_meal, name='edit-meal'),
-  path('meal/<int:pk>/delete/', logs.delete_meal_log, name='delete-meal')
+  path('meal/<int:pk>/delete/', logs.delete_meal_log, name='delete-meal'),
+  path('export/', export.export_csv, name='export-csv'),
   
 ]

@@ -59,6 +59,66 @@ Account Settings — GlucoRead
                     <div class="field-error">{{ error }}</div>
                 {% endfor %}
             </div>
+
+            {% comment %}
+              Labels carry the unit, so the pair is not self-explanatory
+              without this line above them.
+            {% endcomment %}
+            <p class="form-section-note">
+                Readings inside this band count as in range — it drives the
+                dashboard chart, the time-in-range meter and each reading's
+                status.
+            </p>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="{{ preferences_form.target_low.id_for_label }}">
+                        {{ preferences_form.target_low.label }}
+                    </label>
+                    {{ preferences_form.target_low }}
+                    {% for error in preferences_form.target_low.errors %}
+                        <div class="field-error">{{ error }}</div>
+                    {% endfor %}
+                </div>
+                <div class="form-group">
+                    <label for="{{ preferences_form.target_high.id_for_label }}">
+                        {{ preferences_form.target_high.label }}
+                    </label>
+                    {{ preferences_form.target_high }}
+                    {% for error in preferences_form.target_high.errors %}
+                        <div class="field-error">{{ error }}</div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% comment %}
+              Fills the two inputs and stops there — the reset is not saved
+              until the user submits, so it stays undoable and the page keeps
+              its all-or-nothing save. The values are rendered in the unit the
+              fields are labelled with.
+            {% endcomment %}
+            <button
+                type="button"
+                class="link-btn"
+                data-reset-targets
+                data-target-low="{{ preferences_form.default_targets.0 }}"
+                data-target-high="{{ preferences_form.default_targets.1 }}"
+            >
+                Reset to default ({{ preferences_form.default_targets.0 }}&ndash;{{ preferences_form.default_targets.1 }})
+            </button>
+
+            <div class="form-group">
+                <label for="{{ preferences_form.bread_unit_grams.id_for_label }}">
+                    {{ preferences_form.bread_unit_grams.label }}
+                </label>
+                {{ preferences_form.bread_unit_grams }}
+                <p class="field-hint">{{ preferences_form.bread_unit_grams.help_text }}</p>
+                {% for error in preferences_form.bread_unit_grams.errors %}
+                    <div class="field-error">{{ error }}</div>
+                {% endfor %}
+            </div>
+
+            {% for error in preferences_form.non_field_errors %}
+                <div class="field-error">{{ error }}</div>
+            {% endfor %}
         </div>
 
         <!-- Health Profile Section -->
@@ -82,6 +142,44 @@ Account Settings — GlucoRead
         </div>
     </form>
 
+    {% comment %}
+      A GET form to the logs app, deliberately outside the settings <form>
+      above. Downloading is not a settings change, and nesting it would make an
+      export fail whenever an unrelated section had a validation error.
+    {% endcomment %}
+    <section class="form-section">
+        <h3>Export your data</h3>
+        <p class="form-section-note">
+            Download your own records as a CSV, one file per log type. Glucose
+            is exported in the unit you have chosen and meals carry their bread
+            units. Deleted entries are not included.
+        </p>
+        <form method="GET" action="{% url 'export-csv' %}" class="export-form">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="export-type">What to export</label>
+                    <select name="type" id="export-type">
+                        {% for value, label in export_types.items %}
+                            <option value="{{ value }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="export-days">Period</label>
+                    <select name="days" id="export-days">
+                        {% for value, label in export_ranges.items %}
+                            <option value="{{ value }}" {% if value == "30" %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <button type="submit" class="btn-secondary">
+                <svg class="icon icon-sm" aria-hidden="true"><use href="#i-download" /></svg>
+                Download CSV
+            </button>
+        </form>
+    </section>
+
     <div class="account-actions">
         <form method="POST" action="{% url 'glucoread-logout' %}">
             {% csrf_token %}
@@ -94,4 +192,36 @@ Account Settings — GlucoRead
 
 {% block extra_js %}
 <script src="{% static 'users/js/profile.js' %}"></script>
+
+{% comment %}
+  Deliberately inline rather than in profile.js. In development static files
+  are served unhashed and carry only Last-Modified, so a browser that cached
+  an earlier profile.js applies heuristic freshness to it and can go a long
+  time without revalidating — the file changes, the page does not, and the
+  button silently has no handler. Authenticated pages are no-store
+  (main.middleware.NoCacheMiddleware), so a handler that lives here is always
+  the current one. Production hashes static filenames and would not have this
+  problem, but the control has to work while it is being built too.
+{% endcomment %}
+<script nonce="{{ request.csp_nonce }}">
+  (function () {
+    var reset = document.querySelector("[data-reset-targets]");
+    if (!reset) return;
+
+    reset.addEventListener("click", function () {
+      var low = document.getElementById("id_target_low");
+      var high = document.getElementById("id_target_high");
+      if (!low || !high) return;
+
+      low.value = this.dataset.targetLow;
+      high.value = this.dataset.targetHigh;
+
+      // Clears any validation state a previous rejected submit left behind.
+      [low, high].forEach(function (field) {
+        field.dispatchEvent(new Event("input", { bubbles: true }));
+      });
+      low.focus();
+    });
+  })();
+</script>
 {% endblock %}
