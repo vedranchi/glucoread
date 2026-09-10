@@ -45,7 +45,8 @@ docker compose up -d db                  # Postgres on 127.0.0.1:5433 — REQUIR
 ./env/bin/python manage.py runserver
 ```
 
-> **`manage.py test` should find 73 tests, all passing** (verified 2026-08-31 on `dev`).
+> **`manage.py test` should find 166 tests, all passing** (verified 2026-09-10 on
+> `chore/production-hardening`).
 > Treat the number as a floor, not a fact — it goes stale. If the count *drops*, suspect
 > test discovery before assuming tests were deleted: every app needs an `__init__.py`, and
 > `logs/` silently lost its own once, which hid the whole core-domain suite from a green run.
@@ -224,8 +225,26 @@ credential — is unverified.
 * **Media is served only when `DEBUG`** (`core/urls.py:15-16`); Caddy serves it in prod.
 * **`NoCacheMiddleware`** (`main/middleware.py`) forces no-store on every authenticated
   page — relevant when debugging anything cache-related.
-* Chart.js and Bootstrap load from a CDN **version-pinned but without SRI** (`dashboard.html`,
-  `landing/index.html`, `main/base.html`) — the missing `integrity=` is the real gap.
+* **Chart.js is the only CDN script, and it is pinned + SRI-checked.** An earlier note
+  here said the `integrity=` was missing; that has not been true since #37. What *was*
+  wrong until the hardening pass is subtler: the hash covered
+  `dist/chart.umd.min.js`, a path that does not exist in the npm package — jsdelivr
+  synthesises it by minifying `chart.umd.js` on request. So the hash attested only to
+  jsdelivr's minifier output, and a change on their side would fail SRI and silently
+  blank the chart. Both tags now name `dist/chart.umd.js`, whose hash is verifiable
+  against the npm tarball. Bootstrap is not loaded from anywhere; see the crispy/Bootstrap
+  note above.
+* **There is a Content-Security-Policy, and it is nonce-based**
+  (`main.middleware.ContentSecurityPolicyMiddleware`). `script-src` has no
+  `'unsafe-inline'`, so **any inline `<script>` you add needs
+  `nonce="{{ request.csp_nonce }}"` or the browser silently refuses to run it**, and
+  inline `on*=` handlers cannot be used at all — use `data-confirm` and the delegated
+  listener in `base.js`. `style-src` deliberately keeps `'unsafe-inline'` and takes no
+  nonce, so `style=""` attributes are fine. `CSP_REPORT_ONLY=True` in the VM `.env`
+  disarms enforcement without an image rollback.
+* **Django's `{# ... #}` comment is single-line only.** A multi-line one is not a comment;
+  its text renders into the page. Use `{% comment %}` for anything spanning lines — this
+  shipped a literal `<script>` into `_theme_head.html` for exactly one commit.
 
 ## 10. Teaching mode
 * Explain the *why* and trade-offs before/with changes; pace work in phases. This project
