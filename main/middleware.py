@@ -35,9 +35,14 @@ class NoCacheMiddleware:
 #
 # frame-ancestors replaces X-Frame-Options for browsers that honour it, and
 # form-action stops an injected form posting credentials off-site.
+# {nonce} below is substituted by str.replace, not str.format: a directive
+# added later that legitimately contains a brace (a report-uri with a query,
+# say) would make format() raise at request time on every page.
+_NONCE_SLOT = "{nonce}"
+
 _CSP_DIRECTIVES = (
     "default-src 'self'",
-    "script-src 'self' {nonce} https://cdn.jsdelivr.net",
+    f"script-src 'self' {_NONCE_SLOT} https://cdn.jsdelivr.net",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' https://fonts.gstatic.com",
     "img-src 'self' data:",
@@ -86,8 +91,8 @@ class ContentSecurityPolicyMiddleware:
         # A response the middleware did not see rendered (a streaming file, an
         # early 304) can still be HTML, but it will not have used the nonce.
         # Setting the header regardless is correct: worst case it is stricter.
-        policy = "; ".join(_CSP_DIRECTIVES).format(
-            nonce=f"'nonce-{request.csp_nonce}'"
+        policy = "; ".join(_CSP_DIRECTIVES).replace(
+            _NONCE_SLOT, f"'nonce-{request.csp_nonce}'"
         )
         response.setdefault(self.header, policy)
         return response
