@@ -95,17 +95,28 @@ VM, running `dev`. Moved off `glucolog.duckdns.org` on 2026-08-31, onto a reserv
 public IP. Caddy holds valid Let's Encrypt certs, all three containers are healthy, and the
 security headers verify on the wire.
 
-**One canonical hostname.** `deploy/Caddyfile` serves the app on `{$SITE_DOMAIN}` only;
+**One canonical hostname.** `deploy/caddy/Caddyfile` serves the app on `{$SITE_DOMAIN}` only;
 `www.glucoread.com` and the old `glucolog.duckdns.org` are 301'd to it by a separate block.
 Redirecting at the proxy means those never reach Django, so they must *not* be in
 `ALLOWED_HOSTS` — and must not be in `SITE_DOMAIN` either. A hostname appearing in both the
 app block and the redirect block is a fatal Caddy config error that takes the whole site
 down, so change `.env` and the Caddyfile together.
 
-**Caddy is only restarted by a deploy.** `redeploy.sh` used to run `up -d web`, so a
-Caddyfile change fast-forwarded into the checkout and then did nothing until Caddy happened
-to restart for some unrelated reason. It now runs `up -d` for the whole stack; compose only
-recreates what actually differs.
+**Caddy config changes need the container to actually see the new file — this has now
+bitten twice.** `redeploy.sh` first ran `up -d web`, so a Caddyfile change landed in the
+checkout and did nothing until Caddy restarted for some unrelated reason; that was fixed by
+running `up -d` for the whole stack plus an explicit `caddy reload`. The *root* cause was
+different and survived that fix: compose bind-mounted `deploy/Caddyfile` as a **single
+file**, Docker resolves a file mount to an inode at container start, and git replaces files
+rather than editing them in place. So after every fast-forward the container went on
+reading the pre-merge Caddyfile — and `caddy reload` dutifully validated and applied that
+stale file and logged "caddy reloaded". Confirmed on the VM 2026-09-10:
+`docker exec glucolog_caddy grep -c nosniff /etc/caddy/Caddyfile` returned 0 while the
+checkout returned 2.
+
+The mount is now the **directory** `deploy/caddy/`, which resolves by path on every lookup,
+and `redeploy.sh` diffs the container's copy against the checkout before reloading and
+recreates the container if they differ. **Never mount a single file that git updates.**
 
 **Rolling the image back across `main/0002` breaks rate limiting.** That migration renames
 the cache table, and a rollback to a pre-rename image leaves `CACHES` pointing at a table

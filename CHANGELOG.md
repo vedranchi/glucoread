@@ -7,6 +7,16 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+### Fixed
+
+- **Caddyfile changes never reached production.** Compose bind-mounted
+  `deploy/Caddyfile` as a single file. Docker resolves a file mount to an inode
+  when the container starts, and git replaces files rather than editing them in
+  place — so after every deploy the container went on serving the pre-merge
+  Caddyfile, and `caddy reload` validated and applied that stale copy and logged
+  success. The mount is now the `deploy/caddy/` directory, and `redeploy.sh`
+  compares the container's copy against the checkout before trusting a reload.
+
 ### Security
 
 - **Patched Django and Pillow up to their current security releases.** Django

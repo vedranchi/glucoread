@@ -16,7 +16,9 @@ Internet ──443──▶ caddy ──proxy──▶ web:8000 (gunicorn/Django
 | `docker-compose.yml` | base: `db` service |
 | `docker-compose.override.yml` | **dev only** (auto-loaded): publishes DB on localhost |
 | `docker-compose.prod.yml` | **prod**: adds `web` + `caddy`, hardens `db` |
-| `deploy/Caddyfile` | reverse proxy + auto-HTTPS + static/media |
+| `deploy/caddy/Caddyfile` | reverse proxy + auto-HTTPS + static/media. Lives in its own
+  directory because compose bind-mounts the **directory**: a single-file mount pins an
+  inode, and git replaces files, so the container kept serving a pre-merge copy. |
 | `deploy/env.example` | template for repo-root `.env` |
 | `deploy/email.env.example` | template for repo-root `email.env` |
 | `deploy/backup.sh` | verified `pg_dump` + rotation (cron) |
