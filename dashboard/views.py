@@ -128,7 +128,16 @@ def dashboard(request):
         user=request.user, measured_at__date=chart_date, is_deleted=False
     ).order_by("measured_at")
 
-    glucose_labels = [g.measured_at.strftime("%H:%M") for g in glucose_chart_day]
+    # localtime() before strftime(). measured_at comes back from the database
+    # as an aware UTC datetime, and strftime() formats whatever tzinfo it is
+    # carrying — so this printed UTC while every other time on the page goes
+    # through the |date filter, which localises. The two disagreed by the
+    # offset, and across midnight the axis wrapped: a local day rendered as
+    # 22:00, 23:00, 00:00, 01:00 … because the readings are ordered by real
+    # time but were labelled with the previous UTC day's hours.
+    glucose_labels = [
+        timezone.localtime(g.measured_at).strftime("%H:%M") for g in glucose_chart_day
+    ]
     glucose_values = [to_display(g.value, is_mgdl) for g in glucose_chart_day]
 
     previous_chart_date = chart_date - timedelta(days=1)
