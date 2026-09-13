@@ -94,12 +94,13 @@ class RecentActivityLabelTest(TestCase):
 class ExternalScriptIntegrityTest(TestCase):
     """Every third-party script must be pinned AND hash-checked.
 
-    Chart.js is the only script this app loads from a CDN, and it runs on the
-    authenticated dashboard with full DOM access. A version pin alone does not
-    help if the CDN serves something else under that version, so the tag needs
-    `integrity`. This asserts it over the rendered HTML rather than the
-    template source, so a tag added via an include or a base template is
-    covered too.
+    Chart.js is the only script this app loads from a CDN, and it loads on the
+    authenticated dashboard only, with full DOM access. A version pin alone
+    does not help if the CDN serves something else under that version, so the
+    tag needs `integrity`. This asserts it over the rendered HTML rather than
+    the template source, so a tag added via an include or a base template is
+    covered too. The landing page carries no third-party script at all -- see
+    the test below, which holds it to that.
     """
 
     # src="..." on any absolute URL, plus whatever else is in the tag.
@@ -136,12 +137,28 @@ class ExternalScriptIntegrityTest(TestCase):
         # vacuously and this test would protect nothing.
         self.assertTrue(tags, "expected the dashboard to load Chart.js from a CDN")
 
-    def test_the_landing_page_pins_every_external_script(self):
+    def test_the_landing_page_loads_no_third_party_script(self):
+        """The landing page must load nothing executable from a third party.
+
+        It used to draw its hero chart with Chart.js and was asserted to pin
+        that tag. The figures are now inline SVG over static example data, so
+        there is no CDN script left to pin -- and the page's own copy claims
+        "no analytics script, no advertising network and no third-party tag on
+        any page". That claim is what this now guards: a stronger property than
+        the pinning it replaces, and the one a reader is relying on.
+
+        `_assert_all_pinned` still runs, so the rule survives if a script is
+        ever added back; the regex itself is guarded by the dashboard test
+        above, which does still load Chart.js.
+        """
         response = self.client.get(reverse("glucoread-home"))
-        tags = self._assert_all_pinned(
-            response.content.decode(), "the landing page"
+        html = response.content.decode()
+        self._assert_all_pinned(html, "the landing page")
+        self.assertEqual(
+            self._EXTERNAL_SCRIPT.findall(html),
+            [],
+            "the landing page states it carries no third-party tag; it now loads one",
         )
-        self.assertTrue(tags, "expected the landing page to load Chart.js from a CDN")
 
 
 class ChartLabelTimezoneTest(TestCase):

@@ -1,20 +1,157 @@
 /* ==========================================================================
    GlucoRead landing page.
 
-   Tokens, buttons, topbar, segmented controls and form fields come from
-   main/css/theme.css. This file is the page itself: hero, dashboard preview,
-   the how-it-works steps, the feature grid, the closer and the footer.
+   Tokens, tones, buttons, badges, pucks, the segmented control, the topbar and
+   the mobile drawer all come from main/css/theme.css — the same layer the
+   authenticated app is built on. This file is only the page: the hero, the day
+   stage, the section shapes, and the small recreations of real app surfaces.
+
+   Two rules hold the page together:
+
+   1. Everything hangs off the left margin. Section heads, split copy and the
+      entry cards all start at the same line; only the closing call to action
+      is centred, because it is a panel rather than a section. That is what
+      keeps nine sections from reading as nine unrelated landing pages.
+
+   2. Colour is information. Teal is glucose, blue is insulin, orange is meals,
+      green is in-range and amber is high — exactly as in the app. Nothing else
+      on the page is coloured, so when something is, it means something.
    ========================================================================== */
 
-main,
-.site-footer {
-  position: relative;
-  z-index: 1;
+/* ------------------------------- utilities -------------------------------- */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
 }
 
-/* --------------------------------- hero ---------------------------------- */
+/* Figures are data. Lining, fixed-width digits stop a value from shuffling
+   sideways when the unit switch rewrites it. */
+.num,
+.tile-value,
+.stage-value,
+.unit-value,
+.range-demo dd,
+.range-meter-value,
+.ui-input {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+/* ------------------------------- topbar add-ons --------------------------- */
+/* theme.css styles .topbar, .menu and the drawer. These are the landing
+   page's own additions: the hamburger's icon, and the spacer that pushes the
+   account actions to the right of the section links. */
+.menu-btn {
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 44px;
+  padding-inline: 0.85rem;
+}
+
+.menu-spacer {
+  flex: 1;
+}
+
+.menu-login {
+  font-weight: 500;
+}
+
+/* --------------------------------- sections ------------------------------- */
+.section {
+  padding-block: clamp(3.25rem, 7vw, 5.5rem);
+}
+
+/* Alternating ground so consecutive sections separate without a rule between
+   every one of them. */
+.band {
+  background: var(--paper-2);
+  border-block: 1px solid var(--line-soft);
+}
+
+.section-head {
+  max-width: 34rem;
+  margin-bottom: clamp(2rem, 4vw, 3rem);
+}
+
+.section-head h2,
+.split-copy h2 {
+  font-size: clamp(1.6rem, 3.1vw, 2.2rem);
+  line-height: 1.12;
+}
+
+.section-head p,
+.split-copy p {
+  margin-top: 1rem;
+  color: var(--ink-2);
+  max-width: 42ch;
+}
+
+.lede-strong {
+  color: var(--ink) !important;
+  font-weight: 500;
+}
+
+/* The one line that carries the page's thesis, set apart from the prose
+   around it rather than shouted. */
+.beat {
+  margin-top: clamp(1.5rem, 3vw, 2.25rem);
+  text-wrap: balance;
+  max-width: 34rem;
+  font-size: clamp(1.05rem, 1.8vw, 1.25rem);
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--ink);
+  border-left: 3px solid var(--accent);
+  padding-left: 1.1rem;
+}
+
+/* copy beside a recreated app surface */
+.split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: clamp(2.25rem, 5vw, 3.5rem);
+  align-items: center;
+}
+
+@media (min-width: 900px) {
+  .split {
+    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  }
+
+  /* Source order stays copy-then-figure for screen readers; only the painted
+     order flips. */
+  .split-reverse .split-copy {
+    order: 2;
+  }
+}
+
+.split-copy p + p {
+  margin-top: 0.85rem;
+}
+
+.split-figure {
+  margin: 0;
+  min-width: 0;
+}
+
+.split-figure figcaption,
+.hero-figure figcaption,
+.stage-caption {
+  margin-top: 0.85rem;
+  font-size: 0.82rem;
+  color: var(--ink-3);
+}
+
+/* ----------------------------------- hero --------------------------------- */
 .hero {
-  padding-block: clamp(2.5rem, 6vw, 4.5rem) clamp(3.5rem, 8vw, 6rem);
+  padding-block: clamp(2.5rem, 6vw, 4rem) clamp(3rem, 6vw, 4.5rem);
 }
 
 .hero-grid {
@@ -24,25 +161,33 @@ main,
   align-items: center;
 }
 
-@media (min-width: 1000px) {
+@media (min-width: 960px) {
   .hero-grid {
-    grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.18fr);
+    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1fr);
     gap: clamp(2.5rem, 5vw, 4rem);
   }
 }
 
-/* sized so the headline holds at two lines from 360px up to the max width */
+.eyebrow {
+  margin-bottom: 0.9rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--accent-deep);
+}
+
 .hero-title {
-  font-size: clamp(2.25rem, 4.1vw, 3.15rem);
-  line-height: 1.04;
-  letter-spacing: -0.035em;
-  max-width: 19ch;
+  font-size: clamp(2.3rem, 5vw, 3.5rem);
+  line-height: 1.02;
+  letter-spacing: -0.037em;
+  max-width: 18ch;
 }
 
 .hero-lead {
   margin-top: 1.35rem;
-  max-width: 46ch;
-  font-size: clamp(1.05rem, 1.5vw, 1.15rem);
+  max-width: 44ch;
+  font-size: clamp(1.05rem, 1.5vw, 1.18rem);
   color: var(--ink-2);
 }
 
@@ -50,671 +195,883 @@ main,
   margin-top: 2rem;
 }
 
-/* hero entrance: one short cascade, top to bottom */
+.btn-lg {
+  font-size: 0.98rem;
+  padding: 0.78rem 1.4rem;
+}
+
+/* Three facts, not a badge row: all three are true of the build and none of
+   them is a claim about users. */
+.hero-meta {
+  margin-top: 1.15rem;
+  font-size: 0.85rem;
+  color: var(--ink-3);
+}
+
+/* One short cascade, top to bottom, and only in the hero — everything below
+   the fold reveals on scroll instead. */
+.eyebrow,
 .hero-title,
 .hero-lead,
 .hero-copy .actions,
-.app-preview {
-  animation: rise 0.8s var(--ease) both;
+.hero-meta,
+.hero-figure {
+  animation: rise 0.7s var(--ease) both;
 }
 
-.hero-lead {
-  animation-delay: 0.08s;
-}
-
-.hero-copy .actions {
-  animation-delay: 0.16s;
-}
-
-.app-preview {
-  animation-delay: 0.12s;
-}
+.hero-title { animation-delay: 0.04s; }
+.hero-lead { animation-delay: 0.09s; }
+.hero-copy .actions { animation-delay: 0.14s; }
+.hero-meta { animation-delay: 0.18s; }
+.hero-figure { animation-delay: 0.12s; }
 
 @keyframes rise {
   from {
     opacity: 0;
-    transform: translateY(18px);
+    transform: translateY(14px);
   }
 }
 
-/* --------------------------- dashboard preview ---------------------------- */
-.app-preview {
+/* ------------------------- hero figure: summary tiles ---------------------- */
+.hero-figure {
   margin: 0;
-}
-
-.app-window {
-  display: grid;
-  grid-template-columns: 148px minmax(0, 1fr);
-  background: var(--surface);
-  border: 1px solid var(--line-soft);
-  border-radius: var(--r-lg);
-  box-shadow: var(--shadow-lg);
-  overflow: hidden;
-}
-
-.app-rail {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-  padding: 1.1rem 0.75rem;
-  background: var(--paper-2);
-  border-right: 1px solid var(--line-soft);
-  font-size: 0.88rem;
-}
-
-.app-rail-item {
-  padding: 0.5rem 0.7rem;
-  border-radius: var(--r-md);
-  color: var(--ink-2);
-}
-
-.app-rail-item.is-active {
-  color: var(--accent-ink);
-  background: var(--accent);
-}
-
-.app-main {
-  display: flex;
-  flex-direction: column;
   min-width: 0;
 }
 
-.app-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 0.85rem 1.15rem;
-  border-bottom: 1px solid var(--line-soft);
-}
-
-.app-top-title {
-  font-weight: 600;
-  letter-spacing: -0.015em;
-}
-
-.app-account {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.85rem;
-  color: var(--ink-2);
-}
-
-.app-avatar {
-  width: 22px;
-  height: 22px;
-  border-radius: var(--r-pill);
-  background: var(--paper-2);
-  border: 1px solid var(--line);
-}
-
-.app-panel {
-  padding: 1.15rem;
-}
-
-.app-panel-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 0.65rem;
-  margin-bottom: 0.5rem;
-}
-
-.app-panel-title {
-  font-size: 1.02rem;
-}
-
-.app-panel-date {
-  margin-top: 0.15rem;
-  font-size: 0.82rem;
-  color: var(--ink-3);
-}
-
-.app-trend-controls {
-  display: flex;
-  gap: 0.35rem;
-  font-size: 0.78rem;
-}
-
-.app-trend-controls span {
-  padding: 0.3rem 0.7rem;
-  border: 1px solid var(--line);
-  border-radius: var(--r-pill);
-  color: var(--ink-2);
-}
-
-.app-trend-controls span.is-disabled {
-  opacity: 0.45;
-}
-
-.app-chart {
-  position: relative;
-  height: 232px;
-}
-
-.app-preview figcaption {
-  margin-top: 0.85rem;
-  font-size: 0.82rem;
-  color: var(--ink-3);
-  text-align: center;
-}
-
-/* ------------------------------- sections -------------------------------- */
-.section {
-  padding-block: clamp(4rem, 9vw, 7rem);
-}
-
-.grid-head {
-  font-size: clamp(1.75rem, 3.2vw, 2.5rem);
-  max-width: 20ch;
-  margin-bottom: clamp(2.25rem, 4vw, 3.25rem);
-}
-
-/* how it works: sticky heading beside a stepped list */
-.how-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: clamp(2rem, 4vw, 3rem);
-}
-
-@media (min-width: 900px) {
-  .how-grid {
-    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
-    gap: clamp(3rem, 6vw, 5rem);
-  }
-
-  .how-head {
-    position: sticky;
-    top: 7rem;
-    align-self: start;
-  }
-}
-
-.how-head h2 {
-  font-size: clamp(1.75rem, 3.2vw, 2.5rem);
-  max-width: 14ch;
-}
-
-.how-head p {
-  margin-top: 1rem;
-  color: var(--ink-2);
-  max-width: 30ch;
-}
-
-.how-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.how-step {
-  padding-block: clamp(1.75rem, 3vw, 2.5rem);
-  border-bottom: 1px solid var(--line-soft);
-}
-
-.how-step:first-child {
-  padding-top: 0;
-}
-
-.how-step:last-child {
-  border-bottom: 0;
-  padding-bottom: 0;
-}
-
-.how-step h3 {
-  font-size: 1.32rem;
-}
-
-.how-step p {
-  margin-top: 0.55rem;
-  color: var(--ink-2);
-  max-width: 48ch;
-}
-
-/* ---------------------------- app UI previews ----------------------------- */
-/* Same labels, fields and controls as the real screens, drawn in the page's
-   own palette. Static by design: these are illustrations, not live forms. */
-.ui-preview {
-  margin-top: 1.4rem;
-  padding: 1rem 1.1rem 1.15rem;
+.tile-card {
+  padding: clamp(1rem, 2.2vw, 1.35rem);
   background: var(--surface);
-  border: 1px solid var(--line-soft);
-  border-radius: var(--r-md);
-  font-size: 0.9rem;
-}
-
-.ui-heading {
-  font-weight: 600;
-  font-size: 0.95rem;
-}
-
-.ui-field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  margin-top: 0.85rem;
-}
-
-.ui-label {
-  font-size: 0.8rem;
-  color: var(--ink-2);
-}
-
-.ui-input {
-  padding: 0.5rem 0.7rem;
   border: 1px solid var(--line);
-  border-radius: 10px;
-  background: var(--paper);
-  font-family: var(--font-mono);
-  font-size: 0.86rem;
-}
-
-.ui-input.is-empty {
-  color: var(--ink-3);
-  font-family: var(--font-sans);
-}
-
-.ui-input.is-select {
-  font-family: var(--font-sans);
-  background-image: linear-gradient(45deg, transparent 50%, var(--ink-3) 50%),
-    linear-gradient(135deg, var(--ink-3) 50%, transparent 50%);
-  background-position: right 1rem center, right 0.72rem center;
-  background-size: 5px 5px, 5px 5px;
-  background-repeat: no-repeat;
-}
-
-.ui-btn {
-  display: inline-block;
-  margin-top: 1.1rem;
-  padding: 0.45rem 1.1rem;
-  border-radius: var(--r-pill);
-  background: var(--accent);
-  color: var(--accent-ink);
-  font-size: 0.86rem;
-  font-weight: 500;
-}
-
-/* today's cards */
-.ui-metrics {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 0.6rem;
-  padding: 0.75rem;
-}
-
-.ui-metric {
-  display: flex;
-  flex-direction: column;
-  padding: 0.7rem 0.8rem;
-  border: 1px solid var(--line-soft);
-  border-radius: 10px;
-  background: var(--paper);
-}
-
-.ui-metric-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  font-size: 0.78rem;
-  color: var(--ink-2);
-}
-
-.ui-metric-head em {
-  font-style: normal;
-  font-size: 0.68rem;
-  padding: 0.1rem 0.45rem;
-  border-radius: var(--r-pill);
-  color: var(--range);
-  background: var(--range-soft);
-}
-
-.ui-metric-value {
-  margin-top: 0.35rem;
-  font-family: var(--font-mono);
-  font-size: 1.5rem;
-  line-height: 1.1;
-  letter-spacing: -0.02em;
-}
-
-.ui-metric-sub {
-  margin-top: 0.25rem;
-  font-size: 0.78rem;
-  color: var(--ink-3);
-}
-
-/* trend panel header */
-.ui-trend-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-}
-
-.ui-trend-date {
-  font-size: 0.82rem;
-  color: var(--ink-3);
-}
-
-.ui-trend-controls {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-  margin-top: 0.9rem;
-  font-size: 0.8rem;
-}
-
-.ui-trend-controls span {
-  padding: 0.35rem 0.85rem;
-  border: 1px solid var(--line);
-  border-radius: var(--r-pill);
-  color: var(--ink-2);
-}
-
-/* recent activity feed */
-.ui-activity ul {
-  margin: 0.6rem 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-.ui-activity li {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 1rem;
-  padding-block: 0.55rem;
-  border-top: 1px solid var(--line-soft);
-  color: var(--ink-2);
-}
-
-.ui-time {
-  font-family: var(--font-mono);
-  font-size: 0.82rem;
-  color: var(--ink-3);
-}
-
-/* --------------------------------- bento --------------------------------- */
-.bento {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: clamp(0.85rem, 1.6vw, 1.15rem);
-}
-
-@media (min-width: 640px) {
-  .bento {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .cell-timeline,
-  .cell-units,
-  .cell-private {
-    grid-column: span 2;
-  }
-}
-
-@media (min-width: 1024px) {
-  .bento {
-    grid-template-columns: repeat(12, minmax(0, 1fr));
-  }
-
-  .cell-timeline {
-    grid-column: span 7;
-  }
-
-  .cell-units {
-    grid-column: span 5;
-  }
-
-  .cell-safe {
-    grid-column: span 3;
-  }
-
-  .cell-week {
-    grid-column: span 4;
-  }
-
-  .cell-private {
-    grid-column: span 5;
-  }
-}
-
-.cell {
-  display: flex;
-  flex-direction: column;
-  padding: clamp(1.25rem, 2.2vw, 1.75rem);
-  background: var(--surface);
-  border: 1px solid var(--line-soft);
   border-radius: var(--r-lg);
-  transition: transform 0.35s var(--ease), border-color 0.35s var(--ease);
+  box-shadow: var(--shadow-lg);
 }
 
-.cell:hover {
-  transform: translateY(-3px);
-  border-color: var(--line);
+.tile-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
 }
 
-.cell h3 {
-  font-size: 1.16rem;
+.tile-card-title {
+  font-size: 0.95rem;
+  font-weight: 600;
 }
 
-.cell p {
-  margin-top: 0.5rem;
+.tile-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.7rem;
+}
+
+.tile {
+  position: relative;
+  padding: 0.85rem 0.95rem;
+  background: var(--tone-wash);
+  border: 1px solid var(--tone-line);
+  border-radius: var(--r-md);
+}
+
+.tile-label {
+  font-size: 0.76rem;
   color: var(--ink-2);
-  font-size: 0.96rem;
-  max-width: 42ch;
 }
 
-.cell-units {
-  background: linear-gradient(160deg, var(--accent-soft), transparent 62%), var(--surface);
+.tile-value {
+  margin-top: 0.2rem;
+  font-size: clamp(1.25rem, 3vw, 1.5rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
 }
 
-.cell-week {
-  background: linear-gradient(180deg, transparent 40%, var(--range-soft)), var(--surface);
+.tile-value .unit {
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--ink-2);
+  letter-spacing: 0;
 }
 
-.cell-timeline .ui-preview {
-  margin-top: auto;
-  padding: 0.9rem 0 0;
+.tile-foot {
+  margin-top: 0.35rem;
+  font-size: 0.72rem;
+  /* --ink-3 clears 4.5:1 on white but not on the tinted tile fills. */
+  color: var(--ink-2);
+}
+
+/* The puck is decoration inside an already-labelled tile, so it only appears
+   where there is room for it without crowding the value. */
+.tile .puck {
+  position: absolute;
+  top: 0.7rem;
+  right: 0.7rem;
+  width: 34px;
+  height: 34px;
   background: transparent;
-  border: 0;
+  opacity: 0.55;
 }
 
-.spark {
+@media (max-width: 420px) {
+  .tile .puck {
+    display: none;
+  }
+}
+
+/* ---------------------------------- the stage ------------------------------
+   One example day, drawn three times over. Plain SVG: the data is static, so a
+   charting library would be 200 KB to draw eleven shapes, and an <svg> costs
+   no layout shift and themes itself from the same tokens as everything else.
+
+   The SVG is held between 620px and 820px wide. Its text is sized in viewBox
+   units, so it scales with the element — that window keeps every label between
+   roughly 11px and 16px on screen. Below 620px the figure scrolls sideways
+   inside its own box rather than shrinking its labels out of legibility.
+   -------------------------------------------------------------------------- */
+.stage-wrap {
+  /* The same measure as .stage's own cap, so the step control, the chart and
+     the caption all share one left and right edge. */
+  max-width: 820px;
+  margin: 0;
+}
+
+.stage-steps {
+  display: flex;
+  flex-wrap: wrap;
+  width: fit-content;
+  margin-bottom: 1.25rem;
+}
+
+.stage-steps button {
+  min-height: 40px;
+}
+
+.stage-scroll {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  padding-bottom: 0.25rem;
+}
+
+.stage-scroll:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+  border-radius: var(--r-md);
+}
+
+.stage {
   width: 100%;
-  height: 72px;
-  margin-top: auto;
-  padding-top: 1.5rem;
-  overflow: visible;
+  min-width: 620px;
+  max-width: 820px;
+  height: auto;
 }
 
-.spark-band {
-  fill: var(--range-soft);
+.stage text {
+  font-family: var(--font-sans);
+  font-variant-numeric: tabular-nums;
 }
 
-.spark-line {
-  fill: none;
+.stage-axis,
+.stage-lane-label {
+  font-size: 13px;
+  fill: var(--ink-3);
+}
+
+.stage-value {
+  font-size: 14px;
+  font-weight: 500;
+  fill: var(--ink-2);
+}
+
+.stage-value.is-high {
+  fill: var(--warn);
+  font-weight: 600;
+}
+
+/* Steps 2 and 3 fade in over step 1; the wrapper carries the current step. */
+.stage-layer {
+  opacity: 0;
+  transition: opacity 0.5s var(--ease);
+}
+
+.stage-wrap[data-current="2"] .stage-layer[data-from="2"],
+.stage-wrap[data-current="3"] .stage-layer[data-from="2"],
+.stage-wrap[data-current="3"] .stage-layer[data-from="3"] {
+  opacity: 1;
+}
+
+.stage-focus rect {
+  fill: var(--warn-wash);
+  stroke: var(--warn-soft);
+}
+
+.stage-band rect {
+  fill: var(--range-wash);
+}
+
+.stage-band line {
   stroke: var(--range);
-  stroke-width: 2;
+  stroke-width: 1;
+  stroke-dasharray: 4 4;
+  opacity: 0.55;
+}
+
+.stage-band text {
+  fill: var(--range);
+}
+
+/* pathLength="1" makes the dash maths independent of the real path length, so
+   the line draws itself left to right in one transition. */
+.stage-trace polyline {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2.5;
   stroke-linecap: round;
   stroke-linejoin: round;
   stroke-dasharray: 1;
   stroke-dashoffset: 1;
+  transition: stroke-dashoffset 0.9s var(--ease);
 }
 
-.reveal.show .spark-line {
-  animation: draw 1.4s var(--ease) 0.15s both;
+.stage-wrap[data-current="2"] .stage-trace polyline,
+.stage-wrap[data-current="3"] .stage-trace polyline {
+  stroke-dashoffset: 0;
 }
 
-@keyframes draw {
-  to {
-    stroke-dashoffset: 0;
+.stage-points circle {
+  fill: var(--accent);
+  stroke: var(--surface);
+  stroke-width: 2;
+}
+
+/* Out of range is never colour alone: the dot is larger, the value is bolder,
+   and the caption and the hidden table both say "high". */
+.stage-points circle.is-high {
+  fill: var(--warn);
+}
+
+.stage-lane-rule {
+  stroke: var(--line);
+  stroke-width: 1;
+}
+
+/* The empty lanes are scaffolding until step three fills them. */
+.stage-lane-rules {
+  opacity: 0.7;
+}
+
+.lane-insulin {
+  fill: var(--insulin);
+}
+
+.lane-basal {
+  /* Basal is the flat background dose; the app deliberately leaves it
+     uncoloured, and --ink-2 is what .t-neutral resolves --tone to, so the
+     marker and its legend swatch cannot drift apart. */
+  fill: var(--ink-2);
+}
+
+.lane-meal {
+  fill: var(--meal);
+}
+
+.stage-caption {
+  max-width: 52ch;
+  /* reserved so swapping between the three captions never shifts the page */
+  min-height: 3.2em;
+}
+
+/* --------------------------------- entries -------------------------------- */
+/* Three cards never fill a two-column grid, and auto-fit happily leaves the
+   third one stranded beside a gap at tablet widths. So the columns are
+   declared rather than inferred, and in the two-column band the last card
+   spans both — which reads as a decision instead of a leftover. */
+.entry-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: clamp(1rem, 2vw, 1.35rem);
+}
+
+@media (min-width: 620px) {
+  .entry-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .entry-grid > :last-child {
+    grid-column: 1 / -1;
   }
 }
 
-/* unit switch: the conversion is the feature, so let people try it */
-.unit-toggle {
-  margin-top: 1.4rem;
-  align-self: flex-start;
+@media (min-width: 940px) {
+  .entry-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .entry-grid > :last-child {
+    grid-column: auto;
+  }
 }
 
-.unit-demo {
+.entry {
+  padding: clamp(1.25rem, 2.4vw, 1.6rem);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+}
+
+.entry h3 {
+  margin-top: 1rem;
+  font-size: 1.05rem;
+  line-height: 1.3;
+}
+
+.entry > p {
+  margin-top: 0.6rem;
+  color: var(--ink-2);
+  font-size: 0.94rem;
+}
+
+.entry-fields {
+  margin: 1.1rem 0 0;
+  padding: 1.1rem 0 0;
+  list-style: none;
+  border-top: 1px solid var(--line-soft);
+  font-size: 0.88rem;
+  color: var(--ink-2);
+}
+
+.entry-fields li {
+  position: relative;
+  padding-left: 1.1rem;
+}
+
+.entry-fields li + li {
+  margin-top: 0.45rem;
+}
+
+.entry-fields li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.62em;
+  width: 5px;
+  height: 5px;
+  border-radius: var(--r-pill);
+  background: var(--tone);
+}
+
+/* --------------------------- recreated app surfaces ------------------------ */
+/* The card chrome the app uses for its log tables and forms. */
+.ui-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.ui-card-head {
+  padding: 1.05rem 1.15rem;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.ui-card-head h3 {
+  font-size: 1rem;
+}
+
+.ui-card-desc {
+  margin-top: 0.25rem;
+  font-size: 0.82rem;
+  color: var(--ink-3);
+}
+
+.ui-card-body {
+  padding: 1.15rem;
+}
+
+.ui-rule {
+  margin: 1.15rem 0;
+  border: 0;
+  border-top: 1px solid var(--line-soft);
+}
+
+/* ------------------------------ the log table ------------------------------ */
+.ui-table-scroll {
+  overflow-x: auto;
+}
+
+.ui-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.86rem;
+  white-space: nowrap;
+}
+
+.ui-table th {
+  padding: 0.6rem 1.15rem;
+  text-align: left;
+  font-size: 0.74rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+  background: var(--paper-2);
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.ui-table td {
+  padding: 0.7rem 1.15rem;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.ui-table tr:last-child td {
+  border-bottom: 0;
+}
+
+.cell-when {
+  color: var(--ink-2);
+}
+
+.ui-table .num {
+  font-weight: 500;
+}
+
+/* ------------------------------ the range card ----------------------------- */
+.range-head {
   display: flex;
+  align-items: center;
+  justify-content: space-between;
   flex-wrap: wrap;
-  gap: 1.75rem;
-  margin: 1.5rem 0 0;
+  gap: 0.75rem;
 }
 
-.unit-demo dt {
+.range-demo {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.7rem;
+  margin: 0;
+}
+
+.range-demo dt {
+  font-size: 0.76rem;
+  color: var(--ink-3);
+}
+
+.range-demo dd {
+  margin: 0.15rem 0 0;
+  font-size: 1.3rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.range-demo .unit-label {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--ink-2);
+}
+
+.range-bar {
+  position: relative;
+  height: 12px;
+  margin-top: 1.15rem;
+  border-radius: var(--r-pill);
+  background: var(--paper-2);
+}
+
+.range-band {
+  position: absolute;
+  inset-block: 0;
+  /* 3.9-10.0 inside an axis drawn from 2 to 14 */
+  left: 15.83%;
+  width: 50.83%;
+  border-radius: var(--r-pill);
+  background: var(--range-soft);
+}
+
+.range-dot {
+  position: absolute;
+  top: 50%;
+  /* 6.2 on the same axis */
+  left: 35%;
+  width: 14px;
+  height: 14px;
+  margin: -7px 0 0 -7px;
+  border-radius: var(--r-pill);
+  background: var(--accent);
+  border: 2px solid var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.range-caption {
+  margin-top: 0.7rem;
+  font-size: 0.86rem;
+  color: var(--ink-2);
+}
+
+.range-meter-label {
+  font-size: 0.76rem;
+  color: var(--ink-3);
+}
+
+.range-meter-value {
+  margin-top: 0.1rem;
+  font-size: 1.3rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.range-meter-foot {
+  margin-top: 0.5rem;
+  font-size: 0.76rem;
+  color: var(--ink-3);
+}
+
+/* A value the unit switch has just rewritten, nudged so the change is
+   noticed without being animated at. */
+.unit-value.is-swapping {
+  animation: swap 0.3s var(--ease);
+}
+
+@keyframes swap {
+  from {
+    opacity: 0.25;
+    transform: translateY(-3px);
+  }
+}
+
+/* ------------------------------- the add form ------------------------------ */
+/* A picture of the real form, not a form: it would post nowhere, so it carries
+   no inputs and is hidden from the accessibility tree. The surrounding
+   figcaption says what it is. */
+.ui-form {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.ui-field {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.ui-label {
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.ui-label em {
+  font-style: normal;
+  font-weight: 400;
+  color: var(--ink-3);
+}
+
+.ui-input {
+  padding: 0.65rem 0.8rem;
+  font-size: 0.92rem;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+}
+
+.ui-input.is-empty {
+  color: var(--ink-3);
+}
+
+.ui-input.is-select {
+  background-image: var(--select-chevron);
+  background-repeat: no-repeat;
+  background-position: right 0.7rem center;
+  background-size: 16px 16px;
+}
+
+.ui-hint {
   font-size: 0.78rem;
   color: var(--ink-3);
 }
 
-.unit-demo dd {
-  margin: 0.15rem 0 0;
-  font-family: var(--font-mono);
-  font-size: 1.35rem;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: -0.02em;
+.ui-submit {
+  justify-self: start;
+  margin-top: 0.2rem;
+  padding: 0.6rem 1.1rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--accent-ink);
+  background: var(--accent-strong);
+  border-radius: var(--r-md);
 }
 
-.unit-value.is-swapping {
-  animation: swap 0.32s var(--ease);
+/* ---------------------------------- trust ---------------------------------- */
+.trust-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: clamp(1rem, 2vw, 1.35rem);
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-@keyframes swap {
-  50% {
-    opacity: 0;
-    transform: translateY(-6px);
-  }
-  51% {
-    transform: translateY(6px);
-  }
+.trust {
+  padding: clamp(1.15rem, 2.2vw, 1.4rem);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
 }
 
-/* -------------------------------- closer --------------------------------- */
+.trust h3 {
+  font-size: 0.98rem;
+  line-height: 1.3;
+}
+
+.trust p {
+  margin-top: 0.55rem;
+  font-size: 0.9rem;
+  color: var(--ink-2);
+}
+
+/* Padded to clear the 24x24 minimum pointer target: this is a standalone
+   block link, not a link inside a sentence, so the inline exception does not
+   cover it. */
+.trust-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: 0.5rem;
+  padding-block: 0.35rem;
+  font-size: 0.88rem;
+  font-weight: 500;
+  /* the darker teal: --accent is 3.7:1 on the card, under AA at this size */
+  color: var(--accent-strong);
+}
+
+.trust-link:hover {
+  text-decoration: underline;
+}
+
+.trust-link .icon {
+  transition: transform 0.2s var(--ease);
+}
+
+.trust-link:hover .icon {
+  transform: translateX(2px);
+}
+
+/* -------------------------------- moments ---------------------------------- */
+.moments {
+  margin: 1.35rem 0 1.35rem;
+  padding: 0;
+  list-style: none;
+}
+
+.moments li {
+  position: relative;
+  padding-left: 1.4rem;
+  font-size: 1.02rem;
+  font-weight: 500;
+}
+
+.moments li + li {
+  margin-top: 0.5rem;
+}
+
+.moments li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.62em;
+  width: 7px;
+  height: 7px;
+  border-radius: var(--r-pill);
+  background: var(--accent);
+}
+
+/* --------------------------------- closer ---------------------------------- */
 .closer {
-  padding-block: clamp(4rem, 9vw, 7rem);
-  border-top: 1px solid var(--line-soft);
-  background: linear-gradient(180deg, transparent, var(--accent-soft));
+  padding-block: clamp(3.5rem, 8vw, 6rem);
 }
 
 .closer-inner {
-  text-align: center;
-}
-
-.closer h2 {
-  font-size: clamp(2rem, 4.6vw, 3.25rem);
+  max-width: 42rem;
   margin-inline: auto;
+  padding: clamp(2rem, 5vw, 3.25rem) clamp(1.5rem, 4vw, 3rem);
+  text-align: center;
+  background: var(--accent-wash);
+  border: 1px solid var(--accent-line);
+  border-radius: var(--r-lg);
 }
 
-.closer p {
+.closer-inner h2 {
+  font-size: clamp(1.6rem, 3.1vw, 2.1rem);
+}
+
+.closer-inner p {
   margin-top: 0.9rem;
   color: var(--ink-2);
 }
 
-.closer .actions {
-  margin-top: 1.9rem;
+.closer-inner .actions {
+  margin-top: 1.75rem;
   justify-content: center;
 }
 
-/* -------------------------------- footer --------------------------------- */
+/* --------------------------------- footer ---------------------------------- */
 .site-footer {
+  padding-block: clamp(2.5rem, 5vw, 3.5rem);
   border-top: 1px solid var(--line-soft);
-  padding-block: 2.5rem;
-  font-size: 0.9rem;
+  background: var(--paper-2);
 }
 
 .footer-inner {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 1rem 2rem;
+  display: grid;
+  gap: 1.25rem;
 }
 
 .footer-brand {
-  display: inline-flex;
+  display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 0.6rem;
   font-weight: 600;
 }
 
+.footer-tagline {
+  font-weight: 400;
+  font-size: 0.88rem;
+  color: var(--ink-2);
+}
+
 .footer-nav {
   display: flex;
-  gap: 1.5rem;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.4rem;
+  font-size: 0.9rem;
   color: var(--ink-2);
+}
+
+.footer-nav a {
+  padding-block: 0.35rem;
 }
 
 .footer-nav a:hover {
   color: var(--ink);
+  text-decoration: underline;
 }
 
 .footer-disclaimer {
-  flex: 1 1 100%;
-  color: var(--ink-3);
-  font-size: 0.82rem;
   max-width: 62ch;
+  font-size: 0.8rem;
+  /* --ink-3 falls to 4.4:1 on the footer's --paper-2 ground */
+  color: var(--ink-2);
 }
 
-/* ------------------------------- reveals --------------------------------- */
+/* --------------------------------- reveals --------------------------------- */
+/* One short, shallow rise as a block enters. --d staggers siblings in a grid;
+   theme.css collapses every transition under prefers-reduced-motion, and
+   script.js marks everything shown outright when that is set. */
 .reveal {
   opacity: 0;
-  transform: translateY(20px);
+  transform: translateY(14px);
+  transition: opacity 0.5s var(--ease), transform 0.5s var(--ease);
+  transition-delay: var(--d, 0ms);
 }
 
 .reveal.show {
   opacity: 1;
   transform: none;
-  transition: opacity 0.7s var(--ease) var(--d, 0ms), transform 0.7s var(--ease) var(--d, 0ms);
 }
 
-/* ------------------------------- responsive ------------------------------ */
-@media (max-width: 720px) {
-  .app-window {
-    grid-template-columns: minmax(0, 1fr);
+/* -------------------------------- responsive ------------------------------- */
+@media (max-width: 860px) {
+  /* theme.css turns .menu into a full-height drawer here. These give the
+     drawer the landing page's own ordering: section links first, then the
+     account actions pushed to the bottom of the sheet. */
+  .menu-spacer {
+    display: none;
   }
 
-  /* the sidebar becomes a row of links, the way a narrow app would show it */
-  .app-rail {
-    flex-direction: row;
-    gap: 0.35rem;
-    overflow: hidden;
-    border-right: 0;
-    border-bottom: 1px solid var(--line-soft);
-    padding: 0.6rem;
+  .menu > a:not(.btn) {
+    font-size: 1.05rem;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
   }
 
-  .app-rail-item {
-    padding: 0.35rem 0.6rem;
-    font-size: 0.82rem;
+  .menu-login {
+    margin-top: 0.5rem;
+    border-top: 1px solid var(--line-soft);
+    padding-top: 1rem !important;
   }
 
-  .app-chart {
-    height: 200px;
+  .menu .btn {
+    min-height: 48px;
+    font-size: 0.98rem;
   }
 }
 
-@media (max-width: 520px) {
+/* Sits outside the scrolling box, so it stays put while the chart moves. Each
+   swatch repeats its mark's shape as well as its colour. */
+.stage-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.25rem;
+  margin: 0.85rem 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.82rem;
+  color: var(--ink-2);
+}
+
+.stage-legend li {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.stage-legend svg {
+  width: 12px;
+  height: 12px;
+  flex: none;
+  fill: var(--tone);
+}
+
+/* Under the stage's 620px floor the chart scrolls inside its own box; say so,
+   rather than leaving the evening half of the day undiscoverable. */
+.stage-hint {
+  display: none;
+  margin-top: 0.5rem;
+  font-size: 0.78rem;
+  color: var(--ink-3);
+}
+
+@media (max-width: 700px) {
+  .stage-hint {
+    display: block;
+  }
+}
+
+@media (max-width: 560px) {
+  /* Three equal columns rather than a wrapped row: the labels differ in
+     length, and a control whose buttons jump between rows reads as broken. */
+  .stage-steps {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: auto;
+  }
+
+  .stage-steps button {
+    padding-inline: 0.5rem;
+    font-size: 0.78rem;
+    line-height: 1.25;
+  }
+
+  .range-demo {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .range-demo .unit-label {
+    grid-column: 1 / -1;
+  }
+
   .actions .btn {
     flex: 1 1 100%;
-  }
-
-  .unit-demo {
-    gap: 1.25rem;
-  }
-}
-
-/* ----------------------------- reduced motion ---------------------------- */
-@media (prefers-reduced-motion: reduce) {
-  .reveal {
-    opacity: 1;
-    transform: none;
-  }
-
-  .spark-line {
-    stroke-dashoffset: 0;
   }
 }
