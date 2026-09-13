@@ -48,23 +48,39 @@
   --accent-wash-l: #f0fdfa;
   --accent-line-l: #99f6e4;
   --accent-deep-l: #115e59;
+  /* teal-700. --accent is teal-600, and white on teal-600 is 3.7:1 — under AA
+     for the primary button's label. The brand colour itself is unchanged;
+     this is only what a solid button and a pressed segment are filled with. */
+  --accent-strong-l: #0f766e;
+  --accent-strong-hover-l: #115e59;
 
   --insulin-l: #2563eb;
   --insulin-soft-l: #dbeafe;
   --insulin-wash-l: #eff6ff;
+  --insulin-deep-l: #1d4ed8;
   --meal-l: #ea580c;
   --meal-soft-l: #ffedd5;
   --meal-wash-l: #fff7ed;
+  --meal-deep-l: #9a3412;
 
+  /* The -deep variants exist for text on a -soft or -wash fill. A badge's
+     label is 12px, so it needs the 4.5:1 threshold, and the 600-weight hue
+     that reads well as a dot or a chart stroke does not clear it on its own
+     tint. Dark mode needs no equivalent — its tints are translucent over a
+     dark surface, where the base hue already passes — so the dark bindings
+     below simply point --*-deep at the base tone. */
   --range-l: #16a34a;
   --range-soft-l: #dcfce7;
   --range-wash-l: #f0fdf4;
+  --range-deep-l: #15803d;
   --warn-l: #d97706;
   --warn-soft-l: #fef3c7;
   --warn-wash-l: #fffbeb;
+  --warn-deep-l: #92400e;
   --danger-l: #dc2626;
   --danger-soft-l: #fee2e2;
   --danger-wash-l: #fef2f2;
+  --danger-deep-l: #b91c1c;
 
   --shadow-sm-l: 0 1px 2px rgba(17, 24, 39, 0.06);
   --shadow-lg-l: 0 1px 3px rgba(17, 24, 39, 0.08), 0 12px 32px -16px rgba(17, 24, 39, 0.22);
@@ -90,23 +106,30 @@
   --accent-wash-d: rgba(45, 212, 191, 0.08);
   --accent-line-d: rgba(45, 212, 191, 0.32);
   --accent-deep-d: #99f6e4;
+  --accent-strong-d: #2dd4bf;
+  --accent-strong-hover-d: #5eead4;
 
   --insulin-d: #7dabff;
   --insulin-soft-d: rgba(125, 171, 255, 0.18);
   --insulin-wash-d: rgba(125, 171, 255, 0.09);
+  --insulin-deep-d: #7dabff;
   --meal-d: #fb923c;
   --meal-soft-d: rgba(251, 146, 60, 0.18);
   --meal-wash-d: rgba(251, 146, 60, 0.09);
+  --meal-deep-d: #fb923c;
 
   --range-d: #4ade80;
   --range-soft-d: rgba(74, 222, 128, 0.17);
   --range-wash-d: rgba(74, 222, 128, 0.08);
+  --range-deep-d: #4ade80;
   --warn-d: #fbbf24;
   --warn-soft-d: rgba(251, 191, 36, 0.17);
   --warn-wash-d: rgba(251, 191, 36, 0.08);
+  --warn-deep-d: #fbbf24;
   --danger-d: #f87171;
   --danger-soft-d: rgba(248, 113, 113, 0.17);
   --danger-wash-d: rgba(248, 113, 113, 0.09);
+  --danger-deep-d: #f87171;
 
   --shadow-sm-d: 0 1px 2px rgba(0, 0, 0, 0.5);
   --shadow-lg-d: 0 1px 3px rgba(0, 0, 0, 0.5), 0 16px 40px -20px rgba(0, 0, 0, 0.8);
@@ -128,21 +151,28 @@
   --accent-wash: var(--accent-wash-l);
   --accent-line: var(--accent-line-l);
   --accent-deep: var(--accent-deep-l);
+  --accent-strong: var(--accent-strong-l);
+  --accent-strong-hover: var(--accent-strong-hover-l);
   --insulin: var(--insulin-l);
   --insulin-soft: var(--insulin-soft-l);
   --insulin-wash: var(--insulin-wash-l);
+  --insulin-deep: var(--insulin-deep-l);
   --meal: var(--meal-l);
   --meal-soft: var(--meal-soft-l);
   --meal-wash: var(--meal-wash-l);
+  --meal-deep: var(--meal-deep-l);
   --range: var(--range-l);
   --range-soft: var(--range-soft-l);
   --range-wash: var(--range-wash-l);
+  --range-deep: var(--range-deep-l);
   --warn: var(--warn-l);
   --warn-soft: var(--warn-soft-l);
   --warn-wash: var(--warn-wash-l);
+  --warn-deep: var(--warn-deep-l);
   --danger: var(--danger-l);
   --danger-soft: var(--danger-soft-l);
   --danger-wash: var(--danger-wash-l);
+  --danger-deep: var(--danger-deep-l);
   --shadow-sm: var(--shadow-sm-l);
   --shadow-lg: var(--shadow-lg-l);
   --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
@@ -185,21 +215,28 @@
     --accent-wash: var(--accent-wash-d);
     --accent-line: var(--accent-line-d);
     --accent-deep: var(--accent-deep-d);
+  --accent-strong: var(--accent-strong-d);
+  --accent-strong-hover: var(--accent-strong-hover-d);
     --insulin: var(--insulin-d);
     --insulin-soft: var(--insulin-soft-d);
     --insulin-wash: var(--insulin-wash-d);
+  --insulin-deep: var(--insulin-deep-d);
     --meal: var(--meal-d);
     --meal-soft: var(--meal-soft-d);
     --meal-wash: var(--meal-wash-d);
+  --meal-deep: var(--meal-deep-d);
     --range: var(--range-d);
     --range-soft: var(--range-soft-d);
     --range-wash: var(--range-wash-d);
+  --range-deep: var(--range-deep-d);
     --warn: var(--warn-d);
     --warn-soft: var(--warn-soft-d);
     --warn-wash: var(--warn-wash-d);
+  --warn-deep: var(--warn-deep-d);
     --danger: var(--danger-d);
     --danger-soft: var(--danger-soft-d);
     --danger-wash: var(--danger-wash-d);
+  --danger-deep: var(--danger-deep-d);
     --shadow-sm: var(--shadow-sm-d);
     --shadow-lg: var(--shadow-lg-d);
     --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%237d9099' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
@@ -225,26 +262,216 @@
   --accent-wash: var(--accent-wash-d);
   --accent-line: var(--accent-line-d);
   --accent-deep: var(--accent-deep-d);
+  --accent-strong: var(--accent-strong-d);
+  --accent-strong-hover: var(--accent-strong-hover-d);
   --insulin: var(--insulin-d);
   --insulin-soft: var(--insulin-soft-d);
   --insulin-wash: var(--insulin-wash-d);
+  --insulin-deep: var(--insulin-deep-d);
   --meal: var(--meal-d);
   --meal-soft: var(--meal-soft-d);
   --meal-wash: var(--meal-wash-d);
+  --meal-deep: var(--meal-deep-d);
   --range: var(--range-d);
   --range-soft: var(--range-soft-d);
   --range-wash: var(--range-wash-d);
+  --range-deep: var(--range-deep-d);
   --warn: var(--warn-d);
   --warn-soft: var(--warn-soft-d);
   --warn-wash: var(--warn-wash-d);
+  --warn-deep: var(--warn-deep-d);
   --danger: var(--danger-d);
   --danger-soft: var(--danger-soft-d);
   --danger-wash: var(--danger-wash-d);
+  --danger-deep: var(--danger-deep-d);
   --shadow-sm: var(--shadow-sm-d);
   --shadow-lg: var(--shadow-lg-d);
   --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%237d9099' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
 
   color-scheme: dark;
+}
+
+/* --------------------------------- tones ---------------------------------
+   A component asks for a hue by setting --tone / --tone-soft / --tone-wash
+   through a .t-* class, and every coloured part (icon puck, badge, value,
+   action tile, legend dot) reads those. One variable per component keeps a
+   card's colour from drifting between its puck and its badge.
+
+   These live here rather than in app.css because the landing page loads only
+   this stylesheet, and it colour-codes glucose/insulin/meals the same way the
+   dashboard does. Two copies would drift.
+   ------------------------------------------------------------------------ */
+.t-glucose {
+  --tone: var(--accent);
+  --tone-soft: var(--accent-soft);
+  --tone-wash: var(--accent-wash);
+  --tone-line: var(--accent-line);
+  --tone-ink: var(--accent-deep);
+}
+
+.t-insulin {
+  --tone: var(--insulin);
+  --tone-soft: var(--insulin-soft);
+  --tone-wash: var(--insulin-wash);
+  --tone-line: var(--insulin-soft);
+  --tone-ink: var(--insulin-deep);
+}
+
+.t-meal {
+  --tone: var(--meal);
+  --tone-soft: var(--meal-soft);
+  --tone-wash: var(--meal-wash);
+  --tone-line: var(--meal-soft);
+  --tone-ink: var(--meal-deep);
+}
+
+.t-range {
+  --tone: var(--range);
+  --tone-soft: var(--range-soft);
+  --tone-wash: var(--range-wash);
+  --tone-line: var(--range-soft);
+  --tone-ink: var(--range-deep);
+}
+
+.t-warn {
+  --tone: var(--warn);
+  --tone-soft: var(--warn-soft);
+  --tone-wash: var(--warn-wash);
+  --tone-line: var(--warn-soft);
+  --tone-ink: var(--warn-deep);
+}
+
+.t-danger {
+  --tone: var(--danger);
+  --tone-soft: var(--danger-soft);
+  --tone-wash: var(--danger-wash);
+  --tone-line: var(--danger-soft);
+  --tone-ink: var(--danger-deep);
+}
+
+/* The quiet tone, for a value that is deliberately not colour-coded — basal
+   insulin, which is the flat background dose. --surface rather than --paper-2
+   for the soft fill: rows are themselves --paper-2, so a puck filled with it
+   vanished into the row it sat on. This pairs with the grey half of the
+   basal/bolus split bar, so the two say the same thing. */
+.t-neutral {
+  --tone: var(--ink-2);
+  --tone-ink: var(--ink-2);
+  --tone-soft: var(--surface);
+  --tone-wash: var(--surface);
+  --tone-line: var(--line);
+}
+
+/* ------------------------- shared small primitives ------------------------
+   Icons, badges and the range meter are used by the authenticated app AND by
+   the landing page, which loads only this stylesheet. They sit here for the
+   same reason the tones above do: two copies would drift, and the landing
+   page's whole argument is that it shows the real product's parts.
+   ------------------------------------------------------------------------ */
+
+/* Every glyph is a <use> into the sprite in main/_icon_sprite.html. Stroke
+   presentation lives here rather than on each symbol so one symbol can be
+   drawn at any size and inherit the colour of its container. */
+.icon {
+  width: 20px;
+  height: 20px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.icon-sm {
+  width: 16px;
+  height: 16px;
+}
+
+.icon-lg {
+  width: 24px;
+  height: 24px;
+}
+
+/* Status pill. Reads --tone/--tone-soft, so a .t-* class on the badge or on
+   any ancestor colours it. */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.15rem 0.55rem;
+  border-radius: var(--r-sm);
+  font-size: 0.75rem;
+  font-weight: 500;
+  white-space: nowrap;
+  /* --tone-ink, not --tone: at 12px this label needs 4.5:1 against its own
+     tint, which the 600-weight hue does not reach in light mode. */
+  color: var(--tone-ink, var(--tone));
+  background: var(--tone-soft);
+}
+
+.badge-outline {
+  color: var(--ink-2);
+  background: transparent;
+  border: 1px solid var(--line);
+}
+
+/* Time-in-range meter: the rail's progress card, and the landing page's
+   targets section. */
+.meter {
+  margin-top: 0.5rem;
+  height: 8px;
+  border-radius: var(--r-pill);
+  background: var(--accent-soft);
+  overflow: hidden;
+}
+
+.meter > span {
+  display: block;
+  height: 100%;
+  border-radius: var(--r-pill);
+  background: var(--accent);
+}
+
+/* Icon puck and the header's latest-reading chip, both driven by --tone. */
+.puck {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex: none;
+  border-radius: var(--r-pill);
+  color: var(--tone);
+  background: var(--tone-soft);
+}
+
+.puck-sm {
+  width: 36px;
+  height: 36px;
+}
+
+.reading-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.4rem 0.75rem;
+  background: var(--tone-wash);
+  border: 1px solid var(--tone-line);
+  border-radius: var(--r-md);
+}
+
+.reading-chip-label {
+  font-size: 0.6875rem;
+  color: var(--tone-ink, var(--tone));
+  line-height: 1.2;
+}
+
+.reading-chip-value {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--ink);
+  line-height: 1.3;
+  white-space: nowrap;
 }
 
 /* --------------------------------- base ---------------------------------- */
@@ -485,7 +712,7 @@ svg {
 
 .segmented button[aria-pressed="true"] {
   color: var(--accent-ink);
-  background: var(--accent);
+  background: var(--accent-strong);
 }
 
 .segmented button:hover:not([aria-pressed="true"]) {
@@ -602,13 +829,13 @@ svg {
 }
 
 .btn-primary {
-  background: var(--accent);
+  background: var(--accent-strong);
   color: var(--accent-ink);
   box-shadow: var(--shadow-sm);
 }
 
 .btn-primary:hover {
-  background: var(--accent-hover);
+  background: var(--accent-strong-hover);
   transform: translateY(-2px);
   box-shadow: var(--shadow-lg);
 }

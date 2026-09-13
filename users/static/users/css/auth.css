@@ -80,7 +80,7 @@
 }
 
 .auth-links a {
-  color: var(--accent);
+  color: var(--accent-strong);
 }
 
 .auth-links a:hover {

@@ -76,7 +76,7 @@
 
 .change-photo-btn {
   font-size: 0.8125rem;
-  color: var(--accent);
+  color: var(--accent-strong);
   background: var(--accent-wash);
   border: 1px solid var(--accent-line);
   border-radius: var(--r-md);
@@ -341,7 +341,7 @@
 .link-btn {
   font: inherit;
   font-size: 0.8125rem;
-  color: var(--accent);
+  color: var(--accent-strong);
   background: none;
   border: 0;
   border-radius: var(--r-sm);

@@ -22,7 +22,13 @@
 * `main` — shared `base.html`, the `home()` redirect, and `NoCacheMiddleware`.
 * `landing` — the public marketing page rendered by `home()` for anonymous visitors.
   **Part of the product**, not a stopgap: GlucoRead ships as one Django deployment, so the
-  landing page lives here and is styled with the same shared theme tokens as the app.
+  landing page lives here and is styled with the same shared theme tokens as the app —
+  and built from the app's own parts (the lucide sprite, `.badge`, `.puck`, `.meter`,
+  the `.t-*` tones), all of which live in `theme.css` rather than `app.css` for exactly
+  that reason. Its centrepiece is a three-step inline-SVG "day stage": one example day
+  shown as bare readings, then against the target band, then with insulin and meal lanes.
+  Every figure on the page uses the *same* example day (avg 7.8, 35.0 U, 165 g / 13.8 BU,
+  80% in range), so changing one number means changing all of them.
 * `core` — settings/urls/wsgi.
 
 ## 2. Domain invariants — do not break these
@@ -234,15 +240,20 @@ credential — is unverified.
 * **Media is served only when `DEBUG`** (`core/urls.py:15-16`); Caddy serves it in prod.
 * **`NoCacheMiddleware`** (`main/middleware.py`) forces no-store on every authenticated
   page — relevant when debugging anything cache-related.
-* **Chart.js is the only CDN script, and it is pinned + SRI-checked.** An earlier note
-  here said the `integrity=` was missing; that has not been true since #37. What *was*
-  wrong until the hardening pass is subtler: the hash covered
-  `dist/chart.umd.min.js`, a path that does not exist in the npm package — jsdelivr
-  synthesises it by minifying `chart.umd.js` on request. So the hash attested only to
-  jsdelivr's minifier output, and a change on their side would fail SRI and silently
-  blank the chart. Both tags now name `dist/chart.umd.js`, whose hash is verifiable
-  against the npm tarball. Bootstrap is not loaded from anywhere; see the crispy/Bootstrap
-  note above.
+* **Chart.js is the only CDN script, it is pinned + SRI-checked, and it loads on the
+  dashboard only.** An earlier note here said the `integrity=` was missing; that has not
+  been true since #37. What *was* wrong until the hardening pass is subtler: the hash
+  covered `dist/chart.umd.min.js`, a path that does not exist in the npm package —
+  jsdelivr synthesises it by minifying `chart.umd.js` on request. So the hash attested
+  only to jsdelivr's minifier output, and a change on their side would fail SRI and
+  silently blank the chart. The tag now names `dist/chart.umd.js`, whose hash is
+  verifiable against the npm tarball.
+  **The landing page no longer loads it at all** — its figures are inline SVG over static
+  example data, which saved ~200 KB and a third-party round trip on the one page a first
+  visitor sees. `dashboard.tests.ExternalScriptIntegrityTest` holds both halves: the
+  dashboard's tag must stay pinned, and the landing page must keep loading *zero*
+  third-party scripts, because its own copy claims it carries none. Bootstrap is not
+  loaded from anywhere; see the crispy/Bootstrap note above.
 * **There is a Content-Security-Policy, and it is nonce-based**
   (`main.middleware.ContentSecurityPolicyMiddleware`). `script-src` has no
   `'unsafe-inline'`, so **any inline `<script>` you add needs
