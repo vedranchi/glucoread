@@ -15,92 +15,10 @@
      .rail         256px navigation rail
      .page         the content column, 1.5rem padding, 1.5rem stack
 
-   Tone system: a component asks for a hue by setting --tone / --tone-soft /
-   --tone-wash through a .t-* class, and every coloured part (icon puck, badge,
-   value, action tile) reads those. The source repeats the literal Tailwind
-   colour on each element instead; one variable per component keeps a card's
-   colour from drifting between its puck and its badge.
+   Tone system: a component asks for a hue with a .t-* class, which sets
+   --tone / --tone-soft / --tone-wash for every coloured part inside it.
+   Those classes live in theme.css, which the landing page loads too.
    ========================================================================== */
-
-/* --------------------------------- tones --------------------------------- */
-.t-glucose {
-  --tone: var(--accent);
-  --tone-soft: var(--accent-soft);
-  --tone-wash: var(--accent-wash);
-  --tone-line: var(--accent-line);
-}
-
-.t-insulin {
-  --tone: var(--insulin);
-  --tone-soft: var(--insulin-soft);
-  --tone-wash: var(--insulin-wash);
-  --tone-line: var(--insulin-soft);
-}
-
-.t-meal {
-  --tone: var(--meal);
-  --tone-soft: var(--meal-soft);
-  --tone-wash: var(--meal-wash);
-  --tone-line: var(--meal-soft);
-}
-
-.t-range {
-  --tone: var(--range);
-  --tone-soft: var(--range-soft);
-  --tone-wash: var(--range-wash);
-  --tone-line: var(--range-soft);
-}
-
-.t-warn {
-  --tone: var(--warn);
-  --tone-soft: var(--warn-soft);
-  --tone-wash: var(--warn-wash);
-  --tone-line: var(--warn-soft);
-}
-
-.t-danger {
-  --tone: var(--danger);
-  --tone-soft: var(--danger-soft);
-  --tone-wash: var(--danger-wash);
-  --tone-line: var(--danger-soft);
-}
-
-/* The quiet tone, for a value that is deliberately not colour-coded — basal
-   insulin, which is the flat background dose. --surface rather than --paper-2
-   for the soft fill: rows are themselves --paper-2, so a puck filled with it
-   vanished into the row it sat on. This pairs with the grey half of the
-   basal/bolus split bar, so the two say the same thing. */
-.t-neutral {
-  --tone: var(--ink-2);
-  --tone-soft: var(--surface);
-  --tone-wash: var(--surface);
-  --tone-line: var(--line);
-}
-
-/* --------------------------------- icons --------------------------------- */
-/* Every glyph is a <use> into the sprite in main/_icon_sprite.html. Stroke
-   presentation lives here rather than on each symbol so one symbol can be
-   drawn at any size and inherit the colour of its container. */
-.icon {
-  width: 20px;
-  height: 20px;
-  flex: none;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.icon-sm {
-  width: 16px;
-  height: 16px;
-}
-
-.icon-lg {
-  width: 24px;
-  height: 24px;
-}
 
 /* ---------------------------------- shell -------------------------------- */
 .app {
@@ -193,32 +111,8 @@
 
 /* The "Current Glucose" chip from the source header. Rendered only when there
    is a reading to show — an empty chip reading "-- mg/dL" is worse than none. */
-.reading-chip {
-  display: flex;
-  align-items: center;
-  gap: 0.65rem;
-  padding: 0.4rem 0.75rem;
-  background: var(--tone-wash);
-  border: 1px solid var(--tone-line);
-  border-radius: var(--r-md);
-}
-
 .reading-chip .icon {
   color: var(--tone);
-}
-
-.reading-chip-label {
-  font-size: 0.6875rem;
-  color: var(--tone);
-  line-height: 1.2;
-}
-
-.reading-chip-value {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--ink);
-  line-height: 1.3;
-  white-space: nowrap;
 }
 
 .avatar-link {
@@ -328,22 +222,7 @@
 .rail-note-value {
   margin-top: 0.35rem;
   font-size: 0.75rem;
-  color: var(--accent);
-}
-
-.meter {
-  margin-top: 0.5rem;
-  height: 8px;
-  border-radius: var(--r-pill);
-  background: var(--accent-soft);
-  overflow: hidden;
-}
-
-.meter > span {
-  display: block;
-  height: 100%;
-  border-radius: var(--r-pill);
-  background: var(--accent);
+  color: var(--accent-strong);
 }
 
 .rail-note-foot {
@@ -531,22 +410,6 @@
 }
 
 /* The tinted circular icon holder the source puts on every stat card. */
-.puck {
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  flex: none;
-  border-radius: var(--r-pill);
-  color: var(--tone);
-  background: var(--tone-soft);
-}
-
-.puck-sm {
-  width: 36px;
-  height: 36px;
-}
-
 .stat-foot {
   display: flex;
   align-items: center;
@@ -558,26 +421,6 @@
 
 .stat-foot.is-toned {
   color: var(--tone);
-}
-
-/* --------------------------------- badges -------------------------------- */
-.badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  padding: 0.15rem 0.55rem;
-  border-radius: var(--r-sm);
-  font-size: 0.75rem;
-  font-weight: 500;
-  white-space: nowrap;
-  color: var(--tone);
-  background: var(--tone-soft);
-}
-
-.badge-outline {
-  color: var(--ink-2);
-  background: transparent;
-  border: 1px solid var(--line);
 }
 
 /* --------------------------------- rows ---------------------------------- */

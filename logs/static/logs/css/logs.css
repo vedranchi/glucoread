@@ -65,7 +65,7 @@
 }
 
 .data-table a {
-  color: var(--accent);
+  color: var(--accent-strong);
 }
 
 .data-table a:hover {
