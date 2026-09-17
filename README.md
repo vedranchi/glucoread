@@ -20,13 +20,9 @@ dashboard that turns raw logs into a picture of the day.
 
 ![Dashboard](docs/screenshots/dashboard.png)
 
-| Insulin — dark | Meals — light |
+| Insulin | Meals | Glucose
 |---|---|
-| ![Insulin tracking](docs/screenshots/insulin.png) | ![Meal tracking](docs/screenshots/meals.png) |
-
-| Phone layout | Nav drawer |
-|---|---|
-| <img src="docs/screenshots/mobile.jpg" alt="GlucoRead on a phone" width="260"> | <img src="docs/screenshots/mobile-nav.jpg" alt="Mobile nav drawer" width="260"> |
+| ![Insulin tracking](docs/screenshots/insulin.png) | ![Meal tracking](docs/screenshots/meals.png) | ![Glucose tracking](docs/screenshots/glucose-log)
 
 ## Stack
 
