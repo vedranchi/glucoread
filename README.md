@@ -22,7 +22,7 @@ dashboard that turns raw logs into a picture of the day.
 
 | Insulin | Meals | Glucose
 |---|---|
-| ![Insulin tracking](docs/screenshots/insulin.png) | ![Meal tracking](docs/screenshots/meals.png) | ![Glucose tracking](docs/screenshots/glucose-log)
+| ![Insulin tracking](docs/screenshots/insulin.png) | ![Meal tracking](docs/screenshots/meals.png) | ![Glucose tracking](docs/screenshots/glucose-log) |
 
 ## Stack
 
