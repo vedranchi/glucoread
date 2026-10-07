@@ -180,6 +180,13 @@ def add_insulin(request, pk=None):
                 raise ValueError
         except (InvalidOperation, TypeError, ValueError):
             error = "Invalid units value."
+        else:
+            # The column holds one decimal place and Postgres rounds anything
+            # finer on save, so 0.04 U passed the check above and was stored as
+            # a 0.0 U dose. Reject it rather than alter a medical record. A
+            # trailing zero ("2.50") is still fine: it compares equal.
+            if units != units.quantize(Decimal("0.1")):
+                error = "Units can have at most one decimal place, e.g. 2.5."
 
         if not error and form["insulin_type"] not in dict(InsulinLog.INSULIN_TYPES):
             error = "Invalid insulin type."
