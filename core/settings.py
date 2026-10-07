@@ -73,7 +73,11 @@ SECURE_HSTS_SECONDS = env.int(
 SECURE_HSTS_INCLUDE_SUBDOMAINS = env.bool(
     "SECURE_HSTS_INCLUDE_SUBDOMAINS", default=not DEBUG
 )
-SECURE_HSTS_PRELOAD = env.bool("SECURE_HSTS_PRELOAD", default=not DEBUG)
+# Off by default, even in prod. The token is a public request to be hard-coded
+# into browsers as HTTPS-only, which is effectively irreversible; it also does
+# nothing until max-age is a year, so sending it at a week stated an intent the
+# project does not have. Opt in deliberately, alongside the max-age raise.
+SECURE_HSTS_PRELOAD = env.bool("SECURE_HSTS_PRELOAD", default=False)
 
 
 # Application definition

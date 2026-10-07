@@ -51,7 +51,7 @@ docker compose up -d db                  # Postgres on 127.0.0.1:5433 — REQUIR
 ./env/bin/python manage.py runserver
 ```
 
-> **`manage.py test` should find 181 tests, all passing** (verified 2026-10-07 on
+> **`manage.py test` should find 182 tests, all passing** (verified 2026-10-07 on
 > `fix/checkup-findings`).
 > Treat the number as a floor, not a fact — it goes stale. If the count *drops*, suspect
 > test discovery before assuming tests were deleted: every app needs an `__init__.py`, and
@@ -167,6 +167,10 @@ subdomain of a registrable domain you don't own pins HTTPS onto borrowed infrast
 with removal measured in browser release trains. A year is also unrecoverable from the
 server: withdrawing it needs valid HTTPS serving `max-age=0`, which is exactly what a failed
 renewal takes away. Revisit on a custom domain.
+
+Now on `glucoread.com`, the decision (2026-10-07) is to stay at 7 days and **not** preload:
+`SECURE_HSTS_PRELOAD` defaults to off, so the header no longer carries a `preload` token
+that did nothing at a week but publicly asked for an irreversible listing.
 
 Also open, and deferred to v1.1: `TIME_ZONE` is hardcoded to `Europe/Skopje` for every user,
 so "today" rolls over at the wrong hour elsewhere; log entries are always stamped "now" with
