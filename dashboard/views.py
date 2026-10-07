@@ -4,7 +4,7 @@ from logs.models import GlucoseLog, InsulinLog, MealLog
 from django.utils import timezone
 from django.contrib.auth.decorators import login_required
 from django.urls import reverse
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 
 from users.models import UserPreferences
 from users.services import get_user_preferences
@@ -121,6 +121,10 @@ def dashboard(request):
             chart_date = datetime.strptime(chart_date_param, "%Y-%m-%d").date()
         except ValueError:
             chart_date = today
+    # The date comes straight from the URL. A future day has nothing to chart,
+    # and clamping it also keeps the +1 day below from overflowing at 9999-12-31
+    # — that, and the -1 day at 0001-01-01, used to 500 the dashboard.
+    chart_date = min(chart_date, today)
 
     # explicit ordering — the chart draws points in list order, so an
     # unordered queryset would zigzag the line
@@ -140,7 +144,9 @@ def dashboard(request):
     ]
     glucose_values = [to_display(g.value, is_mgdl) for g in glucose_chart_day]
 
-    previous_chart_date = chart_date - timedelta(days=1)
+    previous_chart_date = (
+        chart_date - timedelta(days=1) if chart_date > date.min else None
+    )
     next_chart_date = chart_date + timedelta(days=1)
     if next_chart_date > today:
         next_chart_date = None

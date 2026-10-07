@@ -316,3 +316,20 @@ class ContentSecurityPolicyTest(TestCase):
         self.assertEqual(
             middleware.header, "Content-Security-Policy-Report-Only"
         )
+
+
+@override_settings(SECURE_HSTS_SECONDS=604800, SECURE_SSL_REDIRECT=False)
+class HstsHeaderTest(TestCase):
+    """HSTS must not ask to be preloaded unless that is chosen deliberately.
+
+    The preload token is a public request for an effectively irreversible
+    browser listing, and it is inert below a year of max-age. The project
+    stays at a week, so the token is off by default; see core/settings.py.
+    """
+
+    def test_header_carries_no_preload_token_by_default(self):
+        self.assertFalse(settings.SECURE_HSTS_PRELOAD)
+        response = self.client.get(reverse("glucoread-home"), secure=True)
+        header = response["Strict-Transport-Security"]
+        self.assertIn("max-age=604800", header)
+        self.assertNotIn("preload", header)

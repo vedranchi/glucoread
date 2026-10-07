@@ -356,6 +356,34 @@ class LogViewValidationTest(TestCase):
         self.assertEqual(log.units, 10)
         self.assertEqual(log.brand, "Lantus")
 
+    def test_add_insulin_rejects_units_finer_than_the_column_stores(self):
+        """units holds one decimal place, and Postgres rounds anything finer on
+        save — 0.04 U used to pass validation and be stored as a 0.0 U dose."""
+        from logs.models import InsulinLog
+        from django.urls import reverse
+
+        for units in ("0.04", "2.35"):
+            response = self.client.post(
+                reverse("add-insulin"), {"units": units, "insulin_type": "bolus"}
+            )
+            # re-rendered with the submission, not redirected
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.context["form"]["units"], units)
+        self.assertFalse(InsulinLog.objects.filter(user=self.user).exists())
+
+    def test_add_insulin_accepts_one_decimal_place_and_trailing_zeros(self):
+        from logs.models import InsulinLog
+        from django.urls import reverse
+
+        for units in ("2.5", "2.50", "4"):
+            self.client.post(
+                reverse("add-insulin"), {"units": units, "insulin_type": "bolus"}
+            )
+        self.assertEqual(
+            sorted(InsulinLog.objects.filter(user=self.user).values_list("units", flat=True)),
+            [Decimal("2.5"), Decimal("2.5"), Decimal("4.0")],
+        )
+
     def test_add_insulin_rejects_unknown_type(self):
         from logs.models import InsulinLog
         from django.urls import reverse

@@ -51,8 +51,8 @@ docker compose up -d db                  # Postgres on 127.0.0.1:5433 — REQUIR
 ./env/bin/python manage.py runserver
 ```
 
-> **`manage.py test` should find 166 tests, all passing** (verified 2026-09-10 on
-> `chore/production-hardening`).
+> **`manage.py test` should find 182 tests, all passing** (verified 2026-10-07 on
+> `fix/checkup-findings`).
 > Treat the number as a floor, not a fact — it goes stale. If the count *drops*, suspect
 > test discovery before assuming tests were deleted: every app needs an `__init__.py`, and
 > `logs/` silently lost its own once, which hid the whole core-domain suite from a green run.
@@ -168,11 +168,14 @@ with removal measured in browser release trains. A year is also unrecoverable fr
 server: withdrawing it needs valid HTTPS serving `max-age=0`, which is exactly what a failed
 renewal takes away. Revisit on a custom domain.
 
+Now on `glucoread.com`, the decision (2026-10-07) is to stay at 7 days and **not** preload:
+`SECURE_HSTS_PRELOAD` defaults to off, so the header no longer carries a `preload` token
+that did nothing at a week but publicly asked for an irreversible listing.
+
 Also open, and deferred to v1.1: `TIME_ZONE` is hardcoded to `Europe/Skopje` for every user,
 so "today" rolls over at the wrong hour elsewhere; log entries are always stamped "now" with
 no way to edit the time, so a missed reading can't be back-filled; soft deletes have no
-restore UI, though the landing page copy implies one; and changing your email — the login
-credential — is unverified.
+restore UI; and changing your email — the login credential — is unverified.
 
 **Source of truth for longer context:** `deploy/README.md` (the VM runbook), and `HANDOFF.md`
 (project state — **local-only, gitignored, never commit it**).
@@ -218,6 +221,11 @@ credential — is unverified.
 * `ALLOWED_HOSTS`, `CSRF_TRUSTED_ORIGINS`, `SECURE_PROXY_SSL_HEADER`, and the `SECURE_*`
   block **already exist and are committed** at `core/settings.py:34-70` — env-driven,
   on-in-prod/off-in-dev. **Do not re-implement them.**
+* **Rate limits key on the client IP Caddy forwards, not `REMOTE_ADDR`**
+  (`main/client_ip.py`, `TRUST_PROXY_CLIENT_IP`). Behind the proxy `REMOTE_ADDR` is Caddy's
+  own address, so `key="ip"` used to put every user in one shared bucket. Only the *last*
+  `X-Forwarded-For` entry is trusted, and only because `web` is never published outside
+  the compose network — publish its port and the header becomes forgeable.
 * The site hostname is env-driven end to end (`ALLOWED_HOSTS`, `CSRF_TRUSTED_ORIGINS`,
   `SITE_DOMAIN` for Caddy), so moving domains is a VM `.env` change, not a code change.
 * `SECRET_KEY` and `DATABASE_URL` intentionally fail fast with no fallback. Keep it that way.

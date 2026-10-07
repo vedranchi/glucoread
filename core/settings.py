@@ -54,6 +54,12 @@ CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=[])
 if env.bool("USE_X_FORWARDED_PROTO", default=not DEBUG):
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
+# Rate-limit by the client address Caddy forwards, not by REMOTE_ADDR — behind
+# the proxy that is Caddy's own address, which made every per-IP limit one bucket
+# shared by all users. Same trust condition as above; see main/client_ip.py.
+TRUST_PROXY_CLIENT_IP = env.bool("TRUST_PROXY_CLIENT_IP", default=not DEBUG)
+RATELIMIT_IP_META_KEY = "main.client_ip.client_ip"
+
 SECURE_SSL_REDIRECT = env.bool("SECURE_SSL_REDIRECT", default=not DEBUG)
 SESSION_COOKIE_SECURE = env.bool("SESSION_COOKIE_SECURE", default=not DEBUG)
 CSRF_COOKIE_SECURE = env.bool("CSRF_COOKIE_SECURE", default=not DEBUG)
@@ -67,7 +73,11 @@ SECURE_HSTS_SECONDS = env.int(
 SECURE_HSTS_INCLUDE_SUBDOMAINS = env.bool(
     "SECURE_HSTS_INCLUDE_SUBDOMAINS", default=not DEBUG
 )
-SECURE_HSTS_PRELOAD = env.bool("SECURE_HSTS_PRELOAD", default=not DEBUG)
+# Off by default, even in prod. The token is a public request to be hard-coded
+# into browsers as HTTPS-only, which is effectively irreversible; it also does
+# nothing until max-age is a year, so sending it at a week stated an intent the
+# project does not have. Opt in deliberately, alongside the max-age raise.
+SECURE_HSTS_PRELOAD = env.bool("SECURE_HSTS_PRELOAD", default=False)
 
 
 # Application definition
