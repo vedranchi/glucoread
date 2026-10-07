@@ -235,3 +235,37 @@ class ChartLabelTimezoneTest(TestCase):
             GlucoseLog.objects.get(user=self.user).measured_at
         ).strftime("%H:%M")
         self.assertEqual(chart_label, feed_time)
+
+
+class ChartDateBoundsTest(TestCase):
+    """chart_date comes straight from the URL, so its extremes must not 500.
+
+    Both ends of the calendar used to overflow the +/-1 day navigation
+    arithmetic and raise OverflowError.
+    """
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="bounds", email="bounds@example.com", password="pw12345!"
+        )
+        self.client.login(email="bounds@example.com", password="pw12345!")
+
+    def _get(self, date_string):
+        return self.client.get(
+            reverse("glucoread-dashboard"), {"chart_date": date_string}
+        )
+
+    def test_the_last_day_of_the_calendar_is_clamped_to_today(self):
+        response = self._get("9999-12-31")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["chart_date"], timezone.localdate())
+        self.assertIsNone(response.context["next_chart_date"])
+
+    def test_any_future_day_is_clamped_to_today(self):
+        response = self._get("3000-01-01")
+        self.assertEqual(response.context["chart_date"], timezone.localdate())
+
+    def test_the_first_day_of_the_calendar_has_no_previous_day(self):
+        response = self._get("0001-01-01")
+        self.assertEqual(response.status_code, 200)
+        self.assertIsNone(response.context["previous_chart_date"])
