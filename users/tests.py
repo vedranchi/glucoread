@@ -2,7 +2,7 @@ import tempfile
 from decimal import Decimal
 from io import BytesIO
 
-from django.test import TestCase, override_settings
+from django.test import RequestFactory, TestCase, override_settings
 from django.core import mail
 from django.core.cache import cache
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -153,6 +153,53 @@ class RateLimitTest(TestCase):
         self.assertEqual(
             settings.CACHES["default"]["LOCATION"], rename.NEW_TABLE
         )
+
+
+@override_settings(TRUST_PROXY_CLIENT_IP=True)
+class RateLimitClientIpTest(TestCase):
+    """Per-IP limits must count the real client, not the proxy in front of it.
+
+    Behind Caddy, REMOTE_ADDR is the proxy's address for every request, so
+    keying on it made each per-IP limit one bucket shared by all users.
+    """
+
+    def setUp(self):
+        cache.clear()
+        self.factory = RequestFactory()
+
+    def ip_for(self, forwarded=None):
+        from main.client_ip import client_ip
+
+        extra = {"HTTP_X_FORWARDED_FOR": forwarded} if forwarded is not None else {}
+        return client_ip(self.factory.get("/", REMOTE_ADDR="172.18.0.5", **extra))
+
+    def test_uses_the_address_the_proxy_appended(self):
+        self.assertEqual(self.ip_for("203.0.113.9"), "203.0.113.9")
+
+    def test_ignores_client_supplied_entries_before_it(self):
+        """Only the last entry was written by our proxy; earlier ones are forgeable."""
+        self.assertEqual(self.ip_for("1.1.1.1, 203.0.113.9"), "203.0.113.9")
+
+    def test_malformed_header_falls_back_to_the_peer(self):
+        self.assertEqual(self.ip_for("not-an-ip"), "172.18.0.5")
+        self.assertEqual(self.ip_for(""), "172.18.0.5")
+        self.assertEqual(self.ip_for(), "172.18.0.5")
+
+    @override_settings(TRUST_PROXY_CLIENT_IP=False)
+    def test_header_ignored_when_proxy_not_trusted(self):
+        """Without a proxy in front, the header is the client's to forge."""
+        self.assertEqual(self.ip_for("203.0.113.9"), "172.18.0.5")
+
+    def test_one_client_hitting_the_limit_does_not_block_another(self):
+        url = reverse("glucoread-register")
+        for i in range(10):
+            self.client.post(
+                url, {"email": f"u{i}@example.com"}, HTTP_X_FORWARDED_FOR="203.0.113.1"
+            )
+        blocked = self.client.post(url, {}, HTTP_X_FORWARDED_FOR="203.0.113.1")
+        other = self.client.post(url, {}, HTTP_X_FORWARDED_FOR="203.0.113.2")
+        self.assertEqual(blocked.status_code, 403)
+        self.assertEqual(other.status_code, 200)
 
 
 class ProfileUpdateTest(TestCase):
