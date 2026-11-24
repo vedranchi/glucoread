@@ -53,6 +53,11 @@ if (sentinel && topbar && hasObserver) {
 /* --- scroll reveals ------------------------------------------------------- */
 const revealItems = document.querySelectorAll(".reveal");
 
+/* Hand-drawn marks are drawn by default. Only once this script is running
+   does the root say so, and only then do marks below the fold wait for
+   their section to arrive before drawing themselves on. */
+if (!reducedMotion && hasObserver) document.documentElement.classList.add("ink-ready");
+
 if (reducedMotion || !hasObserver) {
   revealItems.forEach((item) => item.classList.add("show"));
 } else {
@@ -64,7 +69,7 @@ if (reducedMotion || !hasObserver) {
         revealObserver.unobserve(entry.target);
       });
     },
-    { threshold: 0.15 }
+    { threshold: 0.3 }
   );
 
   revealItems.forEach((item) => revealObserver.observe(item));
@@ -126,6 +131,15 @@ if (stage) {
       setStep(Number(button.dataset.step));
     })
   );
+
+  // On a phone the chart opens scrolled to the evening, so the 21:30 reading
+  // every caption talks about is on screen from the first step.
+  // Again on load: web fonts can change the box's width after this runs.
+  const scrollToEvening = () => {
+    if (scroller) scroller.scrollLeft = scroller.scrollWidth;
+  };
+  scrollToEvening();
+  window.addEventListener("load", scrollToEvening, { once: true });
 
   if (reducedMotion || !hasObserver) {
     setStep(3);

@@ -28,8 +28,9 @@
 }
 
 .page-title {
-  font-size: 1.25rem;
-  font-weight: 600;
+  font-family: var(--font-display);
+  font-size: 1.65rem;
+  font-weight: 400;
   color: var(--ink);
 }
 
@@ -140,8 +141,9 @@
 
 .form-section h3 {
   margin: 0 0 1rem;
-  font-size: 1rem;
-  font-weight: 600;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 400;
   color: var(--ink);
 }
 

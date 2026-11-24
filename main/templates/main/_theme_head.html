@@ -4,16 +4,17 @@ Shared <head> pieces for pages using the new design language: fonts, the token
 stylesheet, and the pre-paint theme resolution. Include it first, then add the
 page's own stylesheet after it.
 {% endcomment %}
-<meta name="theme-color" media="(prefers-color-scheme: light)" content="#f9fafb" />
-<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0d1214" />
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#5a6534" />
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#2a3019" />
 
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link
-  href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500&family=Geist:wght@400;500;600;700&display=swap"
-  rel="stylesheet"
-/>
+{% comment %}
+  theme.css carries the token names and primitives; warm.css re-binds those
+  tokens to the paper-logbook world and self-hosts its three faces. Every page
+  loads both, in this order, so the landing page, the auth screens and the app
+  are one product. No third-party font request remains.
+{% endcomment %}
 <link rel="stylesheet" href="{% static 'main/css/theme.css' %}" />
+<link rel="stylesheet" href="{% static 'main/css/warm.css' %}" />
 
 {% comment %}
   Runs before first paint so a stored choice never flashes the other theme.

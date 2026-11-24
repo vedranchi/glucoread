@@ -78,6 +78,10 @@
      RGB at different alphas, which means deriving them from a token whose
      value is a plain hex in both themes (--accent-bright is; --accent-soft is
      already an rgba() in dark). */
+  /* Glucose is written in biro throughout the paper-logbook world (warm.css).
+     --biro is a plain hex in both themes, which the gradient below needs. */
+  const glucoseInk = () => token("--biro") || token("--accent-bright");
+
   const withAlpha = (hex, alpha) => {
     const digits = hex.replace("#", "");
     if (digits.length !== 6) return hex;
@@ -93,10 +97,10 @@
     const { ctx, chartArea } = chart;
     if (!chartArea) return "transparent";
 
-    const teal = token("--accent-bright");
+    const ink = glucoseInk();
     const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
-    gradient.addColorStop(0, withAlpha(teal, 0.3));
-    gradient.addColorStop(1, withAlpha(teal, 0));
+    gradient.addColorStop(0, withAlpha(ink, 0.18));
+    gradient.addColorStop(1, withAlpha(ink, 0));
     return gradient;
   };
 
@@ -108,7 +112,7 @@
     const labels = readJSON("glucose-labels");
     const values = readJSON("glucose-values");
     const unitLabel = canvas.dataset.unitLabel || "";
-    const accent = token("--accent-bright");
+    const accent = glucoseInk();
 
     chart = new Chart(canvas.getContext("2d"), {
       type: "line",
@@ -146,7 +150,7 @@
             titleColor: token("--paper"),
             bodyColor: token("--paper"),
             padding: 10,
-            cornerRadius: 8,
+            cornerRadius: 4,
             displayColors: false,
             callbacks: {
               label: (item) => `${item.formattedValue} ${unitLabel}`,
@@ -177,7 +181,7 @@
 
   const repaint = () => {
     if (!chart) return;
-    const accent = token("--accent-bright");
+    const accent = glucoseInk();
     const dataset = chart.data.datasets[0];
 
     dataset.borderColor = accent;
