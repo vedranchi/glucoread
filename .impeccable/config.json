@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "flat-type-hierarchy",
+        "value": "*",
+        "files": [
+          "landing/templates/landing/index.html"
+        ],
+        "createdAt": "2026-11-23T20:01:09.497Z",
+        "reason": "Claude: detector cannot resolve Django {% static %} stylesheet links so it reads every role at 16px; actual sizes are h1 clamp(2.6–4.6rem), h2 clamp(1.9–2.9rem), body 1.06rem, verified in rendered screenshots"
+      }
+    ]
+  }
+}

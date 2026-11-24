@@ -1,0 +1,937 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-23T20:10:44+00:00",
+  "title": "Design System: GlucoRead",
+  "scope": "The whole product: landing page, auth screens and the authenticated app. warm.css loads for every page from main/templates/main/_theme_head.html, after theme.css (extended to the app 2026-11-24).",
+  "extensions": {
+    "colorMeta": {
+      "paper": {
+        "role": "neutral",
+        "displayName": "Diary Paper",
+        "canonical": "#f7efdf",
+        "tonalRamp": [
+          "#0c0b0a",
+          "#272520",
+          "#464139",
+          "#676053",
+          "#898273",
+          "#aaa49a",
+          "#ccc9c2",
+          "#efeeec"
+        ]
+      },
+      "paper-deep": {
+        "role": "neutral",
+        "displayName": "Deeper Paper",
+        "canonical": "#efe4cc",
+        "tonalRamp": [
+          "#0c0b09",
+          "#28251d",
+          "#484134",
+          "#6a604c",
+          "#8b816c",
+          "#aca495",
+          "#cdc9bf",
+          "#f0eeeb"
+        ]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Writing Surface",
+        "canonical": "#fbf6ea",
+        "tonalRamp": [
+          "#0c0b0a",
+          "#262521",
+          "#44423b",
+          "#656157",
+          "#868277",
+          "#a8a59d",
+          "#cbc9c4",
+          "#efeeec"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink Brown",
+        "canonical": "#2f241a",
+        "tonalRamp": [
+          "#0c0b0a",
+          "#292420",
+          "#494039",
+          "#6b5f53",
+          "#8d8074",
+          "#ada39a",
+          "#cec8c3",
+          "#f0eeec"
+        ]
+      },
+      "ink-2": {
+        "role": "neutral",
+        "displayName": "Ink Brown 2",
+        "canonical": "#5b4b3a",
+        "tonalRamp": [
+          "#0d0b09",
+          "#2a241e",
+          "#4b4034",
+          "#6e5e4d",
+          "#907f6d",
+          "#afa395",
+          "#cfc8c0",
+          "#f1eeeb"
+        ]
+      },
+      "ink-3": {
+        "role": "neutral",
+        "displayName": "Ink Brown 3",
+        "canonical": "#6f5f4c",
+        "tonalRamp": [
+          "#0d0b09",
+          "#2a241d",
+          "#4a4034",
+          "#6e5e4c",
+          "#907f6c",
+          "#afa395",
+          "#cfc8bf",
+          "#f1eeeb"
+        ]
+      },
+      "line": {
+        "role": "neutral",
+        "displayName": "Paper Line",
+        "canonical": "#dccdb0",
+        "tonalRamp": [
+          "#0c0b08",
+          "#29241b",
+          "#494130",
+          "#6d6046",
+          "#8e8166",
+          "#aea491",
+          "#cec8bd",
+          "#f0eeea"
+        ]
+      },
+      "line-soft": {
+        "role": "neutral",
+        "displayName": "Soft Paper Line",
+        "canonical": "#e8dcc3",
+        "tonalRamp": [
+          "#0c0b09",
+          "#28251d",
+          "#484133",
+          "#6a604b",
+          "#8c816b",
+          "#aca494",
+          "#cdc9bf",
+          "#f0eeea"
+        ]
+      },
+      "cloth": {
+        "role": "primary",
+        "displayName": "Book-Cloth Sage",
+        "canonical": "#5a6534",
+        "tonalRamp": [
+          "#0b0c07",
+          "#232717",
+          "#3f4626",
+          "#5c6737",
+          "#7d8958",
+          "#a1aa87",
+          "#c6ccb7",
+          "#edf0e8"
+        ]
+      },
+      "cloth-deep": {
+        "role": "primary",
+        "displayName": "Cloth Deep",
+        "canonical": "#4c5629",
+        "tonalRamp": [
+          "#0b0c07",
+          "#232718",
+          "#3f4628",
+          "#5c673a",
+          "#7d885b",
+          "#a1aa89",
+          "#c7ccb8",
+          "#edf0e8"
+        ]
+      },
+      "cloth-ink": {
+        "role": "primary",
+        "displayName": "Cover Cream",
+        "canonical": "#f4ecd8",
+        "tonalRamp": [
+          "#0c0b09",
+          "#27251f",
+          "#464236",
+          "#676150",
+          "#898270",
+          "#aaa598",
+          "#ccc9c1",
+          "#efeeeb"
+        ]
+      },
+      "cloth-ink-2": {
+        "role": "primary",
+        "displayName": "Cover Cream 2",
+        "canonical": "#e6e0c6",
+        "tonalRamp": [
+          "#0c0b09",
+          "#27251d",
+          "#464233",
+          "#67614b",
+          "#88836b",
+          "#a9a594",
+          "#ccc9bf",
+          "#efeeeb"
+        ]
+      },
+      "sage-action": {
+        "role": "primary",
+        "displayName": "Stamp Sage",
+        "canonical": "#4f5b2a",
+        "tonalRamp": [
+          "#0a0c07",
+          "#232717",
+          "#3e4627",
+          "#5b6737",
+          "#7c8958",
+          "#a0aa87",
+          "#c6ccb7",
+          "#edf0e8"
+        ]
+      },
+      "sage-action-hover": {
+        "role": "primary",
+        "displayName": "Stamp Sage, Pressed",
+        "canonical": "#3f4920",
+        "tonalRamp": [
+          "#0a0c08",
+          "#232719",
+          "#3e462b",
+          "#5c673e",
+          "#7d885e",
+          "#a1aa8b",
+          "#c6ccb9",
+          "#edefe9"
+        ]
+      },
+      "sage": {
+        "role": "primary",
+        "displayName": "Cover Sage",
+        "canonical": "#5d6a33",
+        "tonalRamp": [
+          "#0a0c07",
+          "#232715",
+          "#3e4623",
+          "#5b6832",
+          "#7c8a53",
+          "#a0ab84",
+          "#c6cdb5",
+          "#edf0e7"
+        ]
+      },
+      "sage-ink": {
+        "role": "primary",
+        "displayName": "Stamp Cream",
+        "canonical": "#fbf6ea",
+        "tonalRamp": [
+          "#0c0b0a",
+          "#262521",
+          "#44423b",
+          "#656157",
+          "#868277",
+          "#a8a59d",
+          "#cbc9c4",
+          "#efeeec"
+        ]
+      },
+      "biro": {
+        "role": "secondary",
+        "displayName": "Biro Navy",
+        "canonical": "#24357a",
+        "tonalRamp": [
+          "#080b13",
+          "#1b243d",
+          "#303f6e",
+          "#465ca3",
+          "#667ec9",
+          "#90a3da",
+          "#bcc9ea",
+          "#e9eefb"
+        ]
+      },
+      "rule": {
+        "role": "neutral",
+        "displayName": "Printed Rule Blue",
+        "canonical": "#b9c7dd",
+        "tonalRamp": [
+          "#0a0b0d",
+          "#21252c",
+          "#3a424f",
+          "#566275",
+          "#768397",
+          "#9ca6b5",
+          "#c4cad3",
+          "#eceff2"
+        ]
+      },
+      "grid": {
+        "role": "neutral",
+        "displayName": "Graph Grid",
+        "canonical": "rgba(36, 53, 122, 0.08)",
+        "tonalRamp": [
+          "#080b13",
+          "#1b243d",
+          "#303f6e",
+          "#465ca3",
+          "#667ec9",
+          "#90a3da",
+          "#bcc9ea",
+          "#e9eefb"
+        ]
+      },
+      "margin-rose": {
+        "role": "neutral",
+        "displayName": "Margin Rose",
+        "canonical": "#d4867a",
+        "tonalRamp": [
+          "#110908",
+          "#361d19",
+          "#61332c",
+          "#904a40",
+          "#b56b60",
+          "#cd958c",
+          "#e2c0ba",
+          "#f8ebe9"
+        ]
+      },
+      "plum": {
+        "role": "secondary",
+        "displayName": "Plum Pencil",
+        "canonical": "#7a4580",
+        "tonalRamp": [
+          "#0f090f",
+          "#301d32",
+          "#553359",
+          "#7e4a84",
+          "#a26ba8",
+          "#bd95c1",
+          "#d8c0da",
+          "#f4ebf5"
+        ]
+      },
+      "ochre": {
+        "role": "secondary",
+        "displayName": "Ochre Pencil",
+        "canonical": "#a7610f",
+        "tonalRamp": [
+          "#110904",
+          "#361f07",
+          "#623501",
+          "#914e00",
+          "#b56f28",
+          "#cc996c",
+          "#e2c2a8",
+          "#f8ece2"
+        ]
+      },
+      "leaf": {
+        "role": "secondary",
+        "displayName": "Leaf Green",
+        "canonical": "#4a7a2e",
+        "tonalRamp": [
+          "#080d06",
+          "#1a2a11",
+          "#2d4c1b",
+          "#416f25",
+          "#629247",
+          "#8eb17d",
+          "#bbd1b1",
+          "#e9f1e6"
+        ]
+      },
+      "leaf-soft": {
+        "role": "secondary",
+        "displayName": "Leaf Soft",
+        "canonical": "#dde7c9",
+        "tonalRamp": [
+          "#0b0c09",
+          "#23261d",
+          "#3f4534",
+          "#5d654c",
+          "#7e876c",
+          "#a2a895",
+          "#c7cbbf",
+          "#eeefeb"
+        ]
+      },
+      "leaf-wash": {
+        "role": "secondary",
+        "displayName": "Leaf Wash",
+        "canonical": "#ebf0dd",
+        "tonalRamp": [
+          "#0b0b0a",
+          "#242620",
+          "#414339",
+          "#5f6353",
+          "#808574",
+          "#a4a79a",
+          "#c8cac3",
+          "#eeefec"
+        ]
+      },
+      "alarm-red": {
+        "role": "tertiary",
+        "displayName": "Alarm Red",
+        "canonical": "#b13f28",
+        "tonalRamp": [
+          "#140805",
+          "#3e1810",
+          "#702718",
+          "#a53620",
+          "#cc5a42",
+          "#df8c79",
+          "#efbbaf",
+          "#fee9e5"
+        ]
+      },
+      "alarm-soft": {
+        "role": "tertiary",
+        "displayName": "Alarm Soft",
+        "canonical": "#f2d5c9",
+        "tonalRamp": [
+          "#0d0a09",
+          "#2c231f",
+          "#4e3e37",
+          "#735b51",
+          "#967c71",
+          "#b4a098",
+          "#d2c6c1",
+          "#f2edeb"
+        ]
+      },
+      "alarm-wash": {
+        "role": "tertiary",
+        "displayName": "Alarm Wash",
+        "canonical": "#f7e4da",
+        "tonalRamp": [
+          "#0d0b0a",
+          "#292421",
+          "#4a3f3a",
+          "#6d5d55",
+          "#8f7e76",
+          "#afa29c",
+          "#cfc7c3",
+          "#f1eeec"
+        ]
+      },
+      "error-red": {
+        "role": "tertiary",
+        "displayName": "Error Red",
+        "canonical": "#a3311f",
+        "tonalRamp": [
+          "#140806",
+          "#3e1711",
+          "#70271a",
+          "#a53624",
+          "#cc5a46",
+          "#e08b7b",
+          "#efbbb0",
+          "#fee9e5"
+        ]
+      },
+      "paper-dark": {
+        "role": "neutral",
+        "displayName": "Diary Paper (dark)",
+        "canonical": "#241e17",
+        "tonalRamp": [
+          "#0c0b0a",
+          "#272522",
+          "#46413c",
+          "#676058",
+          "#888178",
+          "#aaa49e",
+          "#ccc8c5",
+          "#efeeed"
+        ]
+      },
+      "surface-dark": {
+        "role": "neutral",
+        "displayName": "Writing Surface (dark)",
+        "canonical": "#2b241c",
+        "tonalRamp": [
+          "#0c0b0a",
+          "#272421",
+          "#46413b",
+          "#686057",
+          "#898177",
+          "#aaa49d",
+          "#ccc8c4",
+          "#f0eeec"
+        ]
+      },
+      "ink-dark": {
+        "role": "neutral",
+        "displayName": "Ink Brown (dark)",
+        "canonical": "#f0e6d2",
+        "tonalRamp": [
+          "#0c0b09",
+          "#28251f",
+          "#474136",
+          "#69604f",
+          "#8a8170",
+          "#aba497",
+          "#cdc9c1",
+          "#f0eeeb"
+        ]
+      },
+      "ink-2-dark": {
+        "role": "neutral",
+        "displayName": "Ink Brown 2 (dark)",
+        "canonical": "#cfbfa5",
+        "tonalRamp": [
+          "#0c0b08",
+          "#29241c",
+          "#4a4131",
+          "#6d5f48",
+          "#8f8068",
+          "#aea492",
+          "#cfc8be",
+          "#f1eeea"
+        ]
+      },
+      "ink-3-dark": {
+        "role": "neutral",
+        "displayName": "Ink Brown 3 (dark)",
+        "canonical": "#ad9c82",
+        "tonalRamp": [
+          "#0d0b08",
+          "#2a241c",
+          "#4b4031",
+          "#6e5f47",
+          "#908067",
+          "#afa391",
+          "#cfc8bd",
+          "#f1eeea"
+        ]
+      },
+      "cloth-dark": {
+        "role": "primary",
+        "displayName": "Book-Cloth Sage (dark)",
+        "canonical": "#2a3019",
+        "tonalRamp": [
+          "#0b0c09",
+          "#24261e",
+          "#404434",
+          "#5e654c",
+          "#7f866c",
+          "#a2a895",
+          "#c7cbbf",
+          "#eeefeb"
+        ]
+      },
+      "cloth-ink-dark": {
+        "role": "primary",
+        "displayName": "Cover Cream (dark)",
+        "canonical": "#ece3cc",
+        "tonalRamp": [
+          "#0c0b09",
+          "#28251e",
+          "#474235",
+          "#68614d",
+          "#8a826d",
+          "#aba596",
+          "#ccc9c0",
+          "#f0eeeb"
+        ]
+      },
+      "sage-action-dark": {
+        "role": "primary",
+        "displayName": "Stamp Sage (dark)",
+        "canonical": "#bcc684",
+        "tonalRamp": [
+          "#0b0c06",
+          "#242712",
+          "#41461d",
+          "#5f6728",
+          "#80894a",
+          "#a3aa7e",
+          "#c8ccb2",
+          "#eef0e6"
+        ]
+      },
+      "sage-ink-dark": {
+        "role": "primary",
+        "displayName": "Stamp Cream (dark)",
+        "canonical": "#1d2110",
+        "tonalRamp": [
+          "#0b0b09",
+          "#24261f",
+          "#404437",
+          "#5f6451",
+          "#808571",
+          "#a3a798",
+          "#c8cac1",
+          "#eeefeb"
+        ]
+      },
+      "biro-dark": {
+        "role": "secondary",
+        "displayName": "Biro Navy (dark)",
+        "canonical": "#a9b9f2",
+        "tonalRamp": [
+          "#090b11",
+          "#1f2436",
+          "#374061",
+          "#515e90",
+          "#717fb4",
+          "#98a3ca",
+          "#c1c8e0",
+          "#ebeef7"
+        ]
+      },
+      "rule-dark": {
+        "role": "neutral",
+        "displayName": "Printed Rule Blue (dark)",
+        "canonical": "rgba(169, 185, 242, 0.2)",
+        "tonalRamp": [
+          "#090b11",
+          "#1f2436",
+          "#374061",
+          "#515e90",
+          "#717fb4",
+          "#98a3ca",
+          "#c1c8e0",
+          "#ebeef7"
+        ]
+      },
+      "margin-rose-dark": {
+        "role": "neutral",
+        "displayName": "Margin Rose (dark)",
+        "canonical": "#a2584c",
+        "tonalRamp": [
+          "#110908",
+          "#371d19",
+          "#62332b",
+          "#914a3e",
+          "#b66b5e",
+          "#cd958b",
+          "#e3c0b9",
+          "#f8ebe9"
+        ]
+      },
+      "plum-dark": {
+        "role": "secondary",
+        "displayName": "Plum Pencil (dark)",
+        "canonical": "#d7a2dc",
+        "tonalRamp": [
+          "#0e090f",
+          "#2f1e30",
+          "#543557",
+          "#7c4d81",
+          "#9f6ea4",
+          "#bb97be",
+          "#d7c1d9",
+          "#f4ebf4"
+        ]
+      },
+      "ochre-dark": {
+        "role": "secondary",
+        "displayName": "Ochre Pencil (dark)",
+        "canonical": "#e9ad5f",
+        "tonalRamp": [
+          "#100a04",
+          "#342106",
+          "#5d3900",
+          "#895400",
+          "#ad7524",
+          "#c69d6a",
+          "#ddc5a7",
+          "#f6ede2"
+        ]
+      },
+      "leaf-dark": {
+        "role": "secondary",
+        "displayName": "Leaf Green (dark)",
+        "canonical": "#a8d083",
+        "tonalRamp": [
+          "#090d06",
+          "#1d2a11",
+          "#334a1b",
+          "#4b6d24",
+          "#6b8f47",
+          "#94af7c",
+          "#bfd0b1",
+          "#ebf1e5"
+        ]
+      },
+      "alarm-red-dark": {
+        "role": "tertiary",
+        "displayName": "Alarm Red (dark)",
+        "canonical": "#f29478",
+        "tonalRamp": [
+          "#120906",
+          "#391c13",
+          "#67301f",
+          "#98452c",
+          "#be664c",
+          "#d4937f",
+          "#e7bfb3",
+          "#faebe6"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Hero headline only; the cover label headline is a near sibling."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "One per spread."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Column guide rows, notices, form titles, auth card heading."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Page copy, 44 to 48ch, Ink Brown 2."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Printed field labels and table column heads."
+      },
+      "figure": {
+        "displayName": "Figure",
+        "purpose": "Printed totals and every value the unit switch rewrites; tabular lining numerals."
+      },
+      "hand": {
+        "displayName": "Hand",
+        "purpose": "Only what the diary's owner wrote: entries, filled-in form lines, margin notes."
+      }
+    },
+    "shadows": [
+      {
+        "name": "sheet-on-cloth",
+        "value": "0 1px 2px rgba(35, 40, 14, 0.25), 0 22px 44px -22px rgba(35, 40, 14, 0.6)",
+        "dark": "0 1px 2px rgba(0, 0, 0, 0.5), 0 24px 48px -22px rgba(0, 0, 0, 0.85)",
+        "purpose": "Spreads, cover label, auth card; stamp button hover."
+      },
+      {
+        "name": "resting-mark",
+        "value": "0 1px 2px rgba(47, 36, 26, 0.12)",
+        "dark": "0 1px 2px rgba(0, 0, 0, 0.5)",
+        "purpose": "Buttons at rest."
+      },
+      {
+        "name": "tucked-slip",
+        "value": "0 1px 2px rgba(47, 36, 26, 0.12), 0 14px 28px -18px rgba(47, 36, 26, 0.45)",
+        "purpose": "The app slip tucked into a page."
+      },
+      {
+        "name": "gutter",
+        "value": "linear-gradient(to right, transparent, rgba(70,50,20,0.07) 38%, rgba(70,50,20,0.2) 50%, rgba(70,50,20,0.07) 62%, transparent)",
+        "dark": "linear-gradient(to right, transparent, rgba(0,0,0,0.18) 38%, rgba(0,0,0,0.45) 50%, rgba(0,0,0,0.18) 62%, transparent)",
+        "purpose": "72px fold between facing pages, on the left page only."
+      },
+      {
+        "name": "stamp-frame",
+        "value": "inset 0 0 0 3px <fill>, inset 0 0 0 4px color-mix(in srgb, currentColor 45%, transparent)",
+        "purpose": "The stamp button's inner inked frame (55% on hover)."
+      },
+      {
+        "name": "double-printed-rule",
+        "value": "inset 0 0 0 10px var(--paper), inset 0 0 0 11px var(--ink-3), inset 0 0 0 14px var(--paper), inset 0 0 0 15px var(--ink-3)",
+        "purpose": "The cover label's frame."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "The only easing."
+      },
+      {
+        "name": "ink-draw-section",
+        "value": "stroke-dashoffset 1 -> 0, 0.9s",
+        "purpose": "Strokes below the fold draw once when their section is revealed (IntersectionObserver, threshold 0.3); list items stagger 0.15s."
+      },
+      {
+        "name": "ink-draw-hero",
+        "value": "1s, 0.5s delay (ring 1.1s)",
+        "purpose": "Above-the-fold strokes draw once on load."
+      },
+      {
+        "name": "tick-draw",
+        "value": "stroke-dashoffset 0.4s",
+        "purpose": "Pressing a tick option draws its tick."
+      },
+      {
+        "name": "stage-layer",
+        "value": "opacity 0.5s",
+        "purpose": "Graph-page step layers; autoplays once (1.5s, 3.2s), never loops."
+      },
+      {
+        "name": "unit-rewrite",
+        "value": "opacity 0 + blur(3px) -> rest, 0.45s",
+        "purpose": "Values rewritten by the unit switch."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "no animation; strokes present, stage on its fullest step",
+        "purpose": "prefers-reduced-motion: reduce."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "spread-stack",
+        "value": "960px"
+      },
+      {
+        "name": "menu-drawer",
+        "value": "860px"
+      },
+      {
+        "name": "stage-hint",
+        "value": "700px"
+      },
+      {
+        "name": "phone",
+        "value": "560px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Stamp Button",
+      "kind": "button",
+      "refersTo": "button-stamp",
+      "description": "Primary action: an inked rubber stamp in Stamp Sage.",
+      "html": "<a class=\"ds-btn-stamp\" href=\"#\">Start tracking for free</a>",
+      "css": ".ds-btn-stamp{display:inline-flex;align-items:center;font-family:var(--font-sans, \"Atkinson Hyperlegible Next\", system-ui, sans-serif);font-weight:700;font-size:1.02rem;letter-spacing:.005em;padding:.85rem 1.35rem;border-radius:4px;text-decoration:none;color:var(--accent-ink, #fbf6ea);background:var(--accent-strong, #4f5b2a);box-shadow:inset 0 0 0 3px var(--accent-strong, #4f5b2a),inset 0 0 0 4px color-mix(in srgb,currentColor 45%,transparent),0 1px 2px rgba(47,36,26,.12);transition:transform .2s cubic-bezier(.16,1,.3,1),box-shadow .2s,background .2s}.ds-btn-stamp:hover{background:var(--accent-strong-hover, #3f4920);transform:translateY(-2px);box-shadow:inset 0 0 0 3px var(--accent-strong-hover, #3f4920),inset 0 0 0 4px color-mix(in srgb,currentColor 55%,transparent),0 1px 2px rgba(35,40,14,.25),0 22px 44px -22px rgba(35,40,14,.6)}.ds-btn-stamp:focus-visible{outline:2px solid var(--biro, #24357a);outline-offset:2px}"
+    },
+    {
+      "name": "Quiet Button",
+      "kind": "button",
+      "refersTo": "button-quiet",
+      "description": "Secondary action on paper: an outlined printed label.",
+      "html": "<a class=\"ds-btn-quiet\" href=\"#\">Log in</a>",
+      "css": ".ds-btn-quiet{display:inline-flex;font-weight:700;font-size:1.02rem;padding:.85rem 1.35rem;border-radius:4px;text-decoration:none;color:var(--ink, #2f241a);background:transparent;border:1px solid var(--ink-3, #6f5f4c);transition:transform .2s cubic-bezier(.16,1,.3,1),border-color .2s,background .2s}.ds-btn-quiet:hover{border-color:var(--ink, #2f241a);background:color-mix(in srgb,var(--ink, #2f241a) 5%,transparent);transform:translateY(-2px)}.ds-btn-quiet:focus-visible{outline:2px solid var(--biro, #24357a);outline-offset:2px}"
+    },
+    {
+      "name": "Paper Button",
+      "kind": "button",
+      "refersTo": "button-paper",
+      "description": "Action printed on the cloth cover (topbar).",
+      "html": "<div class=\"ds-cloth\"><a class=\"ds-btn-paper\" href=\"#\">Start tracking for free</a></div>",
+      "css": ".ds-cloth{padding:1rem;background:var(--cloth, #5a6534)}.ds-btn-paper{display:inline-flex;font-weight:700;font-size:.84rem;padding:.42rem .85rem;border-radius:4px;text-decoration:none;background:var(--cloth-ink, #f4ecd8);color:var(--cloth-2, #4c5629);box-shadow:0 1px 2px rgba(47,36,26,.12);transition:transform .2s,background .2s}.ds-btn-paper:hover{background:#fffaf0;transform:translateY(-2px)}.ds-btn-paper:focus-visible{outline:2px solid var(--cloth-ink, #f4ecd8);outline-offset:2px}"
+    },
+    {
+      "name": "Tick Option",
+      "kind": "chip",
+      "refersTo": "tick-option",
+      "description": "Printed choice with a tick box; pressing draws a biro tick.",
+      "html": "<div class=\"ds-ticks\"><button class=\"ds-tick\" aria-pressed=\"true\"><span class=\"ds-box\"><svg viewBox=\"0 0 24 24\"><path pathLength=\"1\" d=\"M3.5 13.5c2 1.6 3.8 3.6 5.2 6 3-6.6 7-11.6 11.8-15.5\"/></svg></span>mmol/L</button><button class=\"ds-tick\" aria-pressed=\"false\"><span class=\"ds-box\"><svg viewBox=\"0 0 24 24\"><path pathLength=\"1\" d=\"M3.5 13.5c2 1.6 3.8 3.6 5.2 6 3-6.6 7-11.6 11.8-15.5\"/></svg></span>mg/dL</button></div>",
+      "css": ".ds-ticks{display:flex;gap:.4rem 1.4rem}.ds-tick{display:inline-flex;align-items:center;gap:.6rem;min-height:44px;padding:0 .15rem;font:inherit;font-size:1rem;font-weight:600;color:var(--ink-2, #5b4b3a);background:none;border:0;cursor:pointer;transition:color .2s}.ds-tick:hover,.ds-tick[aria-pressed=true]{color:var(--ink, #2f241a)}.ds-tick:focus-visible{outline:2px solid var(--biro, #24357a);outline-offset:2px;border-radius:3px}.ds-box{position:relative;width:1.3rem;height:1.3rem;border:1.5px solid var(--ink-3, #6f5f4c);border-radius:2px;background:var(--surface, #fbf6ea)}.ds-tick:hover .ds-box{border-color:var(--ink, #2f241a)}.ds-box svg{position:absolute;inset:-30% -35% -10% -10%;width:145%;height:140%;overflow:visible;fill:none;stroke:var(--biro, #24357a);stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:1;stroke-dashoffset:1;transition:stroke-dashoffset .4s cubic-bezier(.16,1,.3,1)}.ds-tick[aria-pressed=true] .ds-box svg{stroke-dashoffset:0}"
+    },
+    {
+      "name": "Ruled Diary Table",
+      "kind": "custom",
+      "refersTo": "diary-entry",
+      "description": "Handwritten entries on ruled rows, closed by the printed totals row.",
+      "html": "<table class=\"ds-diary\"><thead><tr><th>Time</th><th>Glucose<span>mmol/L</span></th><th>Insulin<span>units</span></th><th>Carbs<span>g</span></th></tr></thead><tbody><tr><td>07:10</td><td class=\"g\">5.4</td><td></td><td></td></tr><tr><td>07:45</td><td></td><td class=\"i\">6</td><td class=\"m\">42</td></tr><tr class=\"hi\"><td>21:30</td><td class=\"g\">11.4</td><td></td><td></td></tr></tbody><tfoot><tr><th>Day</th><td><small>avg</small> 7.8</td><td>35.0</td><td>165</td></tr></tfoot></table>",
+      "css": ".ds-diary{width:100%;border-collapse:collapse;background:var(--paper, #f7efdf);color:var(--ink, #2f241a);font-family:var(--font-sans, \"Atkinson Hyperlegible Next\", system-ui, sans-serif)}.ds-diary thead th{padding:0 .4rem .45rem;font-size:.78rem;font-weight:700;color:var(--ink-2, #5b4b3a);border-bottom:1.5px solid var(--ink-3, #6f5f4c);text-align:center}.ds-diary th span{display:block;font-weight:400;color:var(--ink-3, #6f5f4c)}.ds-diary tbody td{height:2.05rem;padding:0 .4rem;font-family:var(--font-hand, Kalam, cursive);font-size:1.2rem;line-height:1;text-align:center;color:var(--biro, #24357a);border-bottom:1px solid var(--rule, #b9c7dd)}.ds-diary .g{font-weight:700}.ds-diary .i{color:var(--insulin, #7a4580)}.ds-diary .m{color:var(--meal, #a7610f)}.ds-diary .hi .g{color:var(--warn, #b13f28)}.ds-diary tfoot th,.ds-diary tfoot td{padding:.7rem .4rem 0;font-size:.98rem;font-weight:700;text-align:center;font-variant-numeric:tabular-nums lining-nums;border-top:3px double var(--ink-2, #5b4b3a)}.ds-diary tfoot small{font-weight:400;color:var(--ink-3, #6f5f4c)}"
+    },
+    {
+      "name": "Spread",
+      "kind": "card",
+      "refersTo": "spread",
+      "description": "Two diary pages across a shaded gutter, lying on the cloth.",
+      "html": "<div class=\"ds-cloth-bg\"><div class=\"ds-spread\"><div class=\"ds-page ds-left\"><h2>Your glucose doesn't exist in isolation.</h2><span class=\"ds-folio\">3</span></div><div class=\"ds-page ds-ruled\"><p>Printed copy sits on paper.</p><span class=\"ds-folio r\">4</span></div></div></div>",
+      "css": ".ds-cloth-bg{padding:1.5rem;background-color:var(--cloth, #5a6534);background-image:repeating-linear-gradient(0deg,rgba(255,255,255,.035) 0 1px,transparent 1px 3px),repeating-linear-gradient(90deg,rgba(0,0,0,.05) 0 1px,transparent 1px 3px)}.ds-spread{display:grid;grid-template-columns:1fr 1fr;background:var(--paper, #f7efdf);color:var(--ink, #2f241a);border-radius:3px;box-shadow:0 1px 2px rgba(35,40,14,.25),0 22px 44px -22px rgba(35,40,14,.6)}.ds-page{position:relative;padding:2rem 1.75rem 3rem}.ds-page h2{font-family:var(--font-display, \"Young Serif\", Georgia, serif);font-weight:400;font-size:1.9rem;line-height:1.08;margin:0}.ds-page p{margin:0 0 0 2.6rem;color:var(--ink-2, #5b4b3a)}.ds-left::after{content:\"\";position:absolute;top:0;bottom:0;right:-36px;width:72px;background:linear-gradient(to right,transparent,rgba(70,50,20,.07) 38%,rgba(70,50,20,.2) 50%,rgba(70,50,20,.07) 62%,transparent)}.ds-ruled{background:linear-gradient(to right,transparent 2.1rem,var(--margin, #d4867a) 2.1rem calc(2.1rem + 1px),transparent calc(2.1rem + 1px) calc(2.1rem + 4px),var(--margin, #d4867a) calc(2.1rem + 4px) calc(2.1rem + 5px),transparent calc(2.1rem + 5px))}.ds-folio{position:absolute;bottom:1rem;left:1.75rem;font-family:var(--font-display, \"Young Serif\", Georgia, serif);font-size:.82rem;color:var(--ink-3, #6f5f4c)}.ds-folio.r{left:auto;right:1.75rem}"
+    },
+    {
+      "name": "Cover Label",
+      "kind": "card",
+      "refersTo": "cover-label",
+      "description": "The back-cover closer: a printed label with a double rule, pasted on the cloth.",
+      "html": "<div class=\"ds-cloth-bg2\"><div class=\"ds-label\"><h2>Start your own log.</h2><p>Free, in mmol/L or mg/dL.</p></div></div>",
+      "css": ".ds-cloth-bg2{padding:2rem;background:var(--cloth, #5a6534)}.ds-label{max-width:640px;margin-inline:auto;padding:2.5rem 2rem;text-align:center;background:var(--paper, #f7efdf);color:var(--ink, #2f241a);border-radius:3px;box-shadow:inset 0 0 0 10px var(--paper, #f7efdf),inset 0 0 0 11px var(--ink-3, #6f5f4c),inset 0 0 0 14px var(--paper, #f7efdf),inset 0 0 0 15px var(--ink-3, #6f5f4c),0 1px 2px rgba(35,40,14,.25),0 22px 44px -22px rgba(35,40,14,.6)}.ds-label h2{font-family:var(--font-display, \"Young Serif\", Georgia, serif);font-weight:400;font-size:2.4rem;line-height:1.04;margin:0 0 .8rem}.ds-label p{margin:0;color:var(--ink-2, #5b4b3a)}"
+    },
+    {
+      "name": "Auth Field",
+      "kind": "input",
+      "description": "Field on the auth card: writing surface, biro caret and biro focus ring.",
+      "html": "<label class=\"ds-field\"><span>Email</span><input type=\"email\" placeholder=\"you@example.com\"></label>",
+      "css": ".ds-field{display:flex;flex-direction:column;gap:.4rem;font-size:.88rem;color:var(--ink, #2f241a)}.ds-field input{font:inherit;font-size:1rem;padding:.7rem .85rem;border:1px solid var(--line, #dccdb0);border-radius:4px;background:var(--surface, #fbf6ea);color:var(--ink, #2f241a);caret-color:var(--biro, #24357a);transition:border-color .2s,box-shadow .2s}.ds-field input:focus{outline:none;border-color:var(--biro, #24357a);box-shadow:0 0 0 3px color-mix(in srgb,var(--biro, #24357a) 18%,transparent)}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Paper Logbook",
+    "overview": "**Creative North Star: \"The Paper Logbook\"**\n\nGlucoRead's public face is the paper glucose diary every insulin user was handed at diagnosis, laid open on its own sage book-cloth cover, finally doing the adding-up. The ground is cloth; everything a visitor reads sits on a page of diary paper resting on it. Pages carry the booklet's printed furniture: faint blue rules, a double rose margin line, a darkening gutter between facing pages, folio numbers at the foot. Entries are written into that paper in biro; what GlucoRead works out (totals, averages, time in range) is printed beneath them. The contrast between the hand and the print is the product's argument, made visually.\n\nThe palette is three inks plus paper. Biro navy writes glucose, plum pencil writes insulin, ochre pencil writes meals, leaf green marks in range, sage cloth binds the book and carries every action, and red is the one alarm. Density is that of a well-kept booklet: generous page margins, tight ruled rows inside them. Depth is physical and shallow, paper lying on cloth, never floating UI. Motion is a pen: ink strokes draw themselves on once, and the rest of the page holds still.\n\n**Scope.** This world governs the whole product: the landing page (`landing/`), the auth screens (sign in, register, password reset, via `users/templates/users/auth_base.html`) and the authenticated app (`main/templates/main/base.html` and everything extending it). The user extended it to the app on 2026-11-24, reversing the 2026-11-23 \"landing and auth only\" decision. The world is delivered by `main/static/main/css/warm.css`, which redefines theme.css's raw `-l` / `-d` tokens and is loaded once, for every page, by `main/templates/main/_theme_head.html`, straight after theme.css. Never link it from an individual template, and never load theme.css without it. theme.css still carries the token names, the primitives and the original teal values underneath; warm.css overrides those values.",
+    "keyCharacteristics": [
+      "Sage book-cloth ground; every readable block is a sheet of paper on it.",
+      "Handwriting (Kalam, biro) for what a person logs; print for everything GlucoRead computes or says.",
+      "Colour is data: each log type has its own ink, and red means above range.",
+      "Printed booklet furniture: rules, double margin line, gutter, folios, double-ruled totals line.",
+      "One motion: hand-drawn strokes draw on once.",
+      "Light is the diary on a desk by day; dark is the same diary under a lamp at night."
+    ],
+    "rules": [
+      {
+        "name": "The One Alarm Rule",
+        "body": "Alarm Red means a reading is above range. On the public surfaces its only other use is a form error. Nothing decorative is red, and a high is never colour alone: it is also circled, bolded, enlarged or labelled \"above range\" for screen readers.",
+        "section": "colors"
+      },
+      {
+        "name": "The Margin Is Ruling Rule",
+        "body": "Margin Rose is printed ruling, a 1px double line set inside the page. It never colours text, values, fills or states, and it is deliberately lighter and pinker than Alarm Red so the two never read as one.",
+        "section": "colors"
+      },
+      {
+        "name": "The Column Ink Rule",
+        "body": "Each log type writes in its own ink everywhere it appears: glucose biro, insulin plum, meals ochre, in range leaf. A new figure inherits these through the `.t-*` tones; it never picks a fresh hue for a log type.",
+        "section": "colors"
+      },
+      {
+        "name": "The Hand Logs, Print Computes Rule",
+        "body": "Kalam is only ever something the diary's owner wrote: a reading, a dose, a meal, a date, their own margin note. Totals, averages, labels, headings, copy and controls are printed. If the visitor has to read it to act, it is print.",
+        "section": "typography"
+      },
+      {
+        "name": "The Lining Figures Rule",
+        "body": "Any number that is computed or can be rewritten by the unit switch uses `tabular-nums lining-nums`, so a value never shifts sideways when it changes.",
+        "section": "typography"
+      },
+      {
+        "name": "The Paper On Cloth Rule",
+        "body": "If it is not a sheet of paper (a spread, the cover label, the auth card, a tucked slip), it does not cast a shadow. Inside a page, structure comes from rules, the double totals rule and hairlines.",
+        "section": "elevation"
+      },
+      {
+        "name": "The One Ink Motion Rule",
+        "body": "Ink draws on once, and only ink moves of its own accord. Hero strokes draw on load (1s, 0.5s delay; the ring at 1.1s). Every other stroke waits until its section arrives, then draws in 0.9s on `cubic-bezier(0.16, 1, 0.3, 1)`, staggered 0.15s in lists. Nothing loops and nothing reacts to scroll position. State changes a person causes (a tick, a step layer fading in over 0.5s, the unit rewrite, hover) may transition briefly; nothing else animates. Strokes are drawn by default and only wait when the script has marked the root `ink-ready`; under reduced motion every stroke is simply present.",
+        "section": "components"
+      }
+    ],
+    "dos": [
+      "**Do** deliver this world to every page through `_theme_head.html`, which loads warm.css after theme.css, so it re-binds the raw `-l` / `-d` tokens everywhere at once.",
+      "**Do** put every readable block on a sheet of Diary Paper; the cloth carries only the topbar, the closer and the footer, in Cover Cream.",
+      "**Do** write logged values in Kalam in their column ink (glucose biro, insulin plum, meals ochre) and print every computed value in Atkinson 700 with tabular lining figures.",
+      "**Do** mark a high with Alarm Red plus a second signal: the ink ring, bold weight, a larger point, or \"above range\" text for screen readers.",
+      "**Do** draw new hand marks as single SVG paths with `pathLength=\"1\"` and draw them on with `stroke-dashoffset`, once.",
+      "**Do** use the same example day for every figure (avg 7.8, 35.0 U, 165 g / 13.8 BU, 80% in range).",
+      "**Do** stack spreads below 960px with a dashed fold line, and let wide figures scroll in their own box rather than shrink their labels."
+    ],
+    "donts": [
+      "**Don't** link warm.css from individual templates or hard-code a hex in app CSS; and don't handwrite entries in the app, where they have to scan.",
+      "**Don't** use Alarm Red or Margin Rose for decoration, emphasis, links or brand moments.",
+      "**Don't** set copy, headings, labels, controls or totals in the hand.",
+      "**Don't** give shadows or cards to anything inside a page; separate with rules and hairlines.",
+      "**Don't** add entrance, scroll-linked, looping or parallax motion; only ink draws on.",
+      "**Don't** round sheets or controls beyond 4px.",
+      "**Don't** put a small label or eyebrow above a heading; a column's name is a printed header over its own fields."
+    ]
+  }
+}

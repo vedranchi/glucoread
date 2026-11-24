@@ -14,25 +14,40 @@
     <link rel="stylesheet" href="{% static 'landing/styles.css' %}" />
     <noscript>
       <style>
-        /* Without JS nothing reveals itself, so everything starts revealed.
+        /* Without JS nothing triggers the ink, so every stroke starts drawn.
            The stage needs no rule here: its markup is already the fullest
            step, and JS steps it back to the first only when it can animate
            forward again. Its buttons would do nothing, so they go. */
-        .reveal { opacity: 1; transform: none; }
+        .reveal .ink path { stroke-dashoffset: 0; }
         .stage-steps { display: none; }
       </style>
     </noscript>
   </head>
 
-  <body>
+  <body class="cloth">
     <a class="skip-link" href="#main">Skip to content</a>
     {% include "main/_icon_sprite.html" %}
     <span class="top-sentinel" id="topSentinel" aria-hidden="true"></span>
 
+    {% comment %}
+      Hand-drawn strokes, drawn once and reused with <use>. Every one is a
+      single path with pathLength="1", so CSS can draw it on with one
+      stroke-dashoffset transition regardless of its real length.
+    {% endcomment %}
+    <svg width="0" height="0" class="ink-defs" aria-hidden="true" focusable="false">
+      <defs>
+        <path id="ink-circle" pathLength="1"
+              d="M61 5C35 1 8 9 5 24c-3 16 27 22 52 21 25-1 41-9 39-21C94 12 73 3 41 7" />
+        <path id="ink-tick" pathLength="1"
+              d="M3.5 13.5c2 1.6 3.8 3.6 5.2 6 3-6.6 7-11.6 11.8-15.5" />
+        <path id="ink-underline" pathLength="1"
+              d="M3 8c40-4 90-6 130-4 22 1 44 2 64 0" />
+      </defs>
+    </svg>
+
     <header class="topbar" id="topbar">
       <div class="container topbar-inner">
         <a class="brand" href="#top" aria-label="GlucoRead home">
-          <span class="brand-mark" aria-hidden="true"></span>
           <span class="brand-name">GlucoRead</span>
         </a>
 
@@ -57,7 +72,7 @@
           {% include "main/_theme_switch.html" %}
 
           <a href="{% url 'glucoread-login' %}" class="menu-login">Log in</a>
-          <a href="{% url 'glucoread-register' %}" class="btn btn-primary btn-sm">
+          <a href="{% url 'glucoread-register' %}" class="btn btn-paper btn-sm">
             Start tracking for free
           </a>
         </nav>
@@ -66,488 +81,527 @@
 
     <main id="main">
       <!-- ============================== HERO ==============================
-           Copy on the left; on the right the dashboard's own summary tiles,
-           carrying the example day used by every figure further down. One day,
-           one set of numbers, so nothing on the page contradicts anything
-           else. -->
+           The diary, open across one gutter. Left page: the offer. Right page:
+           the example day used by every figure further down, in biro, with the
+           totals row printed — the one part a paper diary never did for you. -->
       <section class="hero" id="top">
-        <div class="container hero-grid">
-          <div class="hero-copy">
-            <p class="eyebrow">Glucose tracking, made simple</p>
-            <h1 class="hero-title">See the pattern, not just the number.</h1>
-            <p class="hero-lead">
-              Track glucose, insulin, and meals together — and make your day-to-day
-              patterns easier to see.
-            </p>
-            <div class="actions">
-              <a class="btn btn-primary btn-lg" href="{% url 'glucoread-register' %}">
-                Start tracking for free
-              </a>
-              <a class="btn btn-quiet btn-lg" href="{% url 'glucoread-login' %}">Log in</a>
+        <div class="container">
+          <div class="spread hero-spread">
+            <div class="page page-left hero-copy">
+              <h1 class="hero-title">
+                See the
+                <span class="underlined">pattern<svg class="ink ink-under" viewBox="0 0 200 12" preserveAspectRatio="none" aria-hidden="true"><use href="#ink-underline" /></svg></span>,
+                not just the number.
+              </h1>
+              <p class="hero-lead">
+                Track glucose, insulin, and meals together — and make your day-to-day
+                patterns easier to see.
+              </p>
+              <div class="actions">
+                <a class="btn btn-primary btn-stamp btn-lg" href="{% url 'glucoread-register' %}">
+                  Start tracking for free
+                </a>
+                <a class="btn btn-quiet btn-lg" href="{% url 'glucoread-login' %}">Log in</a>
+              </div>
+              <p class="hero-meta">Free · mmol/L or mg/dL · no ads, no trackers</p>
+              <span class="folio" aria-hidden="true">1</span>
             </div>
-            <p class="hero-meta">
-              Free · mmol/L or mg/dL · no ads, no trackers
-            </p>
+
+            <figure class="page page-right ruled-page diary">
+              <p class="diary-date">
+                <span class="field-label">Date</span>
+                <span class="hand">Tues 14 March</span>
+                <span class="sample-mark">Example page</span>
+              </p>
+
+              <table class="diary-table">
+                <caption class="visually-hidden">
+                  One example day: what was logged, and the day totals GlucoRead
+                  works out from it.
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Time</th>
+                    <th scope="col">Glucose <span class="unit">mmol/L</span></th>
+                    <th scope="col">Insulin <span class="unit">units</span></th>
+                    <th scope="col">Carbs <span class="unit">g</span></th>
+                    <th scope="col" class="col-note">Note</th>
+                  </tr>
+                </thead>
+                <tbody class="hand">
+                  <tr><td>07:10</td><td class="g">5.4</td><td></td><td></td><td class="col-note">fasting</td></tr>
+                  <tr><td>07:20</td><td></td><td></td><td class="m">42</td><td class="col-note">breakfast</td></tr>
+                  <tr><td>07:45</td><td></td><td class="i">6</td><td></td><td class="col-note">bolus</td></tr>
+                  <tr><td>10:30</td><td class="g">7.8</td><td></td><td></td><td class="col-note">after meal</td></tr>
+                  <tr><td>12:50</td><td></td><td></td><td class="m">58</td><td class="col-note">lunch</td></tr>
+                  <tr><td>13:20</td><td></td><td class="i">7</td><td></td><td class="col-note">bolus</td></tr>
+                  <tr><td>16:40</td><td class="g">6.2</td><td></td><td></td><td class="col-note">after meal</td></tr>
+                  <tr><td>19:30</td><td></td><td></td><td class="m">65</td><td class="col-note">dinner</td></tr>
+                  <tr><td>20:00</td><td></td><td class="i">8</td><td></td><td class="col-note">bolus</td></tr>
+                  <tr class="is-high">
+                    <td>21:30</td>
+                    <td class="g">
+                      <span class="circled">11.4<svg class="ink ink-ring" viewBox="0 0 100 50" preserveAspectRatio="none" aria-hidden="true"><use href="#ink-circle" /></svg></span><span class="visually-hidden"> — above range</span>
+                    </td>
+                    <td></td><td></td><td class="col-note">after meal</td>
+                  </tr>
+                  <tr><td>22:45</td><td></td><td class="i">14</td><td></td><td class="col-note">basal</td></tr>
+                  <tr><td>23:00</td><td class="g">8.3</td><td></td><td></td><td class="col-note">bedtime</td></tr>
+                </tbody>
+                <tfoot>
+                  <tr>
+                    <th scope="row">Day</th>
+                    <td><span class="total-label">avg</span> 7.8</td>
+                    <td>35.0</td>
+                    <td>165 <span class="total-sub">13.8 BU</span></td>
+                    <td class="col-note">80% in range</td>
+                  </tr>
+                </tfoot>
+              </table>
+
+              <p class="margin-note hand" aria-hidden="true">high again after dinner?</p>
+
+              <figcaption class="diary-caption">
+                An example day. The handwriting is what you log — the printed totals are
+                what GlucoRead works out for you.
+              </figcaption>
+              <span class="folio" aria-hidden="true">2</span>
+            </figure>
           </div>
-
-          <figure class="hero-figure">
-            <div class="tile-card">
-              <div class="tile-card-head">
-                <p class="tile-card-title">Today</p>
-                <span class="reading-chip t-range">
-                  <svg class="icon icon-sm" aria-hidden="true"><use href="#i-droplet" /></svg>
-                  <span>
-                    <span class="reading-chip-label">Latest</span>
-                    <span class="reading-chip-value">8.3 mmol/L</span>
-                  </span>
-                  <span class="badge t-range">In range</span>
-                </span>
-              </div>
-
-              <div class="tile-grid">
-                <article class="tile t-glucose">
-                  <p class="tile-label">Average glucose</p>
-                  <p class="tile-value">7.8 <span class="unit">mmol/L</span></p>
-                  <p class="tile-foot">5 readings today</p>
-                  <span class="puck" aria-hidden="true">
-                    <svg class="icon icon-lg"><use href="#i-droplet" /></svg>
-                  </span>
-                </article>
-
-                <article class="tile t-insulin">
-                  <p class="tile-label">Total insulin</p>
-                  <p class="tile-value">35.0 <span class="unit">units</span></p>
-                  <p class="tile-foot">4 doses today</p>
-                  <span class="puck" aria-hidden="true">
-                    <svg class="icon icon-lg"><use href="#i-syringe" /></svg>
-                  </span>
-                </article>
-
-                <article class="tile t-meal">
-                  <p class="tile-label">Carbs consumed</p>
-                  <p class="tile-value">165 <span class="unit">g</span></p>
-                  <p class="tile-foot">13.8 BU · 3 meals logged</p>
-                  <span class="puck" aria-hidden="true">
-                    <svg class="icon icon-lg"><use href="#i-utensils-crossed" /></svg>
-                  </span>
-                </article>
-
-                <article class="tile t-range">
-                  <p class="tile-label">Time in range</p>
-                  <p class="tile-value">80<span class="unit">%</span></p>
-                  <p class="tile-foot">4 of 5 readings today</p>
-                  <span class="puck" aria-hidden="true">
-                    <svg class="icon icon-lg"><use href="#i-activity" /></svg>
-                  </span>
-                </article>
-              </div>
-            </div>
-            <figcaption>The dashboard summary, on an example day.</figcaption>
-          </figure>
         </div>
       </section>
 
       <!-- ===================== THE IDEA — THE DAY STAGE =====================
-           The page's whole argument, drawn rather than asserted: the same day
-           three times, gaining the target band and then the insulin and meal
-           lanes. Plain inline SVG — it is static example data, so a charting
-           library would be 200 KB to draw eleven shapes. -->
+           The diary's graph page: the same day three times, gaining the target
+           band and then the insulin and meal lanes. Plain inline SVG — it is
+           static example data, so a charting library would be 200 KB to draw
+           eleven shapes. -->
       <section class="section" id="context">
         <div class="container">
-          <div class="section-head reveal">
-            <h2>Your glucose doesn't exist in isolation.</h2>
-            <p>
-              A glucose reading is only part of the story. GlucoRead brings your glucose
-              readings, insulin doses, and meals together in one place, giving you the
-              context behind the numbers.
-            </p>
-          </div>
+          <div class="spread">
+            <div class="page page-full">
+              <div class="page-head reveal">
+                <h2>Your glucose doesn't exist in isolation.</h2>
+                <p>
+                  A glucose reading is only part of the story. GlucoRead brings your glucose
+                  readings, insulin doses, and meals together in one place, giving you the
+                  context behind the numbers.
+                </p>
+              </div>
 
-          <figure class="stage-wrap reveal" data-stage data-current="3">
-            <div class="stage-steps segmented" role="group" aria-label="How much of the day to show">
-              <button type="button" data-step="1" aria-pressed="false">Readings</button>
-              <button type="button" data-step="2" aria-pressed="false">
-                <span aria-hidden="true">+&nbsp;</span>Target range
-              </button>
-              <button type="button" data-step="3" aria-pressed="true">
-                <span aria-hidden="true">+&nbsp;</span>Insulin &amp; meals
-              </button>
-            </div>
+              <figure class="stage-wrap" data-stage data-current="3">
+                <div class="stage-steps tick-group" role="group" aria-label="How much of the day to show">
+                  <button type="button" class="tick-option" data-step="1" aria-pressed="false">
+                    <span class="tickbox" aria-hidden="true"><svg class="ink" viewBox="0 0 24 24"><use href="#ink-tick" /></svg></span>
+                    Readings
+                  </button>
+                  <button type="button" class="tick-option" data-step="2" aria-pressed="false">
+                    <span class="tickbox" aria-hidden="true"><svg class="ink" viewBox="0 0 24 24"><use href="#ink-tick" /></svg></span>
+                    <span aria-hidden="true">+&nbsp;</span>Target range
+                  </button>
+                  <button type="button" class="tick-option" data-step="3" aria-pressed="true">
+                    <span class="tickbox" aria-hidden="true"><svg class="ink" viewBox="0 0 24 24"><use href="#ink-tick" /></svg></span>
+                    <span aria-hidden="true">+&nbsp;</span>Insulin &amp; meals
+                  </button>
+                </div>
 
-            <div
-              class="stage-scroll"
-              tabindex="0"
-              role="group"
-              aria-label="Example day chart, scrollable sideways on narrow screens"
-            >
-              {% comment %}
-                viewBox units, not pixels. Glucose 2–14 mmol/L maps to y 190→20;
-                06:00–24:00 maps to x 48→704. Every coordinate below is derived
-                from those two scales, so a value and its dot cannot disagree.
-              {% endcomment %}
-              <svg class="stage" viewBox="0 0 720 300" role="img"
-                   aria-label="An example day: five glucose readings rising from 5.4 at 07:10 to 11.4 at 21:30 and settling at 8.3 by 23:00, with three meals and four insulin doses logged alongside them. The same readings are listed in the table below.">
-                <!-- step 3: the evening the section is about -->
-                <g class="stage-layer stage-focus" data-from="3">
-                  <rect x="524" y="12" width="108" height="252" rx="10" />
-                </g>
+                <div
+                  class="stage-scroll graph-paper"
+                  tabindex="0"
+                  role="group"
+                  aria-label="Example day chart, scrollable sideways on narrow screens"
+                >
+                  {% comment %}
+                    viewBox units, not pixels. Glucose 2–14 mmol/L maps to y 190→20;
+                    06:00–24:00 maps to x 48→704. Every coordinate below is derived
+                    from those two scales, so a value and its dot cannot disagree.
+                  {% endcomment %}
+                  <svg class="stage" viewBox="0 0 720 300" role="img"
+                       aria-label="An example day: five glucose readings rising from 5.4 at 07:10 to 11.4 at 21:30 and settling at 8.3 by 23:00, with three meals and four insulin doses logged alongside them. The same readings are listed in the table below.">
+                    <!-- step 3: the evening the section is about -->
+                    <g class="stage-layer stage-focus" data-from="3">
+                      <rect x="524" y="12" width="108" height="252" rx="10" />
+                    </g>
 
-                <!-- step 2: the user's own target band -->
-                <g class="stage-layer stage-band" data-from="2">
-                  <rect x="48" y="76.7" width="656" height="86.4" rx="6" />
-                  <line x1="48" y1="76.7" x2="704" y2="76.7" />
-                  <line x1="48" y1="163.1" x2="704" y2="163.1" />
-                  <text class="stage-axis" x="40" y="80.7" text-anchor="end">10.0</text>
-                  <text class="stage-axis" x="40" y="167.1" text-anchor="end">3.9</text>
-                </g>
+                    <!-- step 2: the user's own target band -->
+                    <g class="stage-layer stage-band" data-from="2">
+                      <rect x="48" y="76.7" width="656" height="86.4" rx="2" />
+                      <line x1="48" y1="76.7" x2="704" y2="76.7" />
+                      <line x1="48" y1="163.1" x2="704" y2="163.1" />
+                      <text class="stage-axis" x="40" y="80.7" text-anchor="end">10.0</text>
+                      <text class="stage-axis" x="40" y="167.1" text-anchor="end">3.9</text>
+                    </g>
 
-                <!-- step 2: the readings joined up -->
-                <g class="stage-layer stage-trace" data-from="2">
-                  <polyline pathLength="1"
-                    points="90.5,141.8 212,107.8 436.7,130.5 612.9,56.8 667.6,100.8" />
-                </g>
+                    <!-- step 2: the readings joined up -->
+                    <g class="stage-layer stage-trace" data-from="2">
+                      <polyline pathLength="1"
+                        points="90.5,141.8 212,107.8 436.7,130.5 612.9,56.8 667.6,100.8" />
+                    </g>
 
-                <!-- always: the readings themselves -->
-                <g class="stage-points">
-                  <circle cx="90.5" cy="141.8" r="5.5" />
-                  <circle cx="212" cy="107.8" r="5.5" />
-                  <circle cx="436.7" cy="130.5" r="5.5" />
-                  <circle class="is-high" cx="612.9" cy="56.8" r="6.5" />
-                  <circle cx="667.6" cy="100.8" r="5.5" />
+                    <!-- always: the readings themselves -->
+                    <g class="stage-points">
+                      <circle cx="90.5" cy="141.8" r="5.5" />
+                      <circle cx="212" cy="107.8" r="5.5" />
+                      <circle cx="436.7" cy="130.5" r="5.5" />
+                      <circle class="is-high" cx="612.9" cy="56.8" r="6.5" />
+                      <circle cx="667.6" cy="100.8" r="5.5" />
 
-                  <text class="stage-value" x="90.5" y="127" text-anchor="middle">5.4</text>
-                  <text class="stage-value" x="212" y="93" text-anchor="middle">7.8</text>
-                  <text class="stage-value" x="436.7" y="116" text-anchor="middle">6.2</text>
-                  <text class="stage-value is-high" x="612.9" y="41" text-anchor="middle">11.4</text>
-                  <text class="stage-value" x="667.6" y="86" text-anchor="middle">8.3</text>
-                </g>
+                      <text class="stage-value" x="90.5" y="127" text-anchor="middle">5.4</text>
+                      <text class="stage-value" x="212" y="93" text-anchor="middle">7.8</text>
+                      <text class="stage-value" x="436.7" y="116" text-anchor="middle">6.2</text>
+                      <text class="stage-value is-high" x="612.9" y="41" text-anchor="middle">11.4</text>
+                      <text class="stage-value" x="667.6" y="86" text-anchor="middle">8.3</text>
+                    </g>
+
+                    {% comment %}
+                      The two lanes are drawn at every step, empty, and only their
+                      marks arrive at step three. That keeps the figure exactly one
+                      height throughout — nothing below it can be nudged down — and
+                      it makes the last step read as doses and meals dropping into
+                      a day that was already waiting for them.
+                    {% endcomment %}
+                    <g class="stage-lane-rules">
+                      <text class="stage-lane-label" x="40" y="220" text-anchor="end">Insulin</text>
+                      <line class="stage-lane-rule" x1="48" y1="216" x2="704" y2="216" />
+                      <text class="stage-lane-label" x="40" y="248" text-anchor="end">Meals</text>
+                      <line class="stage-lane-rule" x1="48" y1="244" x2="704" y2="244" />
+                    </g>
+
+                    <!-- step 3: the marks, in the diary's pencil colours -->
+                    <g class="stage-layer stage-lanes" data-from="3">
+                      <rect class="lane-insulin" x="106.8" y="208" width="10" height="16" rx="3" />
+                      <rect class="lane-insulin" x="310.3" y="208" width="10" height="16" rx="3" />
+                      <rect class="lane-insulin" x="553.2" y="208" width="10" height="16" rx="3" />
+                      <rect class="lane-basal" x="653.4" y="208" width="10" height="16" rx="3" />
+                      <rect class="lane-meal" x="89.6" y="237" width="14" height="14" rx="4" />
+                      <rect class="lane-meal" x="290" y="237" width="14" height="14" rx="4" />
+                      <rect class="lane-meal" x="533" y="237" width="14" height="14" rx="4" />
+                    </g>
+
+                    <!-- always: the hours -->
+                    <g class="stage-hours">
+                      <text class="stage-axis" x="48" y="282" text-anchor="start">06:00</text>
+                      <text class="stage-axis" x="266.7" y="282" text-anchor="middle">12:00</text>
+                      <text class="stage-axis" x="485.3" y="282" text-anchor="middle">18:00</text>
+                      <text class="stage-axis" x="704" y="282" text-anchor="end">24:00</text>
+                    </g>
+                  </svg>
+                </div>
 
                 {% comment %}
-                  The two lanes are drawn at every step, empty, and only their
-                  marks arrive at step three. That keeps the figure exactly one
-                  height throughout — nothing below it can be nudged down — and
-                  it makes the last step read as doses and meals dropping into
-                  a day that was already waiting for them, rather than a new
-                  region of chart appearing from nowhere.
+                  The lane labels live inside the SVG, so they scroll away with it
+                  on a phone. This legend does not — and it repeats each mark's
+                  shape, so the three kinds of entry stay distinguishable without
+                  relying on their colour.
                 {% endcomment %}
-                <g class="stage-lane-rules">
-                  <text class="stage-lane-label" x="40" y="220" text-anchor="end">Insulin</text>
-                  <line class="stage-lane-rule" x1="48" y1="216" x2="704" y2="216" />
-                  <text class="stage-lane-label" x="40" y="248" text-anchor="end">Meals</text>
-                  <line class="stage-lane-rule" x1="48" y1="244" x2="704" y2="244" />
-                </g>
+                <ul class="stage-legend">
+                  <li class="t-glucose">
+                    <svg viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="5" /></svg>
+                    Glucose reading
+                  </li>
+                  <li class="t-insulin stage-layer" data-from="3">
+                    <svg viewBox="0 0 14 14" aria-hidden="true"><rect x="4.5" y="1" width="5" height="12" rx="2" /></svg>
+                    Bolus insulin
+                  </li>
+                  {# Basal is the flat background dose, so the app leaves it uncoloured. #}
+                  <li class="t-neutral stage-layer" data-from="3">
+                    <svg viewBox="0 0 14 14" aria-hidden="true"><rect x="4.5" y="1" width="5" height="12" rx="2" /></svg>
+                    Basal insulin
+                  </li>
+                  <li class="t-meal stage-layer" data-from="3">
+                    <svg viewBox="0 0 14 14" aria-hidden="true"><rect x="1.5" y="1.5" width="11" height="11" rx="3" /></svg>
+                    Meal
+                  </li>
+                </ul>
 
-                <!-- step 3: the marks, in the app's own log colours -->
-                <g class="stage-layer stage-lanes" data-from="3">
-                  <rect class="lane-insulin" x="106.8" y="208" width="10" height="16" rx="3" />
-                  <rect class="lane-insulin" x="310.3" y="208" width="10" height="16" rx="3" />
-                  <rect class="lane-insulin" x="553.2" y="208" width="10" height="16" rx="3" />
-                  <rect class="lane-basal" x="653.4" y="208" width="10" height="16" rx="3" />
-                  <rect class="lane-meal" x="89.6" y="237" width="14" height="14" rx="4" />
-                  <rect class="lane-meal" x="290" y="237" width="14" height="14" rx="4" />
-                  <rect class="lane-meal" x="533" y="237" width="14" height="14" rx="4" />
-                </g>
+                <p class="stage-hint">Swipe the chart sideways to see the whole day.</p>
 
-                <!-- always: the hours -->
-                <g class="stage-hours">
-                  <text class="stage-axis" x="48" y="282" text-anchor="start">06:00</text>
-                  <text class="stage-axis" x="266.7" y="282" text-anchor="middle">12:00</text>
-                  <text class="stage-axis" x="485.3" y="282" text-anchor="middle">18:00</text>
-                  <text class="stage-axis" x="704" y="282" text-anchor="end">24:00</text>
-                </g>
-              </svg>
+                {# Announced on change, so the caption is the description for a step. #}
+                <figcaption class="stage-caption" aria-live="polite">
+                  <span data-caption="1" hidden>
+                    Five readings from one example day. Each one is true on its own, and
+                    none of them is the whole day.
+                  </span>
+                  <span data-caption="2" hidden>
+                    Against a target range of 3.9–10.0 mmol/L — yours to set — four sat inside
+                    it and the 21:30 reading sat above.
+                  </span>
+                  <span data-caption="3">
+                    That 21:30 reading follows a 65&nbsp;g dinner and an 8&nbsp;unit bolus,
+                    both logged the same evening. That is the part a single number leaves out.
+                  </span>
+                </figcaption>
+
+                {% comment %}
+                  The accessible alternative to the chart. A screen reader gets the
+                  whole day as data regardless of which step is on screen.
+                {% endcomment %}
+                {# The class goes on a wrapper: a <table> ignores the 1px width, and #}
+                {# setting display:block on it to compensate would strip its table #}
+                {# semantics from the very screen readers it exists for. #}
+                <div class="visually-hidden">
+                <table>
+                  <caption>Example day, in full</caption>
+                  <thead>
+                    <tr><th scope="col">Time</th><th scope="col">Entry</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr><td>07:10</td><td>Glucose 5.4 mmol/L, fasting — in range</td></tr>
+                    <tr><td>07:20</td><td>Meal: breakfast, 42 g carbs</td></tr>
+                    <tr><td>07:45</td><td>Insulin: bolus, 6 units</td></tr>
+                    <tr><td>10:30</td><td>Glucose 7.8 mmol/L, after meal — in range</td></tr>
+                    <tr><td>12:50</td><td>Meal: lunch, 58 g carbs</td></tr>
+                    <tr><td>13:20</td><td>Insulin: bolus, 7 units</td></tr>
+                    <tr><td>16:40</td><td>Glucose 6.2 mmol/L, after meal — in range</td></tr>
+                    <tr><td>19:30</td><td>Meal: dinner, 65 g carbs</td></tr>
+                    <tr><td>20:00</td><td>Insulin: bolus, 8 units</td></tr>
+                    <tr><td>21:30</td><td>Glucose 11.4 mmol/L, after meal — high</td></tr>
+                    <tr><td>22:45</td><td>Insulin: basal, 14 units</td></tr>
+                    <tr><td>23:00</td><td>Glucose 8.3 mmol/L, bedtime — in range</td></tr>
+                  </tbody>
+                </table>
+                </div>
+              </figure>
+
+              <p class="beat hand reveal">
+                See what happened. Add the context. Look for the
+                <span class="underlined">pattern.<svg class="ink ink-under" viewBox="0 0 200 12" preserveAspectRatio="none" aria-hidden="true"><use href="#ink-underline" /></svg></span>
+              </p>
+              <span class="folio" aria-hidden="true">3</span>
             </div>
-
-            {% comment %}
-              The lane labels live inside the SVG, so they scroll away with it
-              on a phone. This legend does not — and it repeats each mark's
-              shape, so the three kinds of entry stay distinguishable without
-              relying on their colour.
-            {% endcomment %}
-            <ul class="stage-legend">
-              <li class="t-glucose">
-                <svg viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="5" /></svg>
-                Glucose reading
-              </li>
-              <li class="t-insulin stage-layer" data-from="3">
-                <svg viewBox="0 0 14 14" aria-hidden="true"><rect x="4.5" y="1" width="5" height="12" rx="2" /></svg>
-                Bolus insulin
-              </li>
-              {# Basal is the flat background dose, so the app leaves it uncoloured. #}
-              <li class="t-neutral stage-layer" data-from="3">
-                <svg viewBox="0 0 14 14" aria-hidden="true"><rect x="4.5" y="1" width="5" height="12" rx="2" /></svg>
-                Basal insulin
-              </li>
-              <li class="t-meal stage-layer" data-from="3">
-                <svg viewBox="0 0 14 14" aria-hidden="true"><rect x="1.5" y="1.5" width="11" height="11" rx="3" /></svg>
-                Meal
-              </li>
-            </ul>
-
-            <p class="stage-hint">Swipe the chart sideways to see the whole day.</p>
-
-            {# Announced on change, so the caption is the description for a step. #}
-            <figcaption class="stage-caption" aria-live="polite">
-              <span data-caption="1" hidden>
-                Five readings from one example day. Each one is true on its own, and
-                none of them is the whole day.
-              </span>
-              <span data-caption="2" hidden>
-                Against a target range of 3.9–10.0 mmol/L — yours to set — four sat inside
-                it and the 21:30 reading sat above.
-              </span>
-              <span data-caption="3">
-                That 21:30 reading follows a 65&nbsp;g dinner and an 8&nbsp;unit bolus,
-                both logged the same evening. That is the part a single number leaves out.
-              </span>
-            </figcaption>
-
-            {% comment %}
-              The accessible alternative to the chart. A screen reader gets the
-              whole day as data regardless of which step is on screen.
-            {% endcomment %}
-            {# The class goes on a wrapper: a <table> ignores the 1px width, and #}
-            {# setting display:block on it to compensate would strip its table #}
-            {# semantics from the very screen readers it exists for. #}
-            <div class="visually-hidden">
-            <table>
-              <caption>Example day, in full</caption>
-              <thead>
-                <tr><th scope="col">Time</th><th scope="col">Entry</th></tr>
-              </thead>
-              <tbody>
-                <tr><td>07:10</td><td>Glucose 5.4 mmol/L, fasting — in range</td></tr>
-                <tr><td>07:20</td><td>Meal: breakfast, 42 g carbs</td></tr>
-                <tr><td>07:45</td><td>Insulin: bolus, 6 units</td></tr>
-                <tr><td>10:30</td><td>Glucose 7.8 mmol/L, after meal — in range</td></tr>
-                <tr><td>12:50</td><td>Meal: lunch, 58 g carbs</td></tr>
-                <tr><td>13:20</td><td>Insulin: bolus, 7 units</td></tr>
-                <tr><td>16:40</td><td>Glucose 6.2 mmol/L, after meal — in range</td></tr>
-                <tr><td>19:30</td><td>Meal: dinner, 65 g carbs</td></tr>
-                <tr><td>20:00</td><td>Insulin: bolus, 8 units</td></tr>
-                <tr><td>21:30</td><td>Glucose 11.4 mmol/L, after meal — high</td></tr>
-                <tr><td>22:45</td><td>Insulin: basal, 14 units</td></tr>
-                <tr><td>23:00</td><td>Glucose 8.3 mmol/L, bedtime — in range</td></tr>
-              </tbody>
-            </table>
-            </div>
-          </figure>
-
-          <p class="beat reveal">See what happened. Add the context. Look for the pattern.</p>
+          </div>
         </div>
       </section>
 
       <!-- ============================ ENTRIES =============================
-           What each of the three entry types actually holds. The detail is the
-           argument: these are the real fields, in the real order. -->
-      <section class="section band" id="entries">
+           The diary's column guide: what each of the three entry types holds.
+           These are the real fields, in the real order, each written out once
+           in biro so the guide shows a filled-in example. -->
+      <section class="section" id="entries">
         <div class="container">
-          <div class="section-head reveal">
-            <h2>Three kinds of entry. One picture.</h2>
-            <p>
-              Each one takes a moment to record, and each one adds to what the others
-              mean.
-            </p>
-          </div>
+          <div class="spread">
+            <div class="page page-full">
+              <div class="page-head reveal">
+                <h2>Three kinds of entry. One picture.</h2>
+                <p>
+                  Each one takes a moment to record, and each one adds to what the others
+                  mean.
+                </p>
+              </div>
 
-          <div class="entry-grid">
-            <article class="entry t-glucose reveal" style="--d: 0ms">
-              <span class="puck" aria-hidden="true">
-                <svg class="icon icon-lg"><use href="#i-droplet" /></svg>
-              </span>
-              <h3>Log your readings and see them in context.</h3>
-              <p>
-                Record your glucose through the day and build a history you can actually
-                look back on.
-              </p>
-              <ul class="entry-fields">
-                <li>Value, in mmol/L or mg/dL</li>
-                <li>Fasting, before meal, after meal, or bedtime</li>
-                <li>An optional note</li>
-              </ul>
-            </article>
+              {% comment %}
+                The inside-cover guide every paper diary prints: one row per
+                column, what it is for on the left and the column's fields,
+                filled in once in its own ink, on the right.
+              {% endcomment %}
+              <div class="guide">
+                <article class="guide-row t-glucose">
+                  <div class="guide-what">
+                    <h3>Log your readings and see them in context.</h3>
+                    <p>
+                      Record your glucose through the day and build a history you can actually
+                      look back on.
+                    </p>
+                  </div>
+                  <div class="guide-entry">
+                    <p class="guide-col">Glucose column</p>
+                    <dl class="form-lines guide-fields">
+                    <div><dt>Value, in mmol/L or mg/dL</dt><dd class="hand">6.2 mmol/L</dd></div>
+                    <div><dt>Fasting, before meal, after meal, or bedtime</dt><dd class="hand">after meal</dd></div>
+                    <div><dt>An optional note</dt><dd class="hand">after a walk</dd></div>
+                    </dl>
+                  </div>
+                </article>
 
-            <article class="entry t-insulin reveal" style="--d: 70ms">
-              <span class="puck" aria-hidden="true">
-                <svg class="icon icon-lg"><use href="#i-syringe" /></svg>
-              </span>
-              <h3>Keep your doses alongside your readings.</h3>
-              <p>
-                Record insulin doses with the rest of your day, so you don't have to piece
-                your history together later.
-              </p>
-              <ul class="entry-fields">
-                <li>Basal or bolus</li>
-                <li>Units, and the brand if you want it</li>
-                <li>An optional note</li>
-              </ul>
-            </article>
+                <article class="guide-row t-insulin">
+                  <div class="guide-what">
+                    <h3>Keep your doses alongside your readings.</h3>
+                    <p>
+                      Record insulin doses with the rest of your day, so you don't have to piece
+                      your history together later.
+                    </p>
+                  </div>
+                  <div class="guide-entry">
+                    <p class="guide-col">Insulin column</p>
+                    <dl class="form-lines guide-fields">
+                    <div><dt>Basal or bolus</dt><dd class="hand">bolus</dd></div>
+                    <div><dt>Units, and the brand if you want it</dt><dd class="hand">8 units</dd></div>
+                    <div><dt>An optional note</dt><dd class="hand">with dinner</dd></div>
+                    </dl>
+                  </div>
+                </article>
 
-            <article class="entry t-meal reveal" style="--d: 140ms">
-              <span class="puck" aria-hidden="true">
-                <svg class="icon icon-lg"><use href="#i-utensils-crossed" /></svg>
-              </span>
-              <h3>Add the context around your numbers.</h3>
-              <p>
-                Record meals and notes alongside your glucose and insulin to keep a clearer
-                picture of what was happening.
-              </p>
-              <ul class="entry-fields">
-                <li>Breakfast, lunch, dinner, or a snack</li>
-                <li>Carbs, protein, fats, calories — all optional</li>
-                <li>Bread units, at your own grams per unit</li>
-              </ul>
-            </article>
+                <article class="guide-row t-meal">
+                  <div class="guide-what">
+                    <h3>Add the context around your numbers.</h3>
+                    <p>
+                      Record meals and notes alongside your glucose and insulin to keep a clearer
+                      picture of what was happening.
+                    </p>
+                  </div>
+                  <div class="guide-entry">
+                    <p class="guide-col">Carbs column</p>
+                    <dl class="form-lines guide-fields">
+                    <div><dt>Breakfast, lunch, dinner, or a snack</dt><dd class="hand">dinner</dd></div>
+                    <div><dt>Carbs, protein, fats, calories — all optional</dt><dd class="hand">65 g carbs</dd></div>
+                    <div><dt>Bread units, at your own grams per unit</dt><dd class="hand">5.4 BU <span class="hand-aside">at 12 g</span></dd></div>
+                    </dl>
+                  </div>
+                </article>
+              </div>
+              <span class="folio" aria-hidden="true">4</span>
+            </div>
           </div>
         </div>
       </section>
 
       <!-- ============================ HISTORY =============================
-           The payoff of the day stage: the same shape, three evenings running.
-           This is the glucose log's own "Last seven days" table. -->
+           The payoff: three evenings, and the pattern runs down one column.
+           Same readings as the glucose log's seven-day table, arranged by time
+           of day the way a paper diary rules them. -->
       <section class="section" id="history">
-        <div class="container split">
-          <div class="split-copy reveal">
-            <h2>Look beyond today.</h2>
-            <p>A single reading tells you what happened once.</p>
-            <p class="lede-strong">Your history shows you what keeps happening.</p>
-            <p>
-              Every reading stays in your log with its time, its context and where it sat
-              against your range — so three high evenings in a row look like three high
-              evenings, not three unrelated numbers.
-            </p>
-            <p>
-              The dashboard chart steps back a day at a time, and your glucose log keeps
-              the full week in one table.
-            </p>
-          </div>
-
-          <figure class="split-figure reveal" style="--d: 120ms">
-            <div class="ui-card">
-              <div class="ui-card-head">
-                <h3>Last seven days</h3>
-                <p class="ui-card-desc">Every reading in the past week</p>
-              </div>
-              <div class="ui-table-scroll">
-                <table class="ui-table">
-                  <thead>
-                    <tr>
-                      <th scope="col">When</th>
-                      <th scope="col">Value</th>
-                      <th scope="col">Status</th>
-                      <th scope="col">Context</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td class="cell-when">Mar 14, 21:30</td>
-                      <td class="num">11.4 mmol/L</td>
-                      <td><span class="badge t-warn">High</span></td>
-                      <td><span class="badge badge-outline">after meal</span></td>
-                    </tr>
-                    <tr>
-                      <td class="cell-when">Mar 14, 16:40</td>
-                      <td class="num">6.2 mmol/L</td>
-                      <td><span class="badge t-range">In range</span></td>
-                      <td><span class="badge badge-outline">after meal</span></td>
-                    </tr>
-                    <tr>
-                      <td class="cell-when">Mar 13, 21:10</td>
-                      <td class="num">11.9 mmol/L</td>
-                      <td><span class="badge t-warn">High</span></td>
-                      <td><span class="badge badge-outline">after meal</span></td>
-                    </tr>
-                    <tr>
-                      <td class="cell-when">Mar 13, 07:05</td>
-                      <td class="num">5.1 mmol/L</td>
-                      <td><span class="badge t-range">In range</span></td>
-                      <td><span class="badge badge-outline">fasting</span></td>
-                    </tr>
-                    <tr>
-                      <td class="cell-when">Mar 12, 21:40</td>
-                      <td class="num">10.8 mmol/L</td>
-                      <td><span class="badge t-warn">High</span></td>
-                      <td><span class="badge badge-outline">after meal</span></td>
-                    </tr>
-                    <tr>
-                      <td class="cell-when">Mar 12, 13:15</td>
-                      <td class="num">7.4 mmol/L</td>
-                      <td><span class="badge t-range">In range</span></td>
-                      <td><span class="badge badge-outline">after meal</span></td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
+        <div class="container">
+          <div class="spread">
+            <div class="page page-left split-copy reveal">
+              <h2>Look beyond today.</h2>
+              <p>A single reading tells you what happened once.</p>
+              <p class="lede-strong">Your history shows you what keeps happening.</p>
+              <p>
+                Every reading stays in your log with its time, its context and where it sat
+                against your range — so three high evenings in a row look like three high
+                evenings, not three unrelated numbers.
+              </p>
+              <p>
+                The dashboard chart steps back a day at a time, and your glucose log keeps
+                the full week in one table.
+              </p>
+              <span class="folio" aria-hidden="true">5</span>
             </div>
-            <figcaption>The glucose log's seven-day table, with example readings.</figcaption>
-          </figure>
+
+            <figure class="page page-right ruled-page week reveal">
+              <table class="week-table">
+                <caption class="visually-hidden">Three days of example readings, by time of day</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Date</th>
+                    <th scope="col">Morning</th>
+                    <th scope="col">Afternoon</th>
+                    <th scope="col" class="col-evening">Evening</th>
+                  </tr>
+                </thead>
+                <tbody class="hand">
+                  <tr>
+                    <th scope="row">12 Mar</th>
+                    <td class="is-empty"><span class="visually-hidden">no reading</span></td>
+                    <td>7.4 <small>13:15</small></td>
+                    <td class="col-evening is-high">
+                      <span class="circled">10.8<svg class="ink ink-ring" viewBox="0 0 100 50" preserveAspectRatio="none" aria-hidden="true"><use href="#ink-circle" /></svg></span>
+                      <small>21:40</small><span class="visually-hidden"> — above range</span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">13 Mar</th>
+                    <td>5.1 <small>07:05</small></td>
+                    <td class="is-empty"><span class="visually-hidden">no reading</span></td>
+                    <td class="col-evening is-high">
+                      <span class="circled">11.9<svg class="ink ink-ring" viewBox="0 0 100 50" preserveAspectRatio="none" aria-hidden="true"><use href="#ink-circle" /></svg></span>
+                      <small>21:10</small><span class="visually-hidden"> — above range</span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">14 Mar</th>
+                    <td>5.4 <small>07:10</small></td>
+                    <td>6.2 <small>16:40</small></td>
+                    <td class="col-evening is-high">
+                      <span class="circled">11.4<svg class="ink ink-ring" viewBox="0 0 100 50" preserveAspectRatio="none" aria-hidden="true"><use href="#ink-circle" /></svg></span>
+                      <small>21:30</small><span class="visually-hidden"> — above range</span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+              <p class="margin-note week-note hand" aria-hidden="true">every evening!</p>
+              <figcaption class="diary-caption">
+                Example readings from three days, in mmol/L. Circled means above your range.
+                In the app they sit in your glucose log's seven-day table, each one flagged.
+              </figcaption>
+              <span class="folio" aria-hidden="true">6</span>
+            </figure>
+          </div>
         </div>
       </section>
 
       <!-- ============================ TARGETS =============================
-           The unit switch is the section's own demonstration: values are held
-           in mmol/L and converted for display, exactly as the app does it. -->
-      <section class="section band" id="targets">
-        <div class="container split split-reverse">
-          <div class="split-copy reveal">
-            <h2>Know where your numbers stand.</h2>
-            <p>
-              Set your own upper and lower glucose targets. Every reading is then shown in
-              relation to them — on the log, on the chart, and in the header.
-            </p>
-            <p>
-              Work in the unit you're comfortable with, <strong>mmol/L or mg/dL</strong>.
-              Readings are stored once and converted for display, so switching units never
-              changes what you recorded.
-            </p>
-          </div>
+           "My targets", the form page at the front of every diary. The tick
+           boxes are the unit switch: values are held in mmol/L and converted
+           for display, exactly as the app does it. -->
+      <section class="section" id="targets">
+        <div class="container">
+          <div class="spread">
+            <div class="page page-left split-copy reveal">
+              <h2>Know where your numbers stand.</h2>
+              <p>
+                Set your own upper and lower glucose targets. Every reading is then shown in
+                relation to them — on the log, on the chart, and in the header.
+              </p>
+              <p>
+                Work in the unit you're comfortable with, <strong>mmol/L or mg/dL</strong>.
+                Readings are stored once and converted for display, so switching units never
+                changes what you recorded.
+              </p>
+              <span class="folio" aria-hidden="true">7</span>
+            </div>
 
-          <div class="split-figure reveal" style="--d: 120ms">
-            <div class="ui-card range-card">
-              <div class="ui-card-head range-head">
-                <h3>Your target range</h3>
-                <div class="segmented unit-toggle" role="group" aria-label="Glucose unit">
-                  <button type="button" data-unit="mmol" aria-pressed="true">mmol/L</button>
-                  <button type="button" data-unit="mgdl" aria-pressed="false">mg/dL</button>
-                </div>
+            <div class="page page-right targets reveal">
+              <h3 class="form-title">My target range</h3>
+
+              <div class="unit-toggle tick-group" role="group" aria-label="Glucose unit">
+                <button type="button" class="tick-option" data-unit="mmol" aria-pressed="true">
+                  <span class="tickbox" aria-hidden="true"><svg class="ink" viewBox="0 0 24 24"><use href="#ink-tick" /></svg></span>
+                  mmol/L
+                </button>
+                <button type="button" class="tick-option" data-unit="mgdl" aria-pressed="false">
+                  <span class="tickbox" aria-hidden="true"><svg class="ink" viewBox="0 0 24 24"><use href="#ink-tick" /></svg></span>
+                  mg/dL
+                </button>
               </div>
 
-              <div class="ui-card-body">
-                <dl class="range-demo">
-                  <div>
-                    <dt>Lower</dt>
-                    <dd class="unit-value" data-mmol="3.9">3.9</dd>
-                  </div>
-                  <div>
-                    <dt>Upper</dt>
-                    <dd class="unit-value" data-mmol="10.0">10.0</dd>
-                  </div>
-                  <div>
-                    <dt>Unit</dt>
-                    <dd class="unit-label">mmol/L</dd>
-                  </div>
-                </dl>
-
-                <div class="range-bar" role="img"
-                     aria-label="A reading of 6.2 sits inside the target band of 3.9 to 10.0.">
-                  <span class="range-band"></span>
-                  <span class="range-dot"></span>
+              <dl class="form-lines range-demo">
+                <div>
+                  <dt>Lower</dt>
+                  <dd class="hand"><span class="unit-value" data-mmol="3.9">3.9</span></dd>
                 </div>
-                <p class="range-caption">
-                  A reading of <span class="unit-value" data-mmol="6.2">6.2</span>, shown
-                  against that band.
-                </p>
-
-                <hr class="ui-rule" />
-
-                <p class="range-meter-label">Time in range, today</p>
-                <p class="range-meter-value">80%</p>
-                <div class="meter" role="img"
-                     aria-label="80 percent of today's example readings are in range">
-                  <span style="width: 80%"></span>
+                <div>
+                  <dt>Upper</dt>
+                  <dd class="hand"><span class="unit-value" data-mmol="10.0">10.0</span></dd>
                 </div>
-                <p class="range-meter-foot">4 of 5 readings today</p>
+                <div>
+                  <dt>Unit</dt>
+                  <dd class="hand unit-label">mmol/L</dd>
+                </div>
+              </dl>
+
+              <div class="range-bar" role="img"
+                   aria-label="A reading of 6.2 sits inside the target band of 3.9 to 10.0.">
+                <span class="range-band"></span>
+                <span class="range-dot"></span>
               </div>
+              <p class="range-caption">
+                A reading of <span class="unit-value" data-mmol="6.2">6.2</span>, shown
+                against that band.
+              </p>
+
+              <h4 class="tir-title">Time in range, today <span class="tir-value">80%</span></h4>
+              <ul class="tir">
+                <li class="is-in"><span class="unit-value hand" data-mmol="5.4">5.4</span><span class="visually-hidden"> in range</span></li>
+                <li class="is-in"><span class="unit-value hand" data-mmol="7.8">7.8</span><span class="visually-hidden"> in range</span></li>
+                <li class="is-in"><span class="unit-value hand" data-mmol="6.2">6.2</span><span class="visually-hidden"> in range</span></li>
+                <li class="is-high">
+                  <span class="circled"><span class="unit-value hand" data-mmol="11.4">11.4</span><svg class="ink ink-ring" viewBox="0 0 100 50" preserveAspectRatio="none" aria-hidden="true"><use href="#ink-circle" /></svg></span><span class="visually-hidden"> above range</span>
+                </li>
+                <li class="is-in"><span class="unit-value hand" data-mmol="8.3">8.3</span><span class="visually-hidden"> in range</span></li>
+              </ul>
+              <p class="range-meter-foot">4 of 5 readings today</p>
+              <span class="folio" aria-hidden="true">8</span>
             </div>
           </div>
         </div>
@@ -555,122 +609,133 @@
 
       <!-- ======================== EVERYDAY TRACKING ======================== -->
       <section class="section" id="everyday">
-        <div class="container split">
-          <div class="split-copy reveal">
-            <h2>Tracking shouldn't get in the way of your day.</h2>
-            <ul class="moments">
-              <li>A reading takes a moment.</li>
-              <li>A meal takes a moment.</li>
-              <li>An insulin dose takes a moment.</li>
-            </ul>
-            <p>
-              One value, when it was taken, and a note if you want one. Nothing is required
-              beyond the number itself, and your target range sits right there on the form
-              so you know where the reading lands.
-            </p>
-          </div>
-
-          <figure class="split-figure reveal" style="--d: 120ms">
-            {% comment %}
-              The add-reading form as it is actually built — the same labels,
-              the same help text, the same optional note. Presentational only:
-              a real form here would post nowhere, so these are static.
-            {% endcomment %}
-            <div class="ui-card">
-              <div class="ui-card-head">
-                <h3>Add glucose reading</h3>
-                <p class="ui-card-desc">Stored in mmol/L, shown in the unit you have chosen.</p>
-              </div>
-              <div class="ui-card-body ui-form" aria-hidden="true">
-                <div class="ui-field">
-                  <span class="ui-label">Glucose reading (mmol/L)</span>
-                  <span class="ui-input">6.2</span>
-                  <span class="ui-hint">
-                    Your target range is 3.9–10.0 mmol/L. Anything outside it is flagged on
-                    the log and the chart.
-                  </span>
-                </div>
-                <div class="ui-field">
-                  <span class="ui-label">When it was taken</span>
-                  <span class="ui-input is-select">After Meal</span>
-                </div>
-                <div class="ui-field">
-                  <span class="ui-label">Note <em>optional</em></span>
-                  <span class="ui-input is-empty">e.g. before a run</span>
-                </div>
-                <span class="ui-submit">Log reading</span>
-              </div>
+        <div class="container">
+          <div class="spread">
+            <div class="page page-left split-copy reveal">
+              <h2>Tracking shouldn't get in the way of your day.</h2>
+              <ul class="moments">
+                <li><svg class="ink" viewBox="0 0 24 24" aria-hidden="true"><use href="#ink-tick" /></svg>A reading takes a moment.</li>
+                <li><svg class="ink" viewBox="0 0 24 24" aria-hidden="true"><use href="#ink-tick" /></svg>A meal takes a moment.</li>
+                <li><svg class="ink" viewBox="0 0 24 24" aria-hidden="true"><use href="#ink-tick" /></svg>An insulin dose takes a moment.</li>
+              </ul>
+              <p>
+                One value, when it was taken, and a note if you want one. Nothing is required
+                beyond the number itself, and your target range sits right there on the form
+                so you know where the reading lands.
+              </p>
+              <span class="folio" aria-hidden="true">9</span>
             </div>
-            <figcaption>The add-reading form, as it appears in the app.</figcaption>
-          </figure>
+
+            <figure class="page page-right slip-page">
+              {% comment %}
+                The add-reading form as it is actually built — the same labels,
+                the same help text, the same optional note. Presentational only:
+                a real form here would post nowhere, so these are static.
+              {% endcomment %}
+              <div class="slip">
+                <h3 class="form-title">Add glucose reading</h3>
+                <p class="slip-desc">Stored in mmol/L, shown in the unit you have chosen.</p>
+                <div class="slip-form" aria-hidden="true">
+                  <div class="slip-field">
+                    <span class="slip-label">Glucose reading (mmol/L)</span>
+                    <span class="slip-input hand">6.2</span>
+                    <span class="slip-hint">
+                      Your target range is 3.9–10.0 mmol/L. Anything outside it is flagged on
+                      the log and the chart.
+                    </span>
+                  </div>
+                  <div class="slip-field">
+                    <span class="slip-label">When it was taken</span>
+                    <span class="slip-input hand is-select">After Meal</span>
+                  </div>
+                  <div class="slip-field">
+                    <span class="slip-label">Note <em>optional</em></span>
+                    <span class="slip-input is-empty">e.g. before a run</span>
+                  </div>
+                  <span class="slip-submit">Log reading</span>
+                </div>
+              </div>
+              <figcaption class="diary-caption">The add-reading form, as it appears in the app.</figcaption>
+              <span class="folio" aria-hidden="true">10</span>
+            </figure>
+          </div>
         </div>
       </section>
 
       <!-- ============================= TRUST ==============================
-           Only claims that are true of this build: no third-party analytics
-           anywhere in the codebase, the source is public under MIT, and the
-           disclaimer that matters for a health tool. -->
-      <section class="section band" id="privacy">
+           The diary's "important information" page. Only claims that are true
+           of this build: no third-party analytics anywhere in the codebase,
+           the source is public under MIT, and the disclaimer that matters for
+           a health tool. -->
+      <section class="section" id="privacy">
         <div class="container">
-          <div class="section-head reveal">
-            <h2>Your health data belongs to you.</h2>
-            <p>
-              GlucoRead is your own diabetes log. It is not there to sell you anything, and
-              it is not a substitute for your care team.
-            </p>
-          </div>
+          <div class="spread">
+            <div class="page page-full">
+              <div class="page-head reveal">
+                <h2>Your health data belongs to you.</h2>
+                <p>
+                  GlucoRead is your own diabetes log. It is not there to sell you anything, and
+                  it is not a substitute for your care team.
+                </p>
+              </div>
 
-          <ul class="trust-grid">
-            <li class="trust reveal" style="--d: 0ms">
-              <h3>No ads and no trackers</h3>
-              <p>
-                There is no analytics script, no advertising network and no third-party
-                tag on any page. Your log isn't a marketing asset.
-              </p>
-            </li>
-            <li class="trust reveal" style="--d: 70ms">
-              <h3>Your account, your entries</h3>
-              <p>
-                Every reading, dose and meal is scoped to your account. Nothing is shared
-                with other users, and there is no shared feed to opt out of.
-              </p>
-            </li>
-            <li class="trust reveal" style="--d: 140ms">
-              <h3>Open source, MIT licensed</h3>
-              <p>
-                The whole application is public on GitHub, so you can read exactly what it
-                does with what you record.
-              </p>
-              <a class="trust-link" href="https://github.com/vedranchi/glucoread"
-                 rel="noopener">
-                Read the source
-                <svg class="icon icon-sm" aria-hidden="true"><use href="#i-chevron-right" /></svg>
-              </a>
-            </li>
-            <li class="trust reveal" style="--d: 210ms">
-              <h3>A record, not a recommendation</h3>
-              <p>
-                GlucoRead organises what you record. It doesn't diagnose, dose or advise —
-                treatment decisions stay between you and your care team.
-              </p>
-            </li>
-          </ul>
+              <ul class="notices">
+                <li>
+                  <h3>No ads and no trackers</h3>
+                  <p>
+                    There is no analytics script, no advertising network and no third-party
+                    tag on any page. Your log isn't a marketing asset.
+                  </p>
+                </li>
+                <li>
+                  <h3>Your account, your entries</h3>
+                  <p>
+                    Every reading, dose and meal is scoped to your account. Nothing is shared
+                    with other users, and there is no shared feed to opt out of.
+                  </p>
+                </li>
+                <li>
+                  <h3>Open source, MIT licensed</h3>
+                  <p>
+                    The whole application is public on GitHub, so you can read exactly what it
+                    does with what you record.
+                  </p>
+                  <a class="text-link" href="https://github.com/vedranchi/glucoread"
+                     rel="noopener">
+                    Read the source
+                    <svg class="icon icon-sm" aria-hidden="true"><use href="#i-chevron-right" /></svg>
+                  </a>
+                </li>
+                <li>
+                  <h3>A record, not a recommendation</h3>
+                  <p>
+                    GlucoRead organises what you record. It doesn't diagnose, dose or advise —
+                    treatment decisions stay between you and your care team.
+                  </p>
+                </li>
+              </ul>
+              <span class="folio" aria-hidden="true">11</span>
+            </div>
+          </div>
         </div>
       </section>
 
-      <!-- =========================== FINAL CTA ============================ -->
+      <!-- =========================== FINAL CTA ============================
+           The back cover: the cloth, and the printed label pasted on it. -->
       <section class="closer">
-        <div class="container closer-inner reveal">
-          <h2>Start seeing the pattern.</h2>
-          <p>
-            Log today's readings and the picture builds itself from there. Free, and it
-            takes a minute to set up.
-          </p>
-          <div class="actions">
-            <a class="btn btn-primary btn-lg" href="{% url 'glucoread-register' %}">
-              Start tracking for free
-            </a>
-            <a class="btn btn-quiet btn-lg" href="{% url 'glucoread-login' %}">Log in</a>
+        <div class="container">
+          <div class="cover-label">
+            <h2>Start seeing the pattern.</h2>
+            <p>
+              Log today's readings and the picture builds itself from there. Free, and it
+              takes a minute to set up.
+            </p>
+            <div class="actions">
+              <a class="btn btn-primary btn-stamp btn-lg" href="{% url 'glucoread-register' %}">
+                Start tracking for free
+              </a>
+              <a class="btn btn-quiet btn-lg" href="{% url 'glucoread-login' %}">Log in</a>
+            </div>
           </div>
         </div>
       </section>
@@ -679,7 +744,6 @@
     <footer class="site-footer">
       <div class="container footer-inner">
         <div class="footer-brand">
-          <span class="brand-mark" aria-hidden="true"></span>
           <span class="brand-name">GlucoRead</span>
           <span class="footer-tagline">See the pattern, not just the number.</span>
         </div>

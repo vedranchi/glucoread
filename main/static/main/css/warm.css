@@ -1,0 +1,274 @@
+/* ==========================================================================
+   GlucoRead warm layer: the paper-logbook palette and faces. Loaded straight
+   after theme.css by main/_theme_head.html, so every page gets it: the
+   landing page, the auth screens and the authenticated app.
+
+   theme.css binds every public token (--paper, --accent, ...) to a raw -l or -d
+   variable on :root. This file redefines those raw variables, so every
+   primitive in theme.css (.btn, .badge, .field, the theme switch) turns warm
+   without a single selector being copied. Light and dark are both covered by
+   the same trick: the bindings already pick -l or -d.
+
+   The world is the paper glucose diary clinics hand to new insulin users:
+   diary paper, a sage book-cloth cover, biro entries, a red margin. Three inks
+   plus paper. Red is reserved for "above range" — nothing decorative uses it.
+   ========================================================================== */
+
+@font-face {
+  font-family: "Young Serif";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../fonts/young-serif-400-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "Young Serif";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../fonts/young-serif-400-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* Atkinson Hyperlegible was drawn for readers with low vision — a real
+   consideration for an audience where retinopathy is a known complication.
+   One variable file per subset serves every weight. */
+@font-face {
+  font-family: "Atkinson Hyperlegible Next";
+  font-style: normal;
+  font-weight: 200 800;
+  font-display: swap;
+  src: url("../fonts/atkinson-hyperlegible-next-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "Atkinson Hyperlegible Next";
+  font-style: normal;
+  font-weight: 200 800;
+  font-display: swap;
+  src: url("../fonts/atkinson-hyperlegible-next-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* The biro hand. Used only for entries "written into" the diary — never for
+   anything a visitor has to read to act. */
+@font-face {
+  font-family: "Kalam";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../fonts/kalam-400-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "Kalam";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../fonts/kalam-400-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Kalam";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("../fonts/kalam-700-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "Kalam";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("../fonts/kalam-700-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+:root {
+  --font-sans: "Atkinson Hyperlegible Next", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Young Serif", Georgia, "Times New Roman", serif;
+  --font-hand: "Kalam", "Segoe Print", "Bradley Hand", cursive;
+
+  /* ---- light: the diary on a desk by day ---- */
+  --paper-l: #f7efdf;
+  --paper-2-l: #efe4cc;
+  --surface-l: #fbf6ea;
+  --ink-l: #2f241a;
+  --ink-2-l: #5b4b3a;
+  --ink-3-l: #6f5f4c;
+  --line-l: #dccdb0;
+  --line-soft-l: #e8dcc3;
+
+  /* The cover's sage is the action colour: it is what the booklet is bound
+     in, and red is spoken for. */
+  --accent-l: #5d6a33;
+  --accent-hover-l: #4b5628;
+  --accent-ink-l: #fbf6ea;
+  --accent-bright-l: #7d8b4a;
+  --accent-soft-l: #e1e3c4;
+  --accent-wash-l: #eeeedb;
+  --accent-line-l: #c3c99a;
+  --accent-deep-l: #414b1f;
+  --accent-strong-l: #4f5b2a;
+  --accent-strong-hover-l: #3f4920;
+
+  /* insulin in plum pencil, meals in ochre pencil */
+  --insulin-l: #7a4580;
+  --insulin-soft-l: #ecdbe9;
+  --insulin-wash-l: #f5ebf2;
+  --insulin-deep-l: #5f3365;
+  --meal-l: #a7610f;
+  --meal-soft-l: #f2dfbd;
+  --meal-wash-l: #f7ebd5;
+  --meal-deep-l: #7a4506;
+
+  --range-l: #4a7a2e;
+  --range-soft-l: #dde7c9;
+  --range-wash-l: #ebf0dd;
+  --range-deep-l: #365c1f;
+  --warn-l: #b13f28;
+  --warn-soft-l: #f2d5c9;
+  --warn-wash-l: #f7e4da;
+  --warn-deep-l: #8c2f1c;
+  --danger-l: #a3311f;
+  --danger-soft-l: #f2d3cb;
+  --danger-wash-l: #f8e6e0;
+  --danger-deep-l: #85261a;
+
+  --shadow-sm-l: 0 1px 2px rgba(47, 36, 26, 0.12);
+  --shadow-lg-l: 0 1px 2px rgba(35, 40, 14, 0.25), 0 22px 44px -22px rgba(35, 40, 14, 0.6);
+
+  /* world tokens with no app counterpart */
+  --cloth-l: #5a6534;
+  --cloth-2-l: #4c5629;
+  --cloth-ink-l: #f4ecd8;
+  --cloth-ink-2-l: #e6e0c6;
+  --biro-l: #24357a;
+  --margin-l: #d4867a;
+  --rule-l: #b9c7dd;
+  --grid-l: rgba(36, 53, 122, 0.08);
+
+  /* ---- dark: the same diary under a desk lamp at night ---- */
+  --paper-d: #241e17;
+  --paper-2-d: #2d261d;
+  --surface-d: #2b241c;
+  --ink-d: #f0e6d2;
+  --ink-2-d: #cfbfa5;
+  --ink-3-d: #ad9c82;
+  --line-d: rgba(240, 230, 210, 0.16);
+  --line-soft-d: rgba(240, 230, 210, 0.09);
+
+  --accent-d: #bcc684;
+  --accent-hover-d: #ced79b;
+  --accent-ink-d: #1d2110;
+  --accent-bright-d: #bcc684;
+  --accent-soft-d: rgba(188, 198, 132, 0.18);
+  --accent-wash-d: rgba(188, 198, 132, 0.09);
+  --accent-line-d: rgba(188, 198, 132, 0.34);
+  --accent-deep-d: #d4dca6;
+  --accent-strong-d: #bcc684;
+  --accent-strong-hover-d: #ced79b;
+
+  --insulin-d: #d7a2dc;
+  --insulin-soft-d: rgba(215, 162, 220, 0.18);
+  --insulin-wash-d: rgba(215, 162, 220, 0.09);
+  --insulin-deep-d: #d7a2dc;
+  --meal-d: #e9ad5f;
+  --meal-soft-d: rgba(233, 173, 95, 0.18);
+  --meal-wash-d: rgba(233, 173, 95, 0.09);
+  --meal-deep-d: #e9ad5f;
+
+  --range-d: #a8d083;
+  --range-soft-d: rgba(168, 208, 131, 0.17);
+  --range-wash-d: rgba(168, 208, 131, 0.08);
+  --range-deep-d: #a8d083;
+  --warn-d: #f29478;
+  --warn-soft-d: rgba(242, 148, 120, 0.18);
+  --warn-wash-d: rgba(242, 148, 120, 0.09);
+  --warn-deep-d: #f29478;
+  --danger-d: #f29478;
+  --danger-soft-d: rgba(242, 148, 120, 0.18);
+  --danger-wash-d: rgba(242, 148, 120, 0.09);
+  --danger-deep-d: #f29478;
+
+  --shadow-sm-d: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --shadow-lg-d: 0 1px 2px rgba(0, 0, 0, 0.5), 0 24px 48px -22px rgba(0, 0, 0, 0.85);
+
+  --cloth-d: #2a3019;
+  --cloth-2-d: #22270f;
+  --cloth-ink-d: #ece3cc;
+  --cloth-ink-2-d: #c3bd9e;
+  --biro-d: #a9b9f2;
+  --margin-d: #a2584c;
+  --rule-d: rgba(169, 185, 242, 0.2);
+  --grid-d: rgba(169, 185, 242, 0.07);
+
+  --cloth: var(--cloth-l);
+  --cloth-2: var(--cloth-2-l);
+  --cloth-ink: var(--cloth-ink-l);
+  --cloth-ink-2: var(--cloth-ink-2-l);
+  --biro: var(--biro-l);
+  --margin: var(--margin-l);
+  --rule: var(--rule-l);
+  --grid: var(--grid-l);
+
+  --r-lg: 4px;
+  --r-md: 4px;
+  --r-sm: 3px;
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Kept in step by hand with the two selectors theme.css uses. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --cloth: var(--cloth-d);
+    --cloth-2: var(--cloth-2-d);
+    --cloth-ink: var(--cloth-ink-d);
+    --cloth-ink-2: var(--cloth-ink-2-d);
+    --biro: var(--biro-d);
+    --margin: var(--margin-d);
+    --rule: var(--rule-d);
+    --grid: var(--grid-d);
+  }
+}
+
+:root[data-theme="dark"] {
+  --cloth: var(--cloth-d);
+  --cloth-2: var(--cloth-2-d);
+  --cloth-ink: var(--cloth-ink-d);
+  --cloth-ink-2: var(--cloth-ink-2-d);
+  --biro: var(--biro-d);
+  --margin: var(--margin-d);
+  --rule: var(--rule-d);
+  --grid: var(--grid-d);
+}
+
+/* Glucose is written in biro in this world, not in the app's teal. */
+.t-glucose {
+  --tone: var(--biro);
+  --tone-soft: color-mix(in srgb, var(--biro) 14%, transparent);
+  --tone-wash: color-mix(in srgb, var(--biro) 7%, transparent);
+  --tone-line: color-mix(in srgb, var(--biro) 30%, transparent);
+  --tone-ink: var(--biro);
+}
+
+/* Book cloth: a fine weave, two hairline grids at low alpha. Cheap to paint
+   and it never repaints, since nothing animates over it. */
+.cloth {
+  background-color: var(--cloth);
+  background-image:
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 3px),
+    repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.05) 0 1px, transparent 1px 3px);
+  color: var(--cloth-ink);
+}
+
+::selection {
+  background: color-mix(in srgb, var(--biro) 22%, transparent);
+}
+
+body {
+  font-family: var(--font-sans);
+  caret-color: var(--biro);
+}

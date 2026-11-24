@@ -1,21 +1,19 @@
 /* ==========================================================================
-   GlucoRead landing page.
+   GlucoRead landing page — the paper logbook.
 
-   Tokens, tones, buttons, badges, pucks, the segmented control, the topbar and
-   the mobile drawer all come from main/css/theme.css — the same layer the
-   authenticated app is built on. This file is only the page: the hero, the day
-   stage, the section shapes, and the small recreations of real app surfaces.
+   The page is the glucose diary clinics hand to new insulin users, laid open
+   on its own sage book-cloth cover: each section is one spread (or one
+   fold-out page) of that diary. Tokens and faces come from main/css/warm.css;
+   primitives (.btn, .badge, the theme switch, the drawer) from theme.css.
 
    Two rules hold the page together:
 
-   1. Everything hangs off the left margin. Section heads, split copy and the
-      entry cards all start at the same line; only the closing call to action
-      is centred, because it is a panel rather than a section. That is what
-      keeps nine sections from reading as nine unrelated landing pages.
-
-   2. Colour is information. Teal is glucose, blue is insulin, orange is meals,
-      green is in-range and amber is high — exactly as in the app. Nothing else
-      on the page is coloured, so when something is, it means something.
+     1. Handwriting is what a person logs; print is what GlucoRead works out.
+        Biro (Kalam, --biro) is only ever an entry. Totals, labels, copy and
+        controls are printed.
+     2. Colour is information. Biro navy is glucose, plum is insulin, ochre is
+        meals, leaf green is in range — and red is reserved for "above range".
+        Nothing decorative is red.
    ========================================================================== */
 
 /* ------------------------------- utilities -------------------------------- */
@@ -31,344 +29,670 @@
   border: 0;
 }
 
-/* Figures are data. Lining, fixed-width digits stop a value from shuffling
-   sideways when the unit switch rewrites it. */
-.num,
-.tile-value,
-.stage-value,
-.unit-value,
-.range-demo dd,
-.range-meter-value,
-.ui-input {
-  font-variant-numeric: tabular-nums;
-  font-feature-settings: "tnum" 1;
+.ink-defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
 }
 
-/* ------------------------------- topbar add-ons --------------------------- */
-/* theme.css styles .topbar, .menu and the drawer. These are the landing
-   page's own additions: the hamburger's icon, and the spacer that pushes the
-   account actions to the right of the section links. */
-.menu-btn {
-  align-items: center;
-  gap: 0.45rem;
-  min-height: 44px;
-  padding-inline: 0.85rem;
+/* Figures are data: lining, fixed-width digits stop a value from shuffling
+   sideways when the unit switch rewrites it. */
+.diary-table tfoot,
+.unit-value,
+.tir-value,
+.stage-axis {
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+.hand {
+  font-family: var(--font-hand);
+  font-weight: 400;
+  color: var(--biro);
+  letter-spacing: 0;
+}
+
+/* ---------------------------------- ink -----------------------------------
+   Every hand-drawn mark (rings, ticks, underlines) is one path with
+   pathLength="1". Drawn by default; the script marks the root ink-ready and
+   each mark then waits for its section to arrive before it draws on — the
+   page's one motion. */
+.ink {
+  overflow: visible;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+  transition: stroke-dashoffset 0.9s var(--ease);
+}
+
+.ink-ready .reveal:not(.show) .ink {
+  stroke-dashoffset: 1;
+}
+
+/* the hero's marks draw once on load: they are above the fold, so there is
+   nothing to wait for */
+.hero .ink {
+  animation: ink-draw 1s var(--ease) 0.5s both;
+}
+
+.hero .circled .ink {
+  animation-delay: 1.1s;
+}
+
+@keyframes ink-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+}
+
+.underlined {
+  position: relative;
+  white-space: nowrap;
+}
+
+.ink-under {
+  position: absolute;
+  left: -2%;
+  bottom: -0.02em;
+  max-width: none;
+  width: 104%;
+  height: 0.32em;
+  color: var(--biro);
+  stroke-width: 4;
+}
+
+.circled {
+  position: relative;
+  display: inline-block;
+}
+
+.ink-ring {
+  position: absolute;
+  max-width: none;
+  left: 50%;
+  top: 50%;
+  width: 3.4em;
+  height: 1.7em;
+  margin: -0.85em 0 0 -1.7em;
+  color: var(--warn);
+  stroke-width: 2.6;
+  pointer-events: none;
+}
+
+/* ------------------------------- the cover -------------------------------- */
+/* The body is the sage cloth (warm.css .cloth). Everything readable sits on a
+   page; only the topbar, the closer and the footer print straight onto the
+   cover, in cloth ink. */
+
+/* The topbar sits on the cover, so it borrows cover colours for the shared
+   primitives inside it. Scoped custom properties, not copied selectors. */
+.topbar {
+  --paper: var(--cloth);
+  --accent: var(--cloth-ink);
+  --accent-ink: var(--cloth-2);
+  --paper-2: rgba(0, 0, 0, 0.18);
+  --line-soft: rgba(255, 255, 255, 0.16);
+  --line: rgba(255, 255, 255, 0.26);
+  --ink: var(--cloth-ink);
+  --ink-2: var(--cloth-ink-2);
+  --ink-3: var(--cloth-ink-2);
+  color: var(--cloth-ink);
+}
+
+.brand-name {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 1.3rem;
+  letter-spacing: 0;
+}
+
+
+.menu > a:not(.btn) {
+  color: var(--cloth-ink-2);
+}
+
+.menu > a:not(.btn):hover {
+  color: var(--cloth-ink);
+}
+
+.menu-login {
+  font-weight: 600;
 }
 
 .menu-spacer {
   flex: 1;
 }
 
-.menu-login {
-  font-weight: 500;
+/* ------------------------------- buttons ---------------------------------- */
+.btn {
+  font-weight: 700;
+  letter-spacing: 0.005em;
 }
 
-/* --------------------------------- sections ------------------------------- */
+.btn-lg {
+  font-size: 1.02rem;
+  padding: 0.85rem 1.35rem;
+}
+
+/* A rubber stamp: the fill, then a thin inner frame in the fill's own ink. */
+.btn-stamp {
+  box-shadow:
+    inset 0 0 0 3px var(--stamp-gap, var(--accent-strong)),
+    inset 0 0 0 4px color-mix(in srgb, currentColor 45%, transparent),
+    var(--shadow-sm);
+}
+
+.btn-stamp:hover {
+  box-shadow:
+    inset 0 0 0 3px var(--stamp-gap, var(--accent-strong-hover)),
+    inset 0 0 0 4px color-mix(in srgb, currentColor 55%, transparent),
+    var(--shadow-lg);
+}
+
+.btn-quiet {
+  border-color: var(--ink-3);
+}
+
+.btn-quiet:hover {
+  border-color: var(--ink);
+  background: color-mix(in srgb, var(--ink) 5%, transparent);
+}
+
+/* on the cover: a paper button and a cloth one */
+.btn-paper {
+  --stamp-gap: var(--cloth-ink);
+  background: var(--cloth-ink);
+  color: var(--cloth-2);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-paper:hover {
+  --stamp-gap: #fffaf0;
+  background: #fffaf0;
+  transform: translateY(-2px);
+}
+
+.btn-cloth {
+  color: var(--cloth-ink);
+  border-color: color-mix(in srgb, var(--cloth-ink) 55%, transparent);
+  background: transparent;
+}
+
+.btn-cloth:hover {
+  border-color: var(--cloth-ink);
+  background: rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+/* ------------------------------ the spreads ------------------------------- */
 .section {
-  padding-block: clamp(3.25rem, 7vw, 5.5rem);
+  padding-top: clamp(1.75rem, 4vw, 3.25rem);
 }
 
-/* Alternating ground so consecutive sections separate without a rule between
-   every one of them. */
-.band {
-  background: var(--paper-2);
-  border-block: 1px solid var(--line-soft);
+.hero {
+  padding-top: clamp(0.5rem, 1.5vw, 1rem);
 }
 
-.section-head {
-  max-width: 34rem;
-  margin-bottom: clamp(2rem, 4vw, 3rem);
-}
-
-.section-head h2,
-.split-copy h2 {
-  font-size: clamp(1.6rem, 3.1vw, 2.2rem);
-  line-height: 1.12;
-}
-
-.section-head p,
-.split-copy p {
-  margin-top: 1rem;
-  color: var(--ink-2);
-  max-width: 42ch;
-}
-
-.lede-strong {
-  color: var(--ink) !important;
-  font-weight: 500;
-}
-
-/* The one line that carries the page's thesis, set apart from the prose
-   around it rather than shouted. */
-.beat {
-  margin-top: clamp(1.5rem, 3vw, 2.25rem);
-  text-wrap: balance;
-  max-width: 34rem;
-  font-size: clamp(1.05rem, 1.8vw, 1.25rem);
-  font-weight: 500;
-  line-height: 1.5;
-  color: var(--ink);
-  border-left: 3px solid var(--accent);
-  padding-left: 1.1rem;
-}
-
-/* copy beside a recreated app surface */
-.split {
+.spread {
+  position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: clamp(2.25rem, 5vw, 3.5rem);
-  align-items: center;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  color: var(--ink);
+  background: var(--paper);
+  border-radius: 3px;
+  box-shadow: var(--shadow-lg);
 }
 
-@media (min-width: 900px) {
-  .split {
-    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
-  }
-
-  /* Source order stays copy-then-figure for screen readers; only the painted
-     order flips. */
-  .split-reverse .split-copy {
-    order: 2;
-  }
-}
-
-.split-copy p + p {
-  margin-top: 0.85rem;
-}
-
-.split-figure {
-  margin: 0;
+.page {
+  position: relative;
   min-width: 0;
+  padding: clamp(1.75rem, 4.2vw, 4rem) clamp(1.35rem, 4.2vw, 4rem) clamp(2.75rem, 5vw, 4.5rem);
 }
 
-.split-figure figcaption,
-.hero-figure figcaption,
-.stage-caption {
-  margin-top: 0.85rem;
+.page-full {
+  grid-column: 1 / -1;
+}
+
+/* The gutter: the paper darkens into the fold between the two pages. Drawn on
+   the left page so a full-width page never has a fold through its text. */
+.page-left::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: -36px;
+  width: 72px;
+  pointer-events: none;
+  background: linear-gradient(
+    to right,
+    transparent,
+    rgba(70, 50, 20, 0.07) 38%,
+    rgba(70, 50, 20, 0.2) 50%,
+    rgba(70, 50, 20, 0.07) 62%,
+    transparent
+  );
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .page-left::after {
+    background: linear-gradient(
+      to right,
+      transparent,
+      rgba(0, 0, 0, 0.18) 38%,
+      rgba(0, 0, 0, 0.45) 50%,
+      rgba(0, 0, 0, 0.18) 62%,
+      transparent
+    );
+  }
+}
+
+:root[data-theme="dark"] .page-left::after {
+  background: linear-gradient(
+    to right,
+    transparent,
+    rgba(0, 0, 0, 0.18) 38%,
+    rgba(0, 0, 0, 0.45) 50%,
+    rgba(0, 0, 0, 0.18) 62%,
+    transparent
+  );
+}
+
+.page-right {
+  margin: 0;
+}
+
+/* page numbers, the way a printed booklet has them */
+.folio {
+  position: absolute;
+  bottom: clamp(1rem, 2vw, 1.5rem);
+  left: clamp(1.35rem, 4.2vw, 4rem);
+  font-family: var(--font-display);
   font-size: 0.82rem;
   color: var(--ink-3);
 }
 
-/* ----------------------------------- hero --------------------------------- */
-.hero {
-  padding-block: clamp(2.5rem, 6vw, 4rem) clamp(3rem, 6vw, 4.5rem);
+.page-right .folio {
+  left: auto;
+  right: clamp(1.35rem, 4.2vw, 4rem);
 }
 
-.hero-grid {
+/* The diary's double red margin rule. It sits inside the page as printed
+   ruling, not along an edge. */
+.ruled-page {
+  --margin-x: clamp(2.1rem, 4.4vw, 3.6rem);
+  background:
+    linear-gradient(
+      to right,
+      transparent var(--margin-x),
+      var(--margin) var(--margin-x) calc(var(--margin-x) + 1px),
+      transparent calc(var(--margin-x) + 1px) calc(var(--margin-x) + 4px),
+      var(--margin) calc(var(--margin-x) + 4px) calc(var(--margin-x) + 5px),
+      transparent calc(var(--margin-x) + 5px)
+    );
+}
+
+/* -------------------------------- type ------------------------------------ */
+h1,
+h2,
+.form-title,
+.notices h3 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+
+h2 {
+  font-size: clamp(1.9rem, 3.6vw, 2.9rem);
+  line-height: 1.08;
+}
+
+.page p {
+  text-wrap: pretty;
+  color: var(--ink-2);
+  font-size: 1.0625rem;
+  line-height: 1.65;
+}
+
+.page-head {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: clamp(2.5rem, 5vw, 3.5rem);
-  align-items: center;
+  grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+  gap: 1.25rem clamp(2rem, 5vw, 5rem);
+  align-items: end;
+  margin-bottom: clamp(1.75rem, 3.5vw, 2.75rem);
 }
 
-@media (min-width: 960px) {
-  .hero-grid {
-    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1fr);
-    gap: clamp(2.5rem, 5vw, 4rem);
-  }
+.page-head p {
+  max-width: 46ch;
 }
 
-.eyebrow {
-  margin-bottom: 0.9rem;
-  font-size: 0.78rem;
-  font-weight: 600;
-  letter-spacing: 0.11em;
-  text-transform: uppercase;
-  color: var(--accent-deep);
+.split-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.split-copy h2 {
+  margin-bottom: 0.4rem;
+}
+
+.split-copy p {
+  max-width: 44ch;
+}
+
+.lede-strong {
+  font-family: var(--font-display);
+  font-size: 1.3rem !important;
+  line-height: 1.35 !important;
+  color: var(--ink) !important;
+}
+
+/* ---------------------------------- hero ---------------------------------- */
+.hero-spread {
+  min-height: min(calc(100svh - 68px - 2.5rem), 760px);
+}
+
+.hero-copy {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1.5rem;
 }
 
 .hero-title {
-  font-size: clamp(2.3rem, 5vw, 3.5rem);
-  line-height: 1.02;
-  letter-spacing: -0.037em;
-  max-width: 18ch;
+  font-size: clamp(2.6rem, 5.4vw, 4.6rem);
+  line-height: 1.03;
+  letter-spacing: -0.015em;
+  max-width: 11ch;
 }
 
 .hero-lead {
-  margin-top: 1.35rem;
-  max-width: 44ch;
-  font-size: clamp(1.05rem, 1.5vw, 1.18rem);
-  color: var(--ink-2);
+  font-size: clamp(1.1rem, 1.5vw, 1.25rem) !important;
+  max-width: 34ch;
 }
 
 .hero-copy .actions {
-  margin-top: 2rem;
+  margin-top: 0.4rem;
 }
 
-.btn-lg {
-  font-size: 0.98rem;
-  padding: 0.78rem 1.4rem;
-}
-
-/* Three facts, not a badge row: all three are true of the build and none of
-   them is a claim about users. */
 .hero-meta {
-  margin-top: 1.15rem;
-  font-size: 0.85rem;
+  font-size: 0.9rem !important;
+  color: var(--ink-3) !important;
+}
+
+/* the right page: one example day, written in */
+.diary {
+  display: flex;
+  flex-direction: column;
+  padding-left: calc(var(--margin-x) + 0.9rem);
+}
+
+.diary-date {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  margin-bottom: 0.9rem;
+  padding-bottom: 0.25rem;
+  border-bottom: 1px solid var(--rule);
+}
+
+.field-label {
+  font-size: 0.78rem;
+  font-weight: 700;
   color: var(--ink-3);
 }
 
-/* One short cascade, top to bottom, and only in the hero — everything below
-   the fold reveals on scroll instead. */
-.eyebrow,
-.hero-title,
-.hero-lead,
-.hero-copy .actions,
-.hero-meta,
-.hero-figure {
-  animation: rise 0.7s var(--ease) both;
+.diary-date .hand {
+  font-size: 1.35rem;
+  line-height: 1;
 }
 
-.hero-title { animation-delay: 0.04s; }
-.hero-lead { animation-delay: 0.09s; }
-.hero-copy .actions { animation-delay: 0.14s; }
-.hero-meta { animation-delay: 0.18s; }
-.hero-figure { animation-delay: 0.12s; }
-
-@keyframes rise {
-  from {
-    opacity: 0;
-    transform: translateY(14px);
-  }
+.diary-table {
+  width: 100%;
+  border-collapse: collapse;
 }
 
-/* ------------------------- hero figure: summary tiles ---------------------- */
-.hero-figure {
-  margin: 0;
-  min-width: 0;
-}
-
-.tile-card {
-  padding: clamp(1rem, 2.2vw, 1.35rem);
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--r-lg);
-  box-shadow: var(--shadow-lg);
-}
-
-.tile-card-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  margin-bottom: 1rem;
-}
-
-.tile-card-title {
-  font-size: 0.95rem;
-  font-weight: 600;
-}
-
-.tile-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.7rem;
-}
-
-.tile {
-  position: relative;
-  padding: 0.85rem 0.95rem;
-  background: var(--tone-wash);
-  border: 1px solid var(--tone-line);
-  border-radius: var(--r-md);
-}
-
-.tile-label {
-  font-size: 0.76rem;
-  color: var(--ink-2);
-}
-
-.tile-value {
-  margin-top: 0.2rem;
-  font-size: clamp(1.25rem, 3vw, 1.5rem);
-  font-weight: 600;
-  letter-spacing: -0.02em;
-  line-height: 1.15;
-}
-
-.tile-value .unit {
+.diary-table th {
+  padding: 0 0.4rem 0.45rem;
   font-size: 0.78rem;
-  font-weight: 500;
-  color: var(--ink-2);
-  letter-spacing: 0;
-}
-
-.tile-foot {
-  margin-top: 0.35rem;
-  font-size: 0.72rem;
-  /* --ink-3 clears 4.5:1 on white but not on the tinted tile fills. */
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
+  vertical-align: bottom;
   color: var(--ink-2);
 }
 
-/* The puck is decoration inside an already-labelled tile, so it only appears
-   where there is room for it without crowding the value. */
-.tile .puck {
-  position: absolute;
-  top: 0.7rem;
-  right: 0.7rem;
-  width: 34px;
-  height: 34px;
-  background: transparent;
-  opacity: 0.55;
+.diary-table thead th:first-child {
+  text-align: left;
+  padding-left: 0;
 }
 
-@media (max-width: 420px) {
-  .tile .puck {
-    display: none;
-  }
+.diary-table thead th {
+  border-bottom: 1.5px solid var(--ink-3);
 }
 
-/* ---------------------------------- the stage ------------------------------
-   One example day, drawn three times over. Plain SVG: the data is static, so a
-   charting library would be 200 KB to draw eleven shapes, and an <svg> costs
-   no layout shift and themes itself from the same tokens as everything else.
+.diary-table .unit {
+  display: block;
+  font-weight: 400;
+  color: var(--ink-3);
+}
 
-   The SVG is held between 620px and 820px wide. Its text is sized in viewBox
-   units, so it scales with the element — that window keeps every label between
-   roughly 11px and 16px on screen. Below 620px the figure scrolls sideways
-   inside its own box rather than shrinking its labels out of legibility.
-   -------------------------------------------------------------------------- */
+.diary-table tbody td {
+  height: 2.05rem;
+  padding: 0 0.4rem;
+  font-size: 1.2rem;
+  line-height: 1;
+  text-align: center;
+  border-bottom: 1px solid var(--rule);
+}
+
+.diary-table tbody td:first-child {
+  padding-left: 0;
+  text-align: left;
+  font-size: 1.05rem;
+  color: color-mix(in srgb, var(--biro) 72%, var(--paper));
+}
+
+.diary-table .col-note {
+  text-align: left;
+}
+
+.diary-table tbody .col-note {
+  font-size: 1rem;
+  color: color-mix(in srgb, var(--biro) 72%, var(--paper));
+}
+
+.diary-table .g {
+  color: var(--biro);
+  font-weight: 700;
+}
+
+.diary-table .i {
+  color: var(--insulin);
+}
+
+.diary-table .m {
+  color: var(--meal);
+}
+
+.diary-table tr.is-high .g {
+  color: var(--warn);
+}
+
+/* the printed totals line — the part the paper diary never did */
+.diary-table tfoot th,
+.diary-table tfoot td {
+  padding: 0.7rem 0.4rem 0;
+  font-family: var(--font-sans);
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: var(--ink);
+  text-align: center;
+  vertical-align: top;
+  border-top: 3px double var(--ink-2);
+}
+
+.diary-table tfoot th {
+  text-align: left;
+  padding-left: 0;
+}
+
+.diary-table tfoot .col-note {
+  text-align: left;
+  color: var(--range-deep);
+}
+
+.total-label,
+.total-sub {
+  font-weight: 400;
+  color: var(--ink-3);
+}
+
+.total-label {
+  font-size: 0.8rem;
+}
+
+.total-sub {
+  display: block;
+  font-size: 0.78rem;
+}
+
+.margin-note {
+  align-self: flex-end;
+  margin-top: 0.85rem;
+  font-size: 1.2rem;
+  transform: rotate(-3deg);
+  color: var(--biro);
+}
+
+.diary-caption {
+  margin-top: auto;
+  padding-top: 1.25rem;
+  font-size: 0.88rem;
+  line-height: 1.55;
+  color: var(--ink-3);
+  max-width: 52ch;
+}
+
+/* -------------------------------- the stage -------------------------------
+   The diary's graph page. The SVG is held between 620px and 900px wide; its
+   text is sized in viewBox units, so that window keeps every label legible.
+   Below 620px the figure scrolls sideways inside its own box. */
 .stage-wrap {
-  /* The same measure as .stage's own cap, so the step control, the chart and
-     the caption all share one left and right edge. */
-  max-width: 820px;
   margin: 0;
+}
+
+.tick-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.4rem;
 }
 
 .stage-steps {
-  display: flex;
-  flex-wrap: wrap;
-  width: fit-content;
-  margin-bottom: 1.25rem;
+  margin-bottom: 1.1rem;
 }
 
-.stage-steps button {
-  min-height: 40px;
+.tick-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 44px;
+  padding: 0 0.15rem;
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--ink-2);
+  background: none;
+  border: 0;
+  cursor: pointer;
+  transition: color 0.2s var(--ease);
+}
+
+.tick-option:hover,
+.tick-option[aria-pressed="true"] {
+  color: var(--ink);
+}
+
+.tickbox {
+  position: relative;
+  display: inline-block;
+  width: 1.3rem;
+  height: 1.3rem;
+  flex: none;
+  border: 1.5px solid var(--ink-3);
+  border-radius: 2px;
+  background: var(--surface);
+  transition: border-color 0.2s var(--ease);
+}
+
+.tick-option:hover .tickbox {
+  border-color: var(--ink);
+}
+
+/* the tick overshoots its box, the way a quick biro tick does */
+.tickbox .ink {
+  position: absolute;
+  inset: -30% -35% -10% -10%;
+  width: 145%;
+  height: 140%;
+  color: var(--biro);
+  stroke-width: 2.6;
+  stroke-dashoffset: 1;
+  transition: stroke-dashoffset 0.4s var(--ease);
+}
+
+.tick-option[aria-pressed="true"] .tickbox .ink {
+  stroke-dashoffset: 0;
+}
+
+/* The stage's steps are cumulative ("+ Target range"), so every step up to
+   the current one stays ticked; aria-pressed still marks only the current. */
+.stage-wrap[data-current="2"] [data-step="1"] .tickbox .ink,
+.stage-wrap[data-current="3"] [data-step="1"] .tickbox .ink,
+.stage-wrap[data-current="3"] [data-step="2"] .tickbox .ink {
+  stroke-dashoffset: 0;
+}
+
+.tick-option:focus-visible {
+  outline: 2px solid var(--biro);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+.graph-paper {
+  background-color: var(--surface);
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 18px 18px;
+  border: 1px solid var(--rule);
+  border-radius: 2px;
 }
 
 .stage-scroll {
   overflow-x: auto;
   overscroll-behavior-x: contain;
-  padding-bottom: 0.25rem;
+  padding: 0.75rem 0.5rem 0.25rem;
 }
 
 .stage-scroll:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 4px;
-  border-radius: var(--r-md);
+  outline: 2px solid var(--biro);
+  outline-offset: 3px;
 }
 
 .stage {
   width: 100%;
   min-width: 620px;
-  max-width: 820px;
+  max-width: 900px;
   height: auto;
+  margin-inline: auto;
 }
 
 .stage text {
   font-family: var(--font-sans);
-  font-variant-numeric: tabular-nums;
 }
 
 .stage-axis,
@@ -378,17 +702,16 @@
 }
 
 .stage-value {
-  font-size: 14px;
-  font-weight: 500;
-  fill: var(--ink-2);
+  font-family: var(--font-hand) !important;
+  font-size: 17px;
+  fill: var(--biro);
 }
 
 .stage-value.is-high {
   fill: var(--warn);
-  font-weight: 600;
+  font-weight: 700;
 }
 
-/* Steps 2 and 3 fade in over step 1; the wrapper carries the current step. */
 .stage-layer {
   opacity: 0;
   transition: opacity 0.5s var(--ease);
@@ -403,6 +726,7 @@
 .stage-focus rect {
   fill: var(--warn-wash);
   stroke: var(--warn-soft);
+  stroke-dasharray: 5 4;
 }
 
 .stage-band rect {
@@ -413,19 +737,13 @@
   stroke: var(--range);
   stroke-width: 1;
   stroke-dasharray: 4 4;
-  opacity: 0.55;
+  opacity: 0.7;
 }
 
-.stage-band text {
-  fill: var(--range);
-}
-
-/* pathLength="1" makes the dash maths independent of the real path length, so
-   the line draws itself left to right in one transition. */
 .stage-trace polyline {
   fill: none;
-  stroke: var(--accent);
-  stroke-width: 2.5;
+  stroke: var(--biro);
+  stroke-width: 2;
   stroke-linecap: round;
   stroke-linejoin: round;
   stroke-dasharray: 1;
@@ -439,7 +757,7 @@
 }
 
 .stage-points circle {
-  fill: var(--accent);
+  fill: var(--biro);
   stroke: var(--surface);
   stroke-width: 2;
 }
@@ -451,23 +769,17 @@
 }
 
 .stage-lane-rule {
-  stroke: var(--line);
+  stroke: var(--rule);
   stroke-width: 1;
-}
-
-/* The empty lanes are scaffolding until step three fills them. */
-.stage-lane-rules {
-  opacity: 0.7;
 }
 
 .lane-insulin {
   fill: var(--insulin);
 }
 
+/* Basal is the flat background dose; the app leaves it uncoloured, and
+   --ink-2 is what .t-neutral resolves --tone to, so mark and swatch agree. */
 .lane-basal {
-  /* Basal is the flat background dose; the app deliberately leaves it
-     uncoloured, and --ink-2 is what .t-neutral resolves --tone to, so the
-     marker and its legend swatch cannot drift apart. */
   fill: var(--ink-2);
 }
 
@@ -475,548 +787,14 @@
   fill: var(--meal);
 }
 
-.stage-caption {
-  max-width: 52ch;
-  /* reserved so swapping between the three captions never shifts the page */
-  min-height: 3.2em;
-}
-
-/* --------------------------------- entries -------------------------------- */
-/* Three cards never fill a two-column grid, and auto-fit happily leaves the
-   third one stranded beside a gap at tablet widths. So the columns are
-   declared rather than inferred, and in the two-column band the last card
-   spans both — which reads as a decision instead of a leftover. */
-.entry-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: clamp(1rem, 2vw, 1.35rem);
-}
-
-@media (min-width: 620px) {
-  .entry-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .entry-grid > :last-child {
-    grid-column: 1 / -1;
-  }
-}
-
-@media (min-width: 940px) {
-  .entry-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .entry-grid > :last-child {
-    grid-column: auto;
-  }
-}
-
-.entry {
-  padding: clamp(1.25rem, 2.4vw, 1.6rem);
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--r-lg);
-}
-
-.entry h3 {
-  margin-top: 1rem;
-  font-size: 1.05rem;
-  line-height: 1.3;
-}
-
-.entry > p {
-  margin-top: 0.6rem;
-  color: var(--ink-2);
-  font-size: 0.94rem;
-}
-
-.entry-fields {
-  margin: 1.1rem 0 0;
-  padding: 1.1rem 0 0;
-  list-style: none;
-  border-top: 1px solid var(--line-soft);
-  font-size: 0.88rem;
-  color: var(--ink-2);
-}
-
-.entry-fields li {
-  position: relative;
-  padding-left: 1.1rem;
-}
-
-.entry-fields li + li {
-  margin-top: 0.45rem;
-}
-
-.entry-fields li::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 0.62em;
-  width: 5px;
-  height: 5px;
-  border-radius: var(--r-pill);
-  background: var(--tone);
-}
-
-/* --------------------------- recreated app surfaces ------------------------ */
-/* The card chrome the app uses for its log tables and forms. */
-.ui-card {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--r-lg);
-  box-shadow: var(--shadow-sm);
-  overflow: hidden;
-}
-
-.ui-card-head {
-  padding: 1.05rem 1.15rem;
-  border-bottom: 1px solid var(--line-soft);
-}
-
-.ui-card-head h3 {
-  font-size: 1rem;
-}
-
-.ui-card-desc {
-  margin-top: 0.25rem;
-  font-size: 0.82rem;
-  color: var(--ink-3);
-}
-
-.ui-card-body {
-  padding: 1.15rem;
-}
-
-.ui-rule {
-  margin: 1.15rem 0;
-  border: 0;
-  border-top: 1px solid var(--line-soft);
-}
-
-/* ------------------------------ the log table ------------------------------ */
-.ui-table-scroll {
-  overflow-x: auto;
-}
-
-.ui-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.86rem;
-  white-space: nowrap;
-}
-
-.ui-table th {
-  padding: 0.6rem 1.15rem;
-  text-align: left;
-  font-size: 0.74rem;
-  font-weight: 500;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--ink-2);
-  background: var(--paper-2);
-  border-bottom: 1px solid var(--line-soft);
-}
-
-.ui-table td {
-  padding: 0.7rem 1.15rem;
-  border-bottom: 1px solid var(--line-soft);
-}
-
-.ui-table tr:last-child td {
-  border-bottom: 0;
-}
-
-.cell-when {
-  color: var(--ink-2);
-}
-
-.ui-table .num {
-  font-weight: 500;
-}
-
-/* ------------------------------ the range card ----------------------------- */
-.range-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-}
-
-.range-demo {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.7rem;
-  margin: 0;
-}
-
-.range-demo dt {
-  font-size: 0.76rem;
-  color: var(--ink-3);
-}
-
-.range-demo dd {
-  margin: 0.15rem 0 0;
-  font-size: 1.3rem;
-  font-weight: 600;
-  letter-spacing: -0.02em;
-}
-
-.range-demo .unit-label {
-  font-size: 1rem;
-  font-weight: 500;
-  color: var(--ink-2);
-}
-
-.range-bar {
-  position: relative;
-  height: 12px;
-  margin-top: 1.15rem;
-  border-radius: var(--r-pill);
-  background: var(--paper-2);
-}
-
-.range-band {
-  position: absolute;
-  inset-block: 0;
-  /* 3.9-10.0 inside an axis drawn from 2 to 14 */
-  left: 15.83%;
-  width: 50.83%;
-  border-radius: var(--r-pill);
-  background: var(--range-soft);
-}
-
-.range-dot {
-  position: absolute;
-  top: 50%;
-  /* 6.2 on the same axis */
-  left: 35%;
-  width: 14px;
-  height: 14px;
-  margin: -7px 0 0 -7px;
-  border-radius: var(--r-pill);
-  background: var(--accent);
-  border: 2px solid var(--surface);
-  box-shadow: var(--shadow-sm);
-}
-
-.range-caption {
-  margin-top: 0.7rem;
-  font-size: 0.86rem;
-  color: var(--ink-2);
-}
-
-.range-meter-label {
-  font-size: 0.76rem;
-  color: var(--ink-3);
-}
-
-.range-meter-value {
-  margin-top: 0.1rem;
-  font-size: 1.3rem;
-  font-weight: 600;
-  letter-spacing: -0.02em;
-}
-
-.range-meter-foot {
-  margin-top: 0.5rem;
-  font-size: 0.76rem;
-  color: var(--ink-3);
-}
-
-/* A value the unit switch has just rewritten, nudged so the change is
-   noticed without being animated at. */
-.unit-value.is-swapping {
-  animation: swap 0.3s var(--ease);
-}
-
-@keyframes swap {
-  from {
-    opacity: 0.25;
-    transform: translateY(-3px);
-  }
-}
-
-/* ------------------------------- the add form ------------------------------ */
-/* A picture of the real form, not a form: it would post nowhere, so it carries
-   no inputs and is hidden from the accessibility tree. The surrounding
-   figcaption says what it is. */
-.ui-form {
-  display: grid;
-  gap: 0.9rem;
-}
-
-.ui-field {
-  display: grid;
-  gap: 0.35rem;
-}
-
-.ui-label {
-  font-size: 0.85rem;
-  font-weight: 500;
-}
-
-.ui-label em {
-  font-style: normal;
-  font-weight: 400;
-  color: var(--ink-3);
-}
-
-.ui-input {
-  padding: 0.65rem 0.8rem;
-  font-size: 0.92rem;
-  color: var(--ink);
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--r-md);
-}
-
-.ui-input.is-empty {
-  color: var(--ink-3);
-}
-
-.ui-input.is-select {
-  background-image: var(--select-chevron);
-  background-repeat: no-repeat;
-  background-position: right 0.7rem center;
-  background-size: 16px 16px;
-}
-
-.ui-hint {
-  font-size: 0.78rem;
-  color: var(--ink-3);
-}
-
-.ui-submit {
-  justify-self: start;
-  margin-top: 0.2rem;
-  padding: 0.6rem 1.1rem;
-  font-size: 0.9rem;
-  font-weight: 500;
-  color: var(--accent-ink);
-  background: var(--accent-strong);
-  border-radius: var(--r-md);
-}
-
-/* ---------------------------------- trust ---------------------------------- */
-.trust-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
-  gap: clamp(1rem, 2vw, 1.35rem);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.trust {
-  padding: clamp(1.15rem, 2.2vw, 1.4rem);
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--r-lg);
-}
-
-.trust h3 {
-  font-size: 0.98rem;
-  line-height: 1.3;
-}
-
-.trust p {
-  margin-top: 0.55rem;
-  font-size: 0.9rem;
-  color: var(--ink-2);
-}
-
-/* Padded to clear the 24x24 minimum pointer target: this is a standalone
-   block link, not a link inside a sentence, so the inline exception does not
-   cover it. */
-.trust-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  margin-top: 0.5rem;
-  padding-block: 0.35rem;
-  font-size: 0.88rem;
-  font-weight: 500;
-  /* the darker teal: --accent is 3.7:1 on the card, under AA at this size */
-  color: var(--accent-strong);
-}
-
-.trust-link:hover {
-  text-decoration: underline;
-}
-
-.trust-link .icon {
-  transition: transform 0.2s var(--ease);
-}
-
-.trust-link:hover .icon {
-  transform: translateX(2px);
-}
-
-/* -------------------------------- moments ---------------------------------- */
-.moments {
-  margin: 1.35rem 0 1.35rem;
-  padding: 0;
-  list-style: none;
-}
-
-.moments li {
-  position: relative;
-  padding-left: 1.4rem;
-  font-size: 1.02rem;
-  font-weight: 500;
-}
-
-.moments li + li {
-  margin-top: 0.5rem;
-}
-
-.moments li::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 0.62em;
-  width: 7px;
-  height: 7px;
-  border-radius: var(--r-pill);
-  background: var(--accent);
-}
-
-/* --------------------------------- closer ---------------------------------- */
-.closer {
-  padding-block: clamp(3.5rem, 8vw, 6rem);
-}
-
-.closer-inner {
-  max-width: 42rem;
-  margin-inline: auto;
-  padding: clamp(2rem, 5vw, 3.25rem) clamp(1.5rem, 4vw, 3rem);
-  text-align: center;
-  background: var(--accent-wash);
-  border: 1px solid var(--accent-line);
-  border-radius: var(--r-lg);
-}
-
-.closer-inner h2 {
-  font-size: clamp(1.6rem, 3.1vw, 2.1rem);
-}
-
-.closer-inner p {
-  margin-top: 0.9rem;
-  color: var(--ink-2);
-}
-
-.closer-inner .actions {
-  margin-top: 1.75rem;
-  justify-content: center;
-}
-
-/* --------------------------------- footer ---------------------------------- */
-.site-footer {
-  padding-block: clamp(2.5rem, 5vw, 3.5rem);
-  border-top: 1px solid var(--line-soft);
-  background: var(--paper-2);
-}
-
-.footer-inner {
-  display: grid;
-  gap: 1.25rem;
-}
-
-.footer-brand {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.6rem;
-  font-weight: 600;
-}
-
-.footer-tagline {
-  font-weight: 400;
-  font-size: 0.88rem;
-  color: var(--ink-2);
-}
-
-.footer-nav {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem 1.4rem;
-  font-size: 0.9rem;
-  color: var(--ink-2);
-}
-
-.footer-nav a {
-  padding-block: 0.35rem;
-}
-
-.footer-nav a:hover {
-  color: var(--ink);
-  text-decoration: underline;
-}
-
-.footer-disclaimer {
-  max-width: 62ch;
-  font-size: 0.8rem;
-  /* --ink-3 falls to 4.4:1 on the footer's --paper-2 ground */
-  color: var(--ink-2);
-}
-
-/* --------------------------------- reveals --------------------------------- */
-/* One short, shallow rise as a block enters. --d staggers siblings in a grid;
-   theme.css collapses every transition under prefers-reduced-motion, and
-   script.js marks everything shown outright when that is set. */
-.reveal {
-  opacity: 0;
-  transform: translateY(14px);
-  transition: opacity 0.5s var(--ease), transform 0.5s var(--ease);
-  transition-delay: var(--d, 0ms);
-}
-
-.reveal.show {
-  opacity: 1;
-  transform: none;
-}
-
-/* -------------------------------- responsive ------------------------------- */
-@media (max-width: 860px) {
-  /* theme.css turns .menu into a full-height drawer here. These give the
-     drawer the landing page's own ordering: section links first, then the
-     account actions pushed to the bottom of the sheet. */
-  .menu-spacer {
-    display: none;
-  }
-
-  .menu > a:not(.btn) {
-    font-size: 1.05rem;
-    min-height: 44px;
-    display: flex;
-    align-items: center;
-  }
-
-  .menu-login {
-    margin-top: 0.5rem;
-    border-top: 1px solid var(--line-soft);
-    padding-top: 1rem !important;
-  }
-
-  .menu .btn {
-    min-height: 48px;
-    font-size: 0.98rem;
-  }
-}
-
-/* Sits outside the scrolling box, so it stays put while the chart moves. Each
-   swatch repeats its mark's shape as well as its colour. */
 .stage-legend {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.4rem 1.25rem;
-  margin: 0.85rem 0 0;
+  gap: 0.4rem 1.4rem;
+  margin: 0.9rem 0 0;
   padding: 0;
   list-style: none;
-  font-size: 0.82rem;
+  font-size: 0.88rem;
   color: var(--ink-2);
 }
 
@@ -1033,13 +811,676 @@
   fill: var(--tone);
 }
 
-/* Under the stage's 620px floor the chart scrolls inside its own box; say so,
-   rather than leaving the evening half of the day undiscoverable. */
 .stage-hint {
   display: none;
   margin-top: 0.5rem;
-  font-size: 0.78rem;
+  font-size: 0.82rem !important;
+  color: var(--ink-3) !important;
+}
+
+.stage-caption {
+  margin-top: 1rem;
+  max-width: 56ch;
+  min-height: 3.3em;
+  color: var(--ink);
+  font-size: 1.02rem;
+  line-height: 1.6;
+}
+
+.beat {
+  margin-top: clamp(1.75rem, 3.5vw, 2.5rem);
+  font-size: clamp(1.4rem, 2.6vw, 1.9rem) !important;
+  line-height: 1.3 !important;
+  color: var(--biro) !important;
+  transform: rotate(-1deg);
+  transform-origin: left center;
+}
+
+/* -------------------------------- entries ---------------------------------
+   The diary's printed column guide: one ruled row per column, what it is for
+   on the left, its fields filled in once in that column's own ink. */
+.guide {
+  border-bottom: 1px solid var(--line);
+}
+
+.guide-row {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  gap: 1.25rem clamp(2rem, 5vw, 4.5rem);
+  padding-block: clamp(1.5rem, 3vw, 2.1rem);
+  border-top: 1px solid var(--line);
+}
+
+.guide-what {
+  display: grid;
+  align-content: start;
+  gap: 0.6rem;
+}
+
+/* The column's name heads its row of sample fields, the way a diary prints
+   a ruled column header, underlined in that column's own ink. */
+.guide-entry {
+  display: grid;
+  align-content: end;
+  gap: 0.85rem;
+}
+
+.guide-col {
+  padding-bottom: 0.35rem;
+  font-size: 0.82rem !important;
+  font-weight: 700;
+  color: var(--tone-ink) !important;
+  border-bottom: 2px solid var(--tone);
+}
+
+.guide-row h3 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 1.35rem;
+  line-height: 1.25;
+}
+
+.guide-what > p:last-child {
+  font-size: 1rem !important;
+  max-width: 42ch;
+}
+
+.guide-fields {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-content: end;
+  gap: 1.25rem;
+}
+
+.guide-fields > div {
+  align-content: end;
+}
+
+.guide-fields dd {
+  border-bottom-color: color-mix(in srgb, var(--tone) 35%, transparent);
+}
+
+.form-lines {
+  margin: 0;
+  display: grid;
+  gap: 0.85rem;
+}
+
+.form-lines > div {
+  display: grid;
+  gap: 0.1rem;
+}
+
+.form-lines dt {
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 1.35;
   color: var(--ink-3);
+}
+
+.form-lines dd {
+  margin: 0;
+  padding: 0.1rem 0 0.2rem;
+  font-size: 1.25rem;
+  line-height: 1.2;
+  color: var(--tone-ink, var(--biro));
+  border-bottom: 1px solid var(--rule);
+}
+
+.hand-aside {
+  font-size: 0.95rem;
+  color: var(--ink-3);
+}
+
+/* -------------------------------- history --------------------------------- */
+.week {
+  display: flex;
+  flex-direction: column;
+  padding-left: calc(var(--margin-x) + 0.9rem);
+}
+
+.week-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.week-table th {
+  padding: 0 0.5rem 0.5rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-align: center;
+  color: var(--ink-2);
+  border-bottom: 1.5px solid var(--ink-3);
+}
+
+.week-table thead th:first-child,
+.week-table tbody th {
+  text-align: left;
+  padding-left: 0;
+}
+
+.week-table tbody th {
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  color: var(--ink-2);
+  border-bottom: 1px solid var(--rule);
+}
+
+.week-table td {
+  height: 4.25rem;
+  padding: 0 0.5rem;
+  font-size: 1.45rem;
+  line-height: 1;
+  text-align: center;
+  border-bottom: 1px solid var(--rule);
+}
+
+.week-table td small {
+  display: block;
+  margin-top: 0.35rem;
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  color: var(--ink-3);
+}
+
+/* the column the pattern runs down */
+.week-table .col-evening {
+  background: var(--warn-wash);
+}
+
+.week-table td.is-high {
+  color: var(--warn);
+  font-weight: 700;
+}
+
+.week-table td.is-empty::after {
+  content: "";
+  display: block;
+  width: 1.1rem;
+  height: 1px;
+  margin-inline: auto;
+  background: var(--ink-3);
+  opacity: 0.6;
+}
+
+.week-note {
+  margin-right: 0.5rem;
+}
+
+.week .diary-caption {
+  margin-top: 1.5rem;
+}
+
+/* -------------------------------- targets --------------------------------- */
+.targets {
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+}
+
+.form-title {
+  font-size: 1.45rem;
+  line-height: 1.2;
+}
+
+.range-demo {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.25rem;
+  margin: 0;
+}
+
+.range-demo dd {
+  font-size: 1.6rem;
+  color: var(--biro);
+}
+
+.unit-value.is-swapping {
+  animation: rewrite 0.45s var(--ease);
+}
+
+@keyframes rewrite {
+  from {
+    opacity: 0;
+    filter: blur(3px);
+  }
+}
+
+/* a printed 2–14 mmol/L scale; the band and the dot are placed on it */
+.range-bar {
+  position: relative;
+  height: 22px;
+  margin-top: 0.5rem;
+}
+
+.range-bar::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1.5px;
+  background: var(--ink-3);
+}
+
+.range-band {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 15.83%; /* 3.9 on a 2–14 scale */
+  width: 50.84%; /* to 10.0 */
+  background: var(--range-soft);
+  border: 1px solid var(--range);
+  border-radius: 2px;
+}
+
+.range-dot {
+  position: absolute;
+  top: 50%;
+  left: 35%; /* 6.2 */
+  width: 13px;
+  height: 13px;
+  margin: -6.5px 0 0 -6.5px;
+  border-radius: 50%;
+  background: var(--biro);
+  box-shadow: 0 0 0 2px var(--paper);
+}
+
+.range-caption {
+  font-size: 0.95rem !important;
+}
+
+.tir-title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 0.75rem 0 0;
+  padding-top: 1.1rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--ink-2);
+  border-top: 1px solid var(--line);
+}
+
+.tir-value {
+  font-family: var(--font-display);
+  font-size: 1.9rem;
+  font-weight: 400;
+  color: var(--ink);
+}
+
+.tir {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tir li {
+  display: grid;
+  place-items: center;
+  height: 3.1rem;
+  font-size: 1.3rem;
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+}
+
+.tir .is-in {
+  background: var(--range-wash);
+  border-color: var(--range-soft);
+}
+
+.tir .is-high .unit-value {
+  color: var(--warn);
+  font-weight: 700;
+}
+
+.tir .ink-ring {
+  width: 3.6em;
+  margin-left: -1.8em;
+}
+
+.range-meter-foot {
+  font-size: 0.9rem !important;
+  color: var(--ink-3) !important;
+}
+
+/* -------------------------------- everyday -------------------------------- */
+.moments {
+  margin: 0.2rem 0 0.3rem;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.moments li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.8rem;
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  color: var(--ink);
+}
+
+.moments .ink {
+  width: 1.5rem;
+  height: 1.5rem;
+  margin-top: 0.05rem;
+  flex: none;
+  color: var(--range);
+}
+
+.moments li:nth-child(2) .ink {
+  transition-delay: 0.15s;
+}
+
+.moments li:nth-child(3) .ink {
+  transition-delay: 0.3s;
+}
+
+.slip-page {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* a slip of the app, tucked into the diary */
+.slip {
+  position: relative;
+  padding: clamp(1.25rem, 3vw, 2rem);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  box-shadow: var(--shadow-sm), 0 14px 28px -18px rgba(47, 36, 26, 0.45);
+  transform: rotate(-1.2deg);
+}
+
+.slip-desc {
+  margin-top: 0.3rem;
+  font-size: 0.92rem !important;
+}
+
+.slip-form {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1.35rem;
+}
+
+.slip-field {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.slip-label {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.slip-label em {
+  font-style: normal;
+  font-weight: 400;
+  color: var(--ink-3);
+}
+
+.slip-input {
+  display: block;
+  padding: 0.45rem 0.8rem;
+  font-size: 1.25rem;
+  line-height: 1.4;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+}
+
+.slip-input.is-select {
+  background-image: var(--select-chevron);
+  background-repeat: no-repeat;
+  background-position: right 0.7rem center;
+  background-size: 16px 16px;
+}
+
+.slip-input.is-empty {
+  font-size: 0.95rem;
+  line-height: 1.85;
+  color: var(--ink-3);
+}
+
+.slip-hint {
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--ink-2);
+}
+
+.slip-submit {
+  justify-self: start;
+  margin-top: 0.25rem;
+  padding: 0.6rem 1.1rem;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--accent-ink);
+  background: var(--accent-strong);
+  border-radius: 4px;
+}
+
+.slip-page .diary-caption {
+  margin-top: 1.5rem;
+}
+
+/* --------------------------------- privacy -------------------------------- */
+.notices {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 clamp(2rem, 5vw, 5rem);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.notices li {
+  display: grid;
+  align-content: start;
+  gap: 0.55rem;
+  padding-block: 1.4rem 1.6rem;
+  border-top: 1px solid var(--line);
+}
+
+.notices h3 {
+  font-size: 1.3rem;
+  line-height: 1.25;
+}
+
+.notices p {
+  max-width: 48ch;
+}
+
+.text-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  width: fit-content;
+  font-weight: 700;
+  color: var(--accent-strong);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+}
+
+.text-link:hover {
+  text-decoration-thickness: 2px;
+}
+
+/* --------------------------------- closer ---------------------------------
+   The back cover: the cloth, with the booklet's printed label pasted on it,
+   framed by a double printed rule the way clinic booklets label their covers. */
+.closer {
+  padding-block: clamp(3.5rem, 8vw, 6rem);
+}
+
+.cover-label {
+  display: grid;
+  justify-items: center;
+  gap: 1.2rem;
+  max-width: 640px;
+  margin-inline: auto;
+  padding: clamp(2rem, 5vw, 3.25rem) clamp(1.5rem, 5vw, 3.5rem);
+  text-align: center;
+  color: var(--ink);
+  background: var(--paper);
+  border-radius: 3px;
+  box-shadow:
+    inset 0 0 0 10px var(--paper),
+    inset 0 0 0 11px var(--ink-3),
+    inset 0 0 0 14px var(--paper),
+    inset 0 0 0 15px var(--ink-3),
+    var(--shadow-lg);
+}
+
+.cover-label h2 {
+  font-size: clamp(2.2rem, 5vw, 3.6rem);
+  line-height: 1.04;
+  max-width: 12ch;
+}
+
+.cover-label p {
+  max-width: 40ch;
+  font-size: 1.08rem;
+  line-height: 1.6;
+  color: var(--ink-2);
+  text-wrap: pretty;
+}
+
+.cover-label .actions {
+  justify-content: center;
+  margin-top: 0.3rem;
+}
+
+/* --------------------------------- footer --------------------------------- */
+.site-footer {
+  padding-block: 2.25rem 2.75rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+  color: var(--cloth-ink-2);
+  font-size: 0.9rem;
+}
+
+.footer-inner {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 1.25rem 2rem;
+  align-items: center;
+}
+
+.footer-brand {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.footer-brand .brand-name {
+  color: var(--cloth-ink);
+}
+
+.footer-tagline {
+  margin-left: 0.35rem;
+}
+
+.footer-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.4rem;
+}
+
+.footer-nav a {
+  color: var(--cloth-ink);
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: 4px;
+  transition: text-decoration-color 0.2s var(--ease);
+}
+
+.footer-nav a:hover {
+  text-decoration-color: currentColor;
+}
+
+.footer-disclaimer {
+  grid-column: 1 / -1;
+  max-width: 70ch;
+  font-size: 0.84rem;
+  line-height: 1.55;
+}
+
+/* focus on the cover reads in cloth ink */
+.topbar :focus-visible,
+.closer :focus-visible,
+.site-footer :focus-visible {
+  outline-color: var(--cloth-ink);
+}
+
+:focus-visible {
+  outline-color: var(--biro);
+}
+
+/* ------------------------------- responsive ------------------------------- */
+@media (max-width: 960px) {
+  .spread {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .page-left::after {
+    display: none;
+  }
+
+  /* stacked, the right page follows on below a fold line */
+  .page-right {
+    border-top: 1px dashed var(--line);
+  }
+
+  .hero-spread {
+    min-height: 0;
+  }
+
+  .hero-title {
+    max-width: 13ch;
+  }
+
+  .page-head {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .guide-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* stacked, the pages run on, so only the right page keeps its number */
+  .page-left .folio {
+    display: none;
+  }
+
+  .page-left {
+    padding-bottom: clamp(1.75rem, 4.2vw, 4rem);
+  }
+
+  .notices {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .slip {
+    transform: none;
+  }
+}
+
+@media (max-width: 860px) {
+  /* the drawer opens over the cover */
+  .topbar .menu {
+    background: var(--cloth);
+  }
+
+  .topbar .menu .btn {
+    margin-top: 0.75rem;
+  }
 }
 
 @media (max-width: 700px) {
@@ -1049,29 +1490,82 @@
 }
 
 @media (max-width: 560px) {
-  /* Three equal columns rather than a wrapped row: the labels differ in
-     length, and a control whose buttons jump between rows reads as broken. */
-  .stage-steps {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    width: auto;
+  .container {
+    padding-inline: 1rem;
   }
 
-  .stage-steps button {
-    padding-inline: 0.5rem;
-    font-size: 0.78rem;
-    line-height: 1.25;
+  .page {
+    padding-inline: 1.25rem;
+  }
+
+  .diary,
+  .week {
+    padding-left: calc(var(--margin-x) + 0.6rem);
+  }
+
+  .diary-table .col-note {
+    display: none;
+  }
+
+  .diary-table tbody td {
+    font-size: 1.1rem;
+  }
+
+  .diary-table th {
+    font-size: 0.72rem;
+    padding-inline: 0.2rem;
+  }
+
+  .week-table td {
+    font-size: 1.25rem;
   }
 
   .range-demo {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .range-demo .unit-label {
+  .range-demo > div:last-child {
     grid-column: 1 / -1;
+  }
+
+  .guide-fields {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.85rem;
+  }
+
+  .tir li {
+    font-size: 1.1rem;
   }
 
   .actions .btn {
     flex: 1 1 100%;
   }
+
+  .footer-inner {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero .ink {
+    animation: none;
+  }
+
+  .ink-ready .reveal:not(.show) .ink {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Diaries open on a filled-in example page; this one says so, so no figure
+   in the first viewport can be mistaken for a real reading. */
+.sample-mark {
+  margin-left: auto;
+  padding: 0.15rem 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--ink-2);
+  border: 1px solid var(--ink-3);
+  border-radius: 2px;
+  transform: rotate(2deg);
 }

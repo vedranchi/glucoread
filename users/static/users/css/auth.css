@@ -124,3 +124,77 @@
 .auth-footer p {
   max-width: 62ch;
 }
+
+/* ----------------------------- warm overrides ------------------------------
+   The auth screens share the landing page's paper-logbook world (warm.css):
+   the page ground is the diary's sage cloth cover, and the card is a page of
+   the diary laid on it. The authenticated app keeps the teal theme. */
+
+/* The topbar sits on the cover, so it borrows cover colours for the shared
+   theme switch — scoped custom properties, as on the landing page. */
+.topbar {
+  --accent: var(--cloth-ink);
+  --accent-ink: var(--cloth-2);
+  --paper-2: rgba(0, 0, 0, 0.18);
+  --line-soft: rgba(255, 255, 255, 0.16);
+  --line: rgba(255, 255, 255, 0.26);
+  --ink-3: var(--cloth-ink-2);
+  color: var(--cloth-ink);
+}
+
+.brand-name {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 1.3rem;
+  letter-spacing: 0;
+}
+
+
+.topbar :focus-visible {
+  outline-color: var(--cloth-ink);
+}
+
+.auth-card {
+  color: var(--ink);
+  background: var(--paper);
+  border: 0;
+  border-radius: 3px;
+}
+
+.auth-card h1 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+
+.auth-card .btn {
+  font-weight: 700;
+}
+
+.auth-card :focus-visible {
+  outline-color: var(--biro);
+}
+
+/* entries typed into the diary page read in biro */
+.auth-card .field input,
+.auth-card .field select,
+.auth-card .field textarea {
+  background-color: var(--surface);
+  caret-color: var(--biro);
+}
+
+.auth-card .field input:focus,
+.auth-card .field select:focus,
+.auth-card .field textarea:focus {
+  border-color: var(--biro);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--biro) 18%, transparent);
+}
+
+.messages .message {
+  color: var(--ink);
+  background: var(--paper);
+}
+
+.auth-footer {
+  color: var(--cloth-ink-2);
+}
